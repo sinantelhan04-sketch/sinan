@@ -1,5 +1,5 @@
-import { SCRIPT_URL } from '../config';
-import type { Credential, Customer, UserActivityStat } from '../types';
+import { SCRIPT_URL } from '../config.ts';
+import type { Credential, Customer, UserActivityStat } from '../types.ts';
 
 async function postRequest(action: string, data: object = {}) {
     if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) {

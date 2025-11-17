@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserIcon, LockIcon } from './icons';
+import { UserIcon, LockIcon } from './icons.tsx';
 
 interface LoginScreenProps {
   onLogin: (username: string, password: string) => Promise<void>;

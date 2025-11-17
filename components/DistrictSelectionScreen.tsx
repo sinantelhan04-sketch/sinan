@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import * as sheetService from '../services/sheetService';
-import { MapPinIcon } from './icons';
+import * as sheetService from '../services/sheetService.ts';
+import { MapPinIcon } from './icons.tsx';
 
 interface DistrictSelectionScreenProps {
   onDistrictSelect: (district: string) => void;

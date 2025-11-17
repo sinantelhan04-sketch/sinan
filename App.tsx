@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import LoginScreen from './components/LoginScreen';
-import MainScreen from './components/MainScreen';
-import LegalScreen from './components/LegalScreen';
-import OfflineScreen from './components/OfflineScreen';
-import AdminScreen from './components/AdminScreen';
-import { isWithinWorkingHours } from './utils/time';
-import * as sheetService from './services/sheetService';
-import { SCRIPT_URL } from './config';
+import LoginScreen from './components/LoginScreen.tsx';
+import MainScreen from './components/MainScreen.tsx';
+import LegalScreen from './components/LegalScreen.tsx';
+import OfflineScreen from './components/OfflineScreen.tsx';
+import AdminScreen from './components/AdminScreen.tsx';
+import { isWithinWorkingHours } from './utils/time.ts';
+import * as sheetService from './services/sheetService.ts';
+import { SCRIPT_URL } from './config.ts';
 
 
 const App: React.FC = () => {

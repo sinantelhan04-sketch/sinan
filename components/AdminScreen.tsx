@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import * as sheetService from '../services/sheetService';
-import type { Credential, UserActivityStat } from '../types';
-import { TrashIcon, EditIcon, SearchIcon } from './icons';
+import * as sheetService from '../services/sheetService.ts';
+import type { Credential, UserActivityStat } from '../types.ts';
+import { TrashIcon, EditIcon, SearchIcon } from './icons.tsx';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
 type SortableKeys = 'username' | 'queryCount' | 'lastLogin';

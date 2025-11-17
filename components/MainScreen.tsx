@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import type { Customer } from '../types';
-import * as sheetService from '../services/sheetService';
-import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon } from './icons';
+import type { Customer } from '../types.ts';
+import * as sheetService from '../services/sheetService.ts';
+import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon } from './icons.tsx';
 
 interface MainScreenProps {
     onLogout: () => void;

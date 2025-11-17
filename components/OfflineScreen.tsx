@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClockIcon } from './icons';
+import { ClockIcon } from './icons.tsx';
 
 const OfflineScreen: React.FC = () => {
     return (
