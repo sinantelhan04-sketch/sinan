@@ -5,23 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tesisat Sorgulama</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 1. Adım: Babel'i (Tarayıcı içi çevirmen) ekle -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- 2. Adım: Güvenilir bir CDN üzerinden React için importmap'i düzelt -->
-    <script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
   }
 }
 </script>
 </head>
   <body class="bg-slate-100">
     <div id="root"></div>
-    <!-- 3. Adım: Script etiketini Babel'in anlayacağı şekilde güncelle -->
-    <script type="text/babel" data-type="module" src="./index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

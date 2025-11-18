@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import * as sheetService from '../services/sheetService.ts';
-import type { Credential, UserActivityStat } from '../types.ts';
-import { TrashIcon, EditIcon, SearchIcon } from './icons.tsx';
+import * as sheetService from '../services/sheetService';
+import type { Credential, UserActivityStat } from '../types';
+import { TrashIcon, EditIcon, SearchIcon } from './icons';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
 type SortableKeys = 'username' | 'queryCount' | 'lastLogin';
@@ -33,33 +33,27 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     setError('');
     setDataWarning('');
     try {
-      // Fetch credentials and stats in parallel using the existing Code.gs structure
       const [creds, stats] = await Promise.all([
         sheetService.getCredentials(),
         sheetService.getUserActivityStats(),
       ]);
 
-      // Create a map for efficient lookup of activity stats
       const statsMap = new Map<string, Omit<UserActivityStat, 'username'>>();
       stats.forEach(stat => {
-        // Ensure username is a string for consistent map keys
         statsMap.set(String(stat.username), { 
             queryCount: stat.queryCount, 
             lastLogin: stat.lastLogin 
         });
       });
 
-      // Merge credentials with their corresponding stats
       const mergedData: AdminUserData[] = creds.map(cred => ({
         ...cred,
-        // Ensure lookup is also done with a string
         queryCount: statsMap.get(String(cred.username))?.queryCount ?? 0,
         lastLogin: statsMap.get(String(cred.username))?.lastLogin ?? 'Giriş Yapmadı',
       }));
 
       setUsers(mergedData);
 
-      // Check for potential data mismatch issues after data is loaded
       const allStatsAreZero = mergedData.length > 0 && mergedData.every(u => u.queryCount === 0 && u.lastLogin === 'Giriş Yapmadı');
       if (allStatsAreZero) {
         setDataWarning("Dikkat: Tüm kullanıcı istatistikleri (sorgu sayısı, son giriş) sıfır veya varsayılan olarak görünüyor. Bu durum genellikle Google E-Tablonuzdaki 'Kullanıcılar', 'SorguLogları' ve 'LoginLog' sekmelerindeki sicil numaralarının birbiriyle tam olarak eşleşmemesinden kaynaklanır. Lütfen sicil numaralarının tüm sayfalarda aynı formatta (örneğin, metin ve boşluksuz) olduğundan emin olun.");
@@ -67,7 +61,6 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
     } catch (err: any) {
       let errorMessage = err.message || 'Veri yüklenirken bir hata oluştu.';
-      // Provide more specific error messages based on the likely cause
       if (errorMessage.includes("sayfa bulunamadı")) {
          if (errorMessage.toLowerCase().includes("'kullanıcılar'")) {
              errorMessage = "Yapılandırma Hatası: Google E-Tablonuzda 'Kullanıcılar' adında bir sayfa bulunamadı. Lütfen kontrol ediniz.";
@@ -166,7 +159,6 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   
   const handleOpenEditModal = (user: AdminUserData) => {
     setEditingUser(user);
-    // Gelen verinin sayı olma ihtimaline karşı String'e çeviriyoruz.
     setEditForm({ username: String(user.username), password: String(user.password) });
     setIsEditModalOpen(true);
     setError('');
@@ -181,7 +173,6 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     e.preventDefault();
     if (!editingUser) return;
     
-    // Değerlerin metin olduğundan emin olmak için String() kullanıyoruz.
     const finalUsername = String(editForm.username).trim();
     const finalPassword = String(editForm.password).trim();
 
@@ -233,7 +224,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             </button>
           </form>
         </div>
-
+        
          {error && !isEditModalOpen && <p className="text-red-500 text-sm my-4 text-center p-3 bg-red-100 rounded-md">{error}</p>}
 
         <div className="overflow-x-auto">

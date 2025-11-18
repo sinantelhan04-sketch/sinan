@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserIcon, LockIcon } from './icons.tsx';
+import { UserIcon, LockIcon } from './icons';
 
 interface LoginScreenProps {
   onLogin: (username: string, password: string) => Promise<void>;
@@ -33,10 +33,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             localStorage.removeItem('rememberedUsername');
         }
     } catch (err: any) {
-        // Handle specific configuration errors
+        // Handle specific errors
         if (err.message && err.message.includes("sayfa bulunamadı")) {
              setError(`Yapılandırma Hatası: Lütfen Google E-Tablonuzda 'Kullanıcılar' adında bir sayfa (sekme) olduğundan emin olun.`);
-        } else {
+        }
+        else {
              setError(err.message || 'Bilinmeyen bir hata oluştu.');
         }
     } finally {
