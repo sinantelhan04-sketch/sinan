@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
-import { TrashIcon, EditIcon, SearchIcon } from './icons';
+import { TrashIcon, EditIcon, SearchIcon, LockIcon } from './icons';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
 type SortableKeys = 'username' | 'queryCount' | 'lastLogin';
@@ -12,8 +12,10 @@ interface AdminScreenProps {
 
 const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [users, setUsers] = useState<AdminUserData[]>([]);
+  // Form states
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newDeviceId, setNewDeviceId] = useState(''); // New field
   
   const [error, setError] = useState('');
   const [dataWarning, setDataWarning] = useState('');
@@ -22,7 +24,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUserData | null>(null);
-  const [editForm, setEditForm] = useState({ username: '', password: '' });
+  const [editForm, setEditForm] = useState({ username: '', password: '', allowedDeviceId: '' });
 
   const [showPasswords, setShowPasswords] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys; direction: 'ascending' | 'descending' }>({ key: 'queryCount', direction: 'descending' });
@@ -56,19 +58,13 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
       const allStatsAreZero = mergedData.length > 0 && mergedData.every(u => u.queryCount === 0 && u.lastLogin === 'Giriş Yapmadı');
       if (allStatsAreZero) {
-        setDataWarning("Dikkat: Tüm kullanıcı istatistikleri (sorgu sayısı, son giriş) sıfır veya varsayılan olarak görünüyor. Bu durum genellikle Google E-Tablonuzdaki 'Kullanıcılar', 'SorguLogları' ve 'LoginLog' sekmelerindeki sicil numaralarının birbiriyle tam olarak eşleşmemesinden kaynaklanır. Lütfen sicil numaralarının tüm sayfalarda aynı formatta (örneğin, metin ve boşluksuz) olduğundan emin olun.");
+        setDataWarning("Dikkat: Tüm kullanıcı istatistikleri sıfır görünüyor. Kullanıcılar ve Log sekmelerindeki sicil numaralarının eşleştiğinden emin olun.");
       }
 
     } catch (err: any) {
       let errorMessage = err.message || 'Veri yüklenirken bir hata oluştu.';
       if (errorMessage.includes("sayfa bulunamadı")) {
-         if (errorMessage.toLowerCase().includes("'kullanıcılar'")) {
-             errorMessage = "Yapılandırma Hatası: Google E-Tablonuzda 'Kullanıcılar' adında bir sayfa bulunamadı. Lütfen kontrol ediniz.";
-         } else {
-            errorMessage = `Yapılandırma Hatası: Google E-Tablonuzda gerekli bir sayfa (örn: 'SorguLogları' veya 'LoginLog') bulunamadı. Lütfen kontrol edin. Hata: ${errorMessage}`;
-         }
-      } else if (errorMessage.toLowerCase().includes("bilinmeyen get eylemi")) {
-        errorMessage = "Arka Uç Hatası: Google Apps Script'iniz istenen eylemi ('getCredentials' veya 'getUserActivityStats') tanımıyor. Lütfen script'inizi kontrol edin.";
+         errorMessage = "Yapılandırma Hatası: Google E-Tablonuzda gerekli sayfalar bulunamadı.";
       }
       setError(errorMessage);
     } finally {
@@ -131,9 +127,14 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     try {
         setIsSubmitting(true);
         setError('');
-        await sheetService.addCredential({ username: newUsername.trim(), password: newPassword.trim() });
+        await sheetService.addCredential({ 
+            username: newUsername.trim(), 
+            password: newPassword.trim(),
+            allowedDeviceId: newDeviceId.trim() 
+        });
         setNewUsername('');
         setNewPassword('');
+        setNewDeviceId('');
         await fetchData(); // Refresh data
     } catch(err: any) {
         setError(err.message || 'Kullanıcı eklenemedi.');
@@ -159,7 +160,11 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   
   const handleOpenEditModal = (user: AdminUserData) => {
     setEditingUser(user);
-    setEditForm({ username: String(user.username), password: String(user.password) });
+    setEditForm({ 
+        username: String(user.username), 
+        password: String(user.password),
+        allowedDeviceId: user.allowedDeviceId ? String(user.allowedDeviceId) : ''
+    });
     setIsEditModalOpen(true);
     setError('');
   };
@@ -175,6 +180,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     
     const finalUsername = String(editForm.username).trim();
     const finalPassword = String(editForm.password).trim();
+    const finalDeviceId = String(editForm.allowedDeviceId).trim();
 
     if (!finalUsername || !finalPassword) {
         setError('Alanlar boş olamaz.');
@@ -183,7 +189,11 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     try {
         setIsSubmitting(true);
         setError('');
-        await sheetService.updateCredential(editingUser.username, {username: finalUsername, password: finalPassword});
+        await sheetService.updateCredential(editingUser.username, {
+            username: finalUsername, 
+            password: finalPassword,
+            allowedDeviceId: finalDeviceId
+        });
         handleCloseEditModal();
         await fetchData();
     } catch (err: any) {
@@ -195,7 +205,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
   return (
     <>
-      <div className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 relative">
+      <div className="w-full max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 relative">
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
             <button 
                 onClick={fetchData}
@@ -214,13 +224,29 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
         <h1 className="text-2xl font-bold mb-6 text-center">Yönetici Paneli</h1>
 
+        {/* Yeni Kullanıcı Ekleme Formu */}
         <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
           <h2 className="text-lg font-semibold mb-4">Yeni Kullanıcı Ekle</h2>
-          <form onSubmit={handleAddUser} className="flex flex-col sm:flex-row gap-4 items-center">
-            <input type="text" placeholder="Sicil Numarası" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} disabled={isSubmitting} className="input-style"/>
-            <input type="text" placeholder="Şifre" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} className="input-style"/>
-            <button type="submit" disabled={isSubmitting} className="px-6 w-full sm:w-auto py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
-              {isSubmitting ? 'Ekleniyor...' : 'Ekle'}
+          <form onSubmit={handleAddUser} className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="w-full">
+                <label className="text-xs text-gray-500 ml-1">Sicil No</label>
+                <input type="text" placeholder="Sicil No" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} disabled={isSubmitting} className="input-style"/>
+            </div>
+            <div className="w-full">
+                <label className="text-xs text-gray-500 ml-1">Şifre</label>
+                <input type="text" placeholder="Şifre" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} className="input-style"/>
+            </div>
+            <div className="w-full">
+                 <label className="text-xs text-gray-500 ml-1">Cihaz Kimliği (Opsiyonel)</label>
+                 <div className="relative">
+                    <input type="text" placeholder="ID (Boşsa her yerden girer)" value={newDeviceId} onChange={(e) => setNewDeviceId(e.target.value)} disabled={isSubmitting} className="input-style pr-8"/>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                        <LockIcon />
+                    </div>
+                 </div>
+            </div>
+            <button type="submit" disabled={isSubmitting} className="px-6 py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait md:mb-[1px]">
+              {isSubmitting ? '...' : 'Ekle'}
             </button>
           </form>
         </div>
@@ -272,8 +298,9 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             <label htmlFor="showpass" className="ml-2 text-xs font-medium text-gray-500 dark:text-gray-300 normal-case">Göster</label>
                         </div>
                       </th>
-                      <th onClick={() => requestSort('queryCount')} className="th-style">Sorgu Sayısı {getSortIndicator('queryCount')}</th>
-                      <th onClick={() => requestSort('lastLogin')} className="th-style">Son Giriş {getSortIndicator('lastLogin')}</th>
+                      <th className="th-style">Tanımlı Cihaz ID</th>
+                      <th onClick={() => requestSort('queryCount')} className="th-style text-center">Sorgu {getSortIndicator('queryCount')}</th>
+                      <th onClick={() => requestSort('lastLogin')} className="th-style text-center">Son Giriş {getSortIndicator('lastLogin')}</th>
                       <th className="th-style text-right">Eylemler</th>
                     </tr>
                   </thead>
@@ -282,6 +309,9 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         <tr key={user.username} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td className="td-style font-mono">{user.username}</td>
                             <td className="td-style font-mono text-gray-500 dark:text-gray-400">{showPasswords ? user.password : '********'}</td>
+                            <td className="td-style font-mono text-xs text-gray-500 truncate max-w-[150px]" title={user.allowedDeviceId}>
+                                {user.allowedDeviceId ? user.allowedDeviceId : <span className="text-gray-300 italic">Herkes</span>}
+                            </td>
                             <td className="td-style text-center font-semibold">{user.queryCount}</td>
                             <td className="td-style text-center text-sm">{user.lastLogin}</td>
                             <td className="td-style text-right">
@@ -329,6 +359,18 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} 
                     className="mt-1 input-style"
                   />
+                </div>
+                <div>
+                  <label htmlFor="edit-deviceid" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cihaz Kimliği (ID)</label>
+                  <input 
+                    id="edit-deviceid" 
+                    type="text" 
+                    placeholder="Boş bırakılırsa cihaz kontrolü yapılmaz"
+                    value={editForm.allowedDeviceId} 
+                    onChange={(e) => setEditForm({ ...editForm, allowedDeviceId: e.target.value })} 
+                    className="mt-1 input-style font-mono text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Kullanıcı giriş ekranındaki ID ile birebir eşleşmelidir.</p>
                 </div>
               </div>
               {error && isEditModalOpen && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}

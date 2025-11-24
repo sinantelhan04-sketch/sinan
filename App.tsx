@@ -4,6 +4,7 @@ import MainScreen from './components/MainScreen';
 import LegalScreen from './components/LegalScreen';
 import OfflineScreen from './components/OfflineScreen';
 import AdminScreen from './components/AdminScreen';
+import DistrictSelectionScreen from './components/DistrictSelectionScreen'; // Import eklendi
 import { isWithinWorkingHours } from './utils/time';
 import * as sheetService from './services/sheetService';
 import { SCRIPT_URL } from './config';
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null); // İlçe state'i
 
 
   useEffect(() => {
@@ -28,7 +30,7 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogin = useCallback(async (username: string, password: string) => {
+  const handleLogin = useCallback(async (username: string, password: string, deviceId: string) => {
     // Admin login is a local check, no need for network request
     if (username === 'admin' && password === 'admin123') {
         setIsAuthenticated(true);
@@ -38,8 +40,8 @@ const App: React.FC = () => {
         return;
     }
    
-    // For regular users, call the new, optimized authentication service
-    await sheetService.authenticateUser(username, password);
+    // For regular users, call the authentication service WITH deviceId
+    await sheetService.authenticateUser(username, password, deviceId);
     
     // If the above line does not throw an error, authentication is successful
     setIsAuthenticated(true);
@@ -53,6 +55,7 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setCurrentUser(null);
     setLegalAccepted(false);
+    setSelectedDistrict(null); // Çıkışta ilçeyi sıfırla
   }, []);
 
   const handleAcceptLegal = useCallback(() => {
@@ -62,6 +65,14 @@ const App: React.FC = () => {
   const handleDeclineLegal = useCallback(() => {
     handleLogout(); // Log out if legal is declined
   }, [handleLogout]);
+
+  const handleDistrictSelect = useCallback((district: string) => {
+    setSelectedDistrict(district);
+  }, []);
+
+  const handleChangeDistrict = useCallback(() => {
+    setSelectedDistrict(null);
+  }, []);
 
 
   const renderContent = () => {
@@ -85,10 +96,15 @@ const App: React.FC = () => {
       if (!isWorkingTime) {
           return <OfflineScreen />;
       }
-      // District selection removed, go straight to MainScreen
+      // İlçe seçimi kontrolü
+      if (!selectedDistrict) {
+          return <DistrictSelectionScreen onDistrictSelect={handleDistrictSelect} onLogout={handleLogout} />;
+      }
       return <MainScreen 
                 onLogout={handleLogout} 
                 username={currentUser!}
+                selectedDistrict={selectedDistrict}
+                onChangeDistrict={handleChangeDistrict}
              />;
   }
 

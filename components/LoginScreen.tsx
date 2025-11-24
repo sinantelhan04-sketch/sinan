@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserIcon, LockIcon } from './icons';
 
 interface LoginScreenProps {
-  onLogin: (username: string, password: string) => Promise<void>;
+  onLogin: (username: string, password: string, deviceId: string) => Promise<void>;
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
@@ -11,8 +11,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
 
   useEffect(() => {
+    // 1. Cihaz Kimliği Yönetimi
+    let storedDeviceId = localStorage.getItem('app_device_id');
+    if (!storedDeviceId) {
+      // Basit bir benzersiz ID üretici (UUID benzeri)
+      storedDeviceId = 'dev-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('app_device_id', storedDeviceId);
+    }
+    setDeviceId(storedDeviceId);
+
+    // 2. Beni Hatırla Yönetimi
     const rememberedUsername = localStorage.getItem('rememberedUsername');
     if (rememberedUsername) {
       setUsername(rememberedUsername);
@@ -25,7 +36,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     setError('');
     setIsLoggingIn(true);
     try {
-        await onLogin(username, password);
+        // Device ID'yi de gönderiyoruz
+        await onLogin(username, password, deviceId);
+        
         // Login successful, handle remember me
         if (rememberMe) {
             localStorage.setItem('rememberedUsername', username);
@@ -42,6 +55,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     } finally {
         setIsLoggingIn(false);
     }
+  };
+
+  const copyDeviceId = () => {
+    navigator.clipboard.writeText(deviceId);
+    alert("Cihaz Kimliği kopyalandı! Yöneticinize iletebilirsiniz.");
   };
 
   return (
@@ -111,6 +129,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           </button>
         </div>
       </form>
+
+      {/* Cihaz Kimliği Göstergesi */}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bu Cihazın Kimliği (Admin Tanımlaması İçin):</p>
+        <div 
+            onClick={copyDeviceId}
+            className="inline-block bg-gray-100 dark:bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-gray-300 dark:border-gray-600"
+            title="Kopyalamak için tıklayın"
+        >
+            {deviceId}
+        </div>
+      </div>
     </div>
   );
 };
