@@ -1,28 +1,61 @@
 import { SCRIPT_URL } from '../config';
 import type { Credential, Customer, UserActivityStat } from '../types';
 
+// Timeout (zaman aşımı) özelliği olan fetch sarmalayıcısı
+async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
+  const { timeout = 30000 } = options; // Varsayılan 30 saniye
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(resource, {
+      ...options,
+      signal: controller.signal  
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error: any) {
+    clearTimeout(id);
+    if (error.name === 'AbortError') {
+       throw new Error('Sunucu yanıt vermedi (30sn Zaman Aşımı). Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.');
+    }
+    throw error;
+  }
+}
+
+// Yanıtı işleyen ve hataları yakalayan yardımcı fonksiyon
+async function handleResponse(response: Response) {
+    if (!response.ok) {
+        throw new Error(`Ağ hatası: ${response.status} ${response.statusText}`);
+    }
+
+    const text = await response.text();
+    try {
+        const result = JSON.parse(text);
+        if (!result.success) {
+            throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
+        }
+        return result;
+    } catch (e) {
+        // JSON parse hatası genellikle sunucunun HTML hata sayfası döndürmesinden kaynaklanır
+        console.error("Geçersiz Sunucu Yanıtı:", text);
+        throw new Error("Sunucudan geçersiz veri alındı. Lütfen yapılandırmayı kontrol edin.");
+    }
+}
+
 async function postRequest(action: string, data: object = {}) {
     if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) {
         throw new Error("Lütfen config.ts dosyasında Google Apps Script URL'sini ayarlayın.");
     }
 
-    const response = await fetch(SCRIPT_URL, {
+    const response = await fetchWithTimeout(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action, data }),
     });
 
-    if (!response.ok) {
-        throw new Error(`Ağ hatası: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    if (!result.success) {
-        throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
-    }
-    
-    return result;
+    return handleResponse(response);
 }
 
 async function getRequest(params: URLSearchParams) {
@@ -32,19 +65,9 @@ async function getRequest(params: URLSearchParams) {
     const url = new URL(SCRIPT_URL);
     params.forEach((value, key) => url.searchParams.append(key, value));
 
-    const response = await fetch(url.toString(), { method: 'GET' });
+    const response = await fetchWithTimeout(url.toString(), { method: 'GET' });
 
-    if (!response.ok) {
-        throw new Error(`Ağ hatası: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.success) {
-        throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
-    }
-
-    return result;
+    return handleResponse(response);
 }
 
 

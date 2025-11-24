@@ -6,10 +6,12 @@ import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon } from './
 interface MainScreenProps {
     onLogout: () => void;
     username: string;
+    district: string;
+    onChangeDistrict: () => void;
 }
 
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, district, onChangeDistrict }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -39,8 +41,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
             // İstatistiklerin çalışabilmesi için sorgu loglama aktif.
             sheetService.logSearchQuery(username, searchTerm.trim()).catch(console.error);
             
-            // İlçe parametresi kaldırıldı
-            const customer = await sheetService.findCustomerByInstallationNumber(searchTerm.trim());
+            // Seçilen ilçe ile arama yapılıyor
+            const customer = await sheetService.findCustomerByInstallationNumber(searchTerm.trim(), district);
             setFoundCustomer(customer);
 
             let gmapsEmbedUrl = '';
@@ -67,12 +69,23 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, username]);
+    }, [searchTerm, username, district]);
     
     return (
         <div className="w-full max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 relative">
-                 <div className="absolute top-4 right-4 flex gap-2">
+                 <div className="absolute top-4 right-4 flex gap-2 items-center">
+                    <div className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mr-2">
+                        {district}
+                    </div>
+                    <button 
+                        onClick={onChangeDistrict}
+                        className="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 font-semibold py-2 px-4 rounded-md transition-colors"
+                        title="İlçe Değiştir"
+                    >
+                       <span className="sm:hidden">İlçe Değiştir</span>
+                       <span className="hidden sm:inline">Değiştir</span>
+                    </button>
                     <button 
                         onClick={onLogout}
                         className="text-sm text-white bg-red-600 hover:bg-red-700 font-semibold py-2 px-4 rounded-md transition-colors"
@@ -84,6 +97,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                     <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10" />
                     <div className="ml-4">
                         <h1 className="text-2xl sm:text-3xl font-bold">Tesisat Sorgulama</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 sm:hidden mt-1">{district} Bölgesi</p>
                     </div>
                 </div>
                 

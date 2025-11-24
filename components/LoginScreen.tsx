@@ -11,18 +11,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [deviceId, setDeviceId] = useState('');
+
+  // 1. Cihaz Kimliği (Device ID) Yönetimi - Kararlı Yapı
+  // Lazy initialization: Sadece ilk render'da çalışır ve localStorage'dan okur.
+  // Bu, kimliğin her render'da veya sayfa yenilemesinde değişmesini kesin olarak engeller.
+  const [deviceId] = useState(() => {
+    const STORAGE_KEY = 'device_uuid';
+    try {
+      let stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        // Rastgele ve benzersiz bir ID oluştur
+        stored = crypto.randomUUID 
+          ? crypto.randomUUID() 
+          : Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem(STORAGE_KEY, stored);
+      }
+      return stored;
+    } catch (e) {
+      console.error("LocalStorage erişim hatası:", e);
+      // Fallback (Tarayıcı depolama izni yoksa)
+      return "temp-session-" + Date.now();
+    }
+  });
 
   useEffect(() => {
-    // 1. Cihaz Kimliği (Device ID) Yönetimi
-    let storedDeviceId = localStorage.getItem('device_uuid');
-    if (!storedDeviceId) {
-        // Eğer cihaz kimliği yoksa, rastgele bir tane oluştur ve kaydet
-        storedDeviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
-        localStorage.setItem('device_uuid', storedDeviceId);
-    }
-    setDeviceId(storedDeviceId);
-
     // 2. Beni Hatırla Yönetimi
     const rememberedUsername = localStorage.getItem('rememberedUsername');
     if (rememberedUsername) {
@@ -115,7 +127,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               Beni Hatırla
             </label>
         </div>
-        {error && <p className="text-red-500 text-sm text-center -mt-2 p-2 bg-red-50 rounded-md">{error}</p>}
+        {error && <p className="text-red-500 text-sm text-center -mt-2 p-2 bg-red-50 rounded-md border border-red-200">{error}</p>}
         <div>
           <button
             type="submit"
@@ -131,9 +143,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
             Yönetici onayı için cihaz kimliğiniz:
         </p>
-        <code className="bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded text-xs font-mono text-blue-600 dark:text-blue-400 select-all">
+        <code className="bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded text-xs font-mono text-blue-600 dark:text-blue-400 select-all break-all">
             {deviceId}
         </code>
+        <p className="text-[10px] text-gray-400 mt-1">
+            (Bu kimlik tarayıcınıza özeldir ve sabittir)
+        </p>
       </div>
     </div>
   );
