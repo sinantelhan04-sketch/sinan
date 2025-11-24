@@ -4,9 +4,10 @@ import { MapPinIcon } from './icons';
 
 interface DistrictSelectionScreenProps {
   onDistrictSelect: (district: string) => void;
+  onLogout: () => void;
 }
 
-const DistrictSelectionScreen: React.FC<DistrictSelectionScreenProps> = ({ onDistrictSelect }) => {
+const DistrictSelectionScreen: React.FC<DistrictSelectionScreenProps> = ({ onDistrictSelect, onLogout }) => {
   const [districts, setDistricts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,7 +36,15 @@ const DistrictSelectionScreen: React.FC<DistrictSelectionScreenProps> = ({ onDis
   }, []);
 
   return (
-    <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
+    <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6 relative">
+      <div className="absolute top-4 right-4">
+        <button 
+            onClick={onLogout}
+            className="text-sm text-white bg-red-600 hover:bg-red-700 font-semibold py-2 px-4 rounded-md transition-colors"
+        >
+            Çıkış Yap
+        </button>
+      </div>
       <div className="text-center">
         <div className="flex justify-center items-center mb-4">
           <img 

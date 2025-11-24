@@ -39,6 +39,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
             // İstatistiklerin çalışabilmesi için sorgu loglama aktif.
             sheetService.logSearchQuery(username, searchTerm.trim()).catch(console.error);
             
+            // İlçe parametresi kaldırıldı
             const customer = await sheetService.findCustomerByInstallationNumber(searchTerm.trim());
             setFoundCustomer(customer);
 
@@ -81,7 +82,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                 </div>
                 <div className="flex items-center mb-6">
                     <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10" />
-                    <h1 className="text-2xl sm:text-3xl font-bold ml-4">Tesisat Sorgulama</h1>
+                    <div className="ml-4">
+                        <h1 className="text-2xl sm:text-3xl font-bold">Tesisat Sorgulama</h1>
+                    </div>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-2 mb-6">

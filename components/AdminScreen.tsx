@@ -224,7 +224,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             </button>
           </form>
         </div>
-        
+
          {error && !isEditModalOpen && <p className="text-red-500 text-sm my-4 text-center p-3 bg-red-100 rounded-md">{error}</p>}
 
         <div className="overflow-x-auto">

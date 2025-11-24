@@ -36,8 +36,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         // Handle specific errors
         if (err.message && err.message.includes("sayfa bulunamadı")) {
              setError(`Yapılandırma Hatası: Lütfen Google E-Tablonuzda 'Kullanıcılar' adında bir sayfa (sekme) olduğundan emin olun.`);
-        }
-        else {
+        } else {
              setError(err.message || 'Bilinmeyen bir hata oluştu.');
         }
     } finally {

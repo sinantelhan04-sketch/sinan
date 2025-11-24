@@ -85,9 +85,10 @@ const App: React.FC = () => {
       if (!isWorkingTime) {
           return <OfflineScreen />;
       }
+      // District selection removed, go straight to MainScreen
       return <MainScreen 
                 onLogout={handleLogout} 
-                username={currentUser!} 
+                username={currentUser!}
              />;
   }
 

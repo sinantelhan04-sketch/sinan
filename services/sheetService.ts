@@ -64,13 +64,6 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     return result.stats || [];
 };
 
-// FIX: Added missing getDistricts function to fetch district data.
-export const getDistricts = async (): Promise<string[]> => {
-    const params = new URLSearchParams({ action: 'getDistricts' });
-    const result = await getRequest(params);
-    return result.districts || [];
-};
-
 export const addCredential = async (credential: Credential): Promise<Credential[]> => {
     const result = await postRequest('add', credential);
     return result.credentials;
@@ -92,9 +85,18 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
         installationNumber: installationNumber
     });
     const result = await getRequest(params);
+    if (!result.customer) {
+        throw new Error(`'${installationNumber}' numaralı tesisat için abone bulunamadı.`);
+    }
     return result.customer;
 };
 
 export const logSearchQuery = async (username: string, installationNumber: string): Promise<void> => {
     await postRequest('logSearch', { username, installationNumber });
+};
+
+export const getDistricts = async (): Promise<string[]> => {
+    const params = new URLSearchParams({ action: 'getDistricts' });
+    const result = await getRequest(params);
+    return result.districts || [];
 };
