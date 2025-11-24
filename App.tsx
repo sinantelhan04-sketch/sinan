@@ -21,9 +21,18 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
+     // 1. URL Varlık Kontrolü
      if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) {
         setAppError("Uygulama yapılandırılmamış. Lütfen config.ts dosyasını kontrol edin.");
+        return;
     }
+
+    // 2. URL Format Kontrolü (/exec ile bitmeli)
+    if (!SCRIPT_URL.endsWith('/exec')) {
+        setAppError("Hatalı Yapılandırma: config.ts dosyasındaki URL bir Web Uygulaması URL'si değil. URL'nin sonunda '/edit' yerine '/exec' olduğundan emin olun.");
+        return;
+    }
+
     const interval = setInterval(() => {
         setIsWorkingTime(isWithinWorkingHours());
     }, 60000); // Check every minute
@@ -78,9 +87,17 @@ const App: React.FC = () => {
   const renderContent = () => {
       if (appError) {
           return (
-              <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 text-center">
-                  <h2 className="text-2xl font-bold text-red-600">Yapılandırma Hatası</h2>
-                  <p className="text-gray-600 dark:text-gray-300">{appError}</p>
+              <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6 text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
+                      <svg className="h-6 w-6 text-red-600 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Yapılandırma Hatası</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-4 rounded-md border border-red-100 dark:border-red-800">
+                    {appError}
+                  </p>
+                  <p className="text-xs text-gray-500">Lütfen geliştiricinizle iletişime geçin.</p>
               </div>
           );
       }

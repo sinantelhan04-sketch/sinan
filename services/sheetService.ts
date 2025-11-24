@@ -3,7 +3,7 @@ import type { Credential, Customer, UserActivityStat } from '../types';
 
 // Timeout (zaman aşımı) özelliği olan fetch sarmalayıcısı
 async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
-  const { timeout = 30000 } = options; // Varsayılan 30 saniye
+  const { timeout = 30000 } = options; // 30 saniye
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -32,15 +32,22 @@ async function handleResponse(response: Response) {
 
     const text = await response.text();
     try {
+        // Gelen yanıtın HTML olup olmadığını basitçe kontrol et (Hata sayfası kontrolü)
+        if (text.trim().startsWith('<')) {
+            throw new Error("Sunucudan HTML yanıtı döndü.");
+        }
+
         const result = JSON.parse(text);
         if (!result.success) {
             throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
         }
         return result;
-    } catch (e) {
-        // JSON parse hatası genellikle sunucunun HTML hata sayfası döndürmesinden kaynaklanır
+    } catch (e: any) {
         console.error("Geçersiz Sunucu Yanıtı:", text);
-        throw new Error("Sunucudan geçersiz veri alındı. Lütfen yapılandırmayı kontrol edin.");
+        if (e.message === "Sunucudan HTML yanıtı döndü.") {
+            throw new Error("Yapılandırma Hatası: URL yanlış veya script erişim izni yok. Lütfen URL'nin '/exec' ile bittiğinden ve erişimin 'Herkes (Anyone)' olduğundan emin olun.");
+        }
+        throw new Error("Sunucudan geçersiz veri alındı. (JSON Parse Hatası)");
     }
 }
 

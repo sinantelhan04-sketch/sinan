@@ -11,16 +11,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // 1. Cihaz Kimliği (Device ID) Yönetimi - Kararlı Yapı
   // Lazy initialization: Sadece ilk render'da çalışır ve localStorage'dan okur.
-  // Bu, kimliğin her render'da veya sayfa yenilemesinde değişmesini kesin olarak engeller.
   const [deviceId] = useState(() => {
     const STORAGE_KEY = 'device_uuid';
     try {
       let stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) {
-        // Rastgele ve benzersiz bir ID oluştur
         stored = crypto.randomUUID 
           ? crypto.randomUUID() 
           : Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -29,7 +28,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       return stored;
     } catch (e) {
       console.error("LocalStorage erişim hatası:", e);
-      // Fallback (Tarayıcı depolama izni yoksa)
       return "temp-session-" + Date.now();
     }
   });
@@ -48,27 +46,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     setError('');
     setIsLoggingIn(true);
     try {
-        // Cihaz kimliğini de gönderiyoruz
         await onLogin(username, password, deviceId);
         
-        // Login successful, handle remember me
         if (rememberMe) {
             localStorage.setItem('rememberedUsername', username);
         } else {
             localStorage.removeItem('rememberedUsername');
         }
     } catch (err: any) {
-        // Handle specific errors
         if (err.message && err.message.includes("sayfa bulunamadı")) {
              setError(`Yapılandırma Hatası: Lütfen Google E-Tablonuzda 'Kullanıcılar' adında bir sayfa (sekme) olduğundan emin olun.`);
         } else if (err.message && err.message.includes("cihaz")) {
-             setError(err.message); // Backend'den gelen detaylı hata mesajını göster
+             setError(err.message); 
         } else {
              setError(err.message || 'Bilinmeyen bir hata oluştu.');
         }
     } finally {
         setIsLoggingIn(false);
     }
+  };
+
+  const copyToClipboard = () => {
+      navigator.clipboard.writeText(deviceId).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+      });
   };
 
   return (
@@ -140,13 +142,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       </form>
       
       <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
             Yönetici onayı için cihaz kimliğiniz:
         </p>
-        <code className="bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded text-xs font-mono text-blue-600 dark:text-blue-400 select-all break-all">
-            {deviceId}
-        </code>
-        <p className="text-[10px] text-gray-400 mt-1">
+        <div className="flex items-center justify-center gap-2">
+            <code className="bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded text-xs font-mono text-blue-600 dark:text-blue-400 select-all break-all border border-gray-200 dark:border-gray-600 max-w-[200px] truncate">
+                {deviceId}
+            </code>
+            <button 
+                onClick={copyToClipboard}
+                className="p-2 text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded transition-colors text-gray-700 dark:text-gray-200 font-medium"
+                title="Kopyala"
+            >
+                {copied ? 'Kopyalandı!' : 'Kopyala'}
+            </button>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-2">
             (Bu kimlik tarayıcınıza özeldir ve sabittir)
         </p>
       </div>
