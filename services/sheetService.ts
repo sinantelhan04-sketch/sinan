@@ -54,6 +54,8 @@ async function handleResponse(response: Response) {
     }
 
     const text = await response.text();
+    let result;
+
     try {
         // Gelen yanıtın HTML olup olmadığını basitçe kontrol et (Hata sayfası kontrolü)
         if (text.trim().startsWith('<')) {
@@ -61,21 +63,25 @@ async function handleResponse(response: Response) {
             throw new Error("Sunucudan HTML yanıtı döndü.");
         }
 
-        const result = JSON.parse(text);
-        if (!result.success) {
-            throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
-        }
-        return result;
+        result = JSON.parse(text);
     } catch (e: any) {
-        console.error("Geçersiz Sunucu Yanıtı:", text);
+        console.error("Geçersiz Sunucu Yanıtı (Parse Hatası):", text);
         if (e.message === "Sunucudan HTML yanıtı döndü.") {
             throw new Error("Yapılandırma Hatası: URL yanlış veya script erişim izni yok. Lütfen URL'nin '/exec' ile bittiğinden ve erişimin 'Herkes (Anyone)' olduğundan emin olun.");
         }
-        if (e.message.includes("JSON")) {
-             throw new Error("Sunucudan bozuk veri geldi. Lütfen biraz bekleyip tekrar deneyin.");
-        }
-        throw e;
+        // Parse hatası ise
+        throw new Error("Sunucudan bozuk veri geldi. Lütfen biraz bekleyip tekrar deneyin.");
     }
+
+    // JSON ayrıştırma başarılı. Şimdi mantıksal kontrol yapalım.
+    if (!result.success) {
+        // Bu bir hata değil, sunucudan gelen geçerli bir uyarıdır (Örn: Şifre yanlış, Cihaz kilitli)
+        // Bu yüzden bunu catch bloğuna düşürmeden doğrudan fırlatıyoruz.
+        // Böylece console.error("Geçersiz Sunucu Yanıtı") çalışmaz.
+        throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
+    }
+    
+    return result;
 }
 
 async function postRequest(action: string, data: object = {}) {
@@ -114,9 +120,11 @@ async function getRequest(params: URLSearchParams) {
 // Sunucuyu kontrol etmek için basit bir ping fonksiyonu
 export const checkServerConnection = async (): Promise<boolean> => {
     try {
-        // Hızlı bir işlem çağıralım (örn: ilçe listesi veya olmayan bir action)
-        // Action 'ping' sunucuda tanımlı olmasa bile switch-case default hatası JSON dönecektir, bu da bağlantının var olduğunu kanıtlar.
-        const params = new URLSearchParams({ action: 'getDistricts' }); 
+        // Performans İyileştirmesi:
+        // Eskiden 'getDistricts' çağırıyorduk, bu tüm tabloyu okuduğu için yavaştı ve timeout'a düşüyordu.
+        // Şimdi 'ping' çağırıyoruz. Backend'de bu komut varsa anında yanıt döner.
+        // Eğer backend güncellenmediyse ve 'ping' komutu yoksa bile JSON hata döneceği için bağlantı var sayılır.
+        const params = new URLSearchParams({ action: 'ping' }); 
         await fetchWithTimeout(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', timeout: 5000 });
         return true;
     } catch (e) {
