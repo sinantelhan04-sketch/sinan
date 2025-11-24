@@ -14,12 +14,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [deviceId, setDeviceId] = useState('');
 
   useEffect(() => {
-    // 1. Cihaz Kimliği Yönetimi
-    let storedDeviceId = localStorage.getItem('app_device_id');
+    // 1. Cihaz Kimliği (Device ID) Yönetimi
+    let storedDeviceId = localStorage.getItem('device_uuid');
     if (!storedDeviceId) {
-      // Basit bir benzersiz ID üretici (UUID benzeri)
-      storedDeviceId = 'dev-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('app_device_id', storedDeviceId);
+        // Eğer cihaz kimliği yoksa, rastgele bir tane oluştur ve kaydet
+        storedDeviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem('device_uuid', storedDeviceId);
     }
     setDeviceId(storedDeviceId);
 
@@ -36,7 +36,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     setError('');
     setIsLoggingIn(true);
     try {
-        // Device ID'yi de gönderiyoruz
+        // Cihaz kimliğini de gönderiyoruz
         await onLogin(username, password, deviceId);
         
         // Login successful, handle remember me
@@ -49,17 +49,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         // Handle specific errors
         if (err.message && err.message.includes("sayfa bulunamadı")) {
              setError(`Yapılandırma Hatası: Lütfen Google E-Tablonuzda 'Kullanıcılar' adında bir sayfa (sekme) olduğundan emin olun.`);
+        } else if (err.message && err.message.includes("cihaz")) {
+             setError(err.message); // Backend'den gelen detaylı hata mesajını göster
         } else {
              setError(err.message || 'Bilinmeyen bir hata oluştu.');
         }
     } finally {
         setIsLoggingIn(false);
     }
-  };
-
-  const copyDeviceId = () => {
-    navigator.clipboard.writeText(deviceId);
-    alert("Cihaz Kimliği kopyalandı! Yöneticinize iletebilirsiniz.");
   };
 
   return (
@@ -129,17 +126,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           </button>
         </div>
       </form>
-
-      {/* Cihaz Kimliği Göstergesi */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bu Cihazın Kimliği (Admin Tanımlaması İçin):</p>
-        <div 
-            onClick={copyDeviceId}
-            className="inline-block bg-gray-100 dark:bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-gray-300 dark:border-gray-600"
-            title="Kopyalamak için tıklayın"
-        >
+      
+      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            Yönetici onayı için cihaz kimliğiniz:
+        </p>
+        <code className="bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded text-xs font-mono text-blue-600 dark:text-blue-400 select-all">
             {deviceId}
-        </div>
+        </code>
       </div>
     </div>
   );

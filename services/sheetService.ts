@@ -48,9 +48,7 @@ async function getRequest(params: URLSearchParams) {
 }
 
 
-export const authenticateUser = async (username: string, password: string, deviceId?: string): Promise<void> => {
-    // Backend'e deviceId bilgisini de gönderiyoruz.
-    // Backend scripti (Google Apps Script) bu parametreyi alıp "allowedDeviceId" sütunu ile karşılaştırmalıdır.
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<void> => {
     await postRequest('authenticateUser', { username, password, deviceId });
 };
 
@@ -91,12 +89,9 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
     }
     
     const result = await getRequest(params);
-    
-    // Eğer sonuç boş dönerse veya customer null ise hata fırlat
     if (!result.customer) {
         throw new Error(`'${installationNumber}' numaralı tesisat için abone bulunamadı.`);
     }
-    
     return result.customer;
 };
 

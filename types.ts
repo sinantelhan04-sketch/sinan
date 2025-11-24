@@ -10,7 +10,7 @@ export interface Customer {
 export interface Credential {
   username: string;
   password: string;
-  allowedDeviceId?: string; // Yönetici tarafından izin verilen cihaz kimliği
+  allowedDeviceId?: string;
 }
 
 export interface UserActivityStat {
