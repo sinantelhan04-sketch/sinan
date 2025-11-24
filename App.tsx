@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
 
   useEffect(() => {
@@ -32,6 +33,15 @@ const App: React.FC = () => {
         setAppError("Hatalı Yapılandırma: config.ts dosyasındaki URL bir Web Uygulaması URL'si değil. URL'nin sonunda '/edit' yerine '/exec' olduğundan emin olun.");
         return;
     }
+
+    // 3. Sunucu Isıtma (Warm-up) ve Bağlantı Kontrolü
+    // Uygulama açılır açılmaz sunucuya ufak bir istek atarak "uyandırıyoruz".
+    const warmUpServer = async () => {
+        setServerStatus('checking');
+        const isOnline = await sheetService.checkServerConnection();
+        setServerStatus(isOnline ? 'online' : 'offline');
+    };
+    warmUpServer();
 
     const interval = setInterval(() => {
         setIsWorkingTime(isWithinWorkingHours());
@@ -102,7 +112,18 @@ const App: React.FC = () => {
           );
       }
       if (!isAuthenticated) {
-        return <LoginScreen onLogin={handleLogin} />;
+        return (
+            <div className="flex flex-col items-center gap-4 w-full">
+                <LoginScreen onLogin={handleLogin} />
+                {/* Sunucu Durum Göstergesi */}
+                <div className="text-xs text-gray-400 flex items-center gap-2">
+                    Sunucu Bağlantısı: 
+                    {serverStatus === 'checking' && <span className="text-yellow-500 animate-pulse">Kontrol Ediliyor...</span>}
+                    {serverStatus === 'online' && <span className="text-green-500 font-bold">Aktif</span>}
+                    {serverStatus === 'offline' && <span className="text-red-500 font-bold">Başarısız (İnternetinizi kontrol edin)</span>}
+                </div>
+            </div>
+        );
       }
       if (isAdmin) {
           return <AdminScreen onLogout={handleLogout} />;
