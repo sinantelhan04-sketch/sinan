@@ -302,6 +302,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             </div>
 
       </div>
+      </div>
 
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity" onClick={handleCloseEditModal}>
