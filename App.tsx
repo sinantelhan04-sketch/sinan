@@ -79,29 +79,49 @@ const App: React.FC = () => {
       if (appError) {
           return (
               <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6 text-center">
-                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
-                      <svg className="h-6 w-6 text-red-600 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 dark:bg-red-900">
+                      <svg className="h-8 w-8 text-red-600 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Yapılandırma Hatası</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-4 rounded-md border border-red-100 dark:border-red-800">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sistem Yapılandırma Hatası</h2>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Uygulama sunucuya bağlanamıyor.</p>
+                  </div>
+                  <div className="text-left text-sm text-gray-600 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-800 font-mono text-xs overflow-x-auto">
                     {appError}
-                  </p>
-                  <p className="text-xs text-gray-500">Lütfen config.ts dosyasını düzenleyin.</p>
+                  </div>
+                  <p className="text-xs text-gray-400">Teknik destek için yönetici ile iletişime geçin.</p>
               </div>
           );
       }
       if (!isAuthenticated) {
         return (
-            <div className="flex flex-col items-center gap-4 w-full">
+            <div className="flex flex-col items-center gap-6 w-full max-w-md">
                 <LoginScreen onLogin={handleLogin} />
-                {/* Sunucu Durum Göstergesi */}
-                <div className="text-xs text-gray-400 flex items-center gap-2">
-                    Sunucu Bağlantısı: 
-                    {serverStatus === 'checking' && <span className="text-yellow-500 animate-pulse">Kontrol Ediliyor...</span>}
-                    {serverStatus === 'online' && <span className="text-green-500 font-bold">Hazır</span>}
-                    {serverStatus === 'offline' && <span className="text-red-500 font-bold">Başarısız</span>}
+                
+                {/* Sunucu Durum Barı */}
+                <div className={`w-full rounded-lg py-2 px-4 flex items-center justify-between text-xs font-medium transition-colors ${
+                    serverStatus === 'online' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                    serverStatus === 'offline' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                }`}>
+                    <div className="flex items-center gap-2">
+                        <span className={`relative flex h-2.5 w-2.5`}>
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                              serverStatus === 'online' ? 'bg-green-400' : serverStatus === 'offline' ? 'bg-red-400' : 'bg-yellow-400'
+                          }`}></span>
+                          <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                              serverStatus === 'online' ? 'bg-green-500' : serverStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+                          }`}></span>
+                        </span>
+                        <span>
+                            {serverStatus === 'online' && "Sunucu Bağlantısı Aktif"}
+                            {serverStatus === 'offline' && "Sunucuya Erişilemiyor"}
+                            {serverStatus === 'checking' && "Sunucu Bağlantısı Kontrol Ediliyor..."}
+                        </span>
+                    </div>
+                    
                     {serverStatus === 'offline' && (
                         <button 
                             onClick={async () => {
@@ -109,9 +129,9 @@ const App: React.FC = () => {
                                 const isOnline = await sheetService.checkServerConnection();
                                 setServerStatus(isOnline ? 'online' : 'offline');
                             }}
-                            className="text-xs underline text-blue-500 hover:text-blue-700 ml-1"
+                            className="underline hover:no-underline"
                         >
-                            Tekrar Dene
+                            Yenile
                         </button>
                     )}
                 </div>
@@ -136,7 +156,7 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 font-sans">
       {renderContent()}
     </div>
   );
