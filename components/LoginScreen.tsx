@@ -71,15 +71,26 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   return (
     <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 border-t-4 border-blue-600">
       <div className="text-center">
-        <div className="flex justify-center items-center mb-6">
+        <div 
+            className="flex justify-center items-center mb-6 animate-entry"
+            style={{ animationDelay: '0ms' }}
+        >
            <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-14 w-auto object-contain" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Personel Girişi</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Lütfen sicil numaranızla giriş yapın</p>
+        <div 
+            className="animate-entry"
+            style={{ animationDelay: '100ms' }}
+        >
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Personel Girişi</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Lütfen sicil numaranızla giriş yapın</p>
+        </div>
       </div>
 
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
+        <div 
+            className="space-y-4 animate-entry"
+            style={{ animationDelay: '200ms' }}
+        >
             <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
                 <UserIcon />
@@ -116,7 +127,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div 
+            className="flex items-center justify-between animate-entry"
+            style={{ animationDelay: '300ms' }}
+        >
             <div className="flex items-center">
                 <input
                 id="remember-me"
@@ -133,7 +147,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         </div>
 
         {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r shadow-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r shadow-sm animate-entry">
                 <div className="flex">
                     <div className="ml-3">
                         <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
@@ -145,7 +159,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <button
             type="submit"
             disabled={isLoggingIn}
-            className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
+            style={{ animationDelay: '400ms' }}
+            className="animate-entry w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
         >
             {isLoggingIn ? (
                 <span className="flex items-center">
@@ -159,7 +174,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         </button>
       </form>
       
-      <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
+      <div 
+        className="pt-6 border-t border-gray-100 dark:border-gray-700 animate-entry"
+        style={{ animationDelay: '500ms' }}
+      >
         <p className="text-xs text-center text-gray-500 mb-3">Yönetici yetkilendirmesi için Cihaz Kimliği:</p>
         <div className="relative group cursor-pointer" onClick={copyToClipboard}>
             <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-700 group-hover:border-blue-300 dark:group-hover:border-blue-700 transition-colors">
@@ -172,6 +190,23 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             </div>
         </div>
       </div>
+
+      <style>{`
+        .animate-entry {
+            opacity: 0;
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+      `}</style>
     </div>
   );
 };
