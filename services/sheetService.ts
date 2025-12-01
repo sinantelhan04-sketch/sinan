@@ -22,20 +22,38 @@ const CACHE_DURATION_MS = 1000 * 60 * 15; // 15 Dakika boyunca hafızada tut
 /**
  * Fetch with Timeout:
  * Belirli bir süre içinde yanıt gelmezse işlemi iptal eder.
- * Timeout süresi 45sn'den 20sn'ye düşürüldü.
+ * Timeout süresi 30 saniyeye çıkarıldı.
  */
-const fetchWithTimeout = async (resource: string, options: RequestInit = {}, timeout = 20000) => {
+const fetchWithTimeout = async (resource: string, options: RequestInit = {}, timeout = 30000) => {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
+    
+    // Google Apps Script için kritik ayar:
+    // CORS Preflight (OPTIONS) isteğini engellemek için Content-Type 'text/plain' olmalı.
+    // Tarayıcı bu durumda basit istek (simple request) olarak algılar ve ön kontrol yapmaz.
+    const headers = {
+        "Content-Type": "text/plain;charset=utf-8",
+        ...options.headers
+    };
+
     try {
         const response = await fetch(resource, {
             ...options,
+            headers,
             signal: controller.signal
         });
         clearTimeout(id);
         return response;
     } catch (error: any) {
         clearTimeout(id);
+        
+        // Hata mesajlarını kullanıcı dostu hale getir
+        if (error.name === 'AbortError') {
+            throw new Error("İstek zaman aşımına uğradı. Sunucu yanıt vermiyor, lütfen tekrar deneyin.");
+        }
+        if (error.message === 'Failed to fetch') {
+            throw new Error("Sunucuya erişilemedi. İnternet bağlantınızı kontrol edin veya sunucu yoğun olabilir.");
+        }
         throw error;
     }
 };
@@ -93,6 +111,16 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
     return result as unknown as T;
 };
 
+// --- URL Yardımcısı ---
+// Tarayıcı önbelleğini (caching) önlemek için URL'ye benzersiz parametre ekler
+const buildUrl = (baseUrl: string, params: Record<string, string>) => {
+    const url = new URL(baseUrl);
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+    // Cache buster ekle
+    url.searchParams.append('_t', Date.now().toString());
+    return url.toString();
+};
+
 // --- Public Methods ---
 
 /**
@@ -101,11 +129,10 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
 export const checkServerConnection = async (): Promise<boolean> => {
     if (!SCRIPT_URL) return false;
     try {
-        const url = `${SCRIPT_URL}?action=ping`;
+        const url = buildUrl(SCRIPT_URL, { action: 'ping' });
         // Ping için kısa timeout
         const response = await fetchWithTimeout(url, { 
             method: 'GET',
-            redirect: 'follow' 
         }, 10000); 
         
         if (!response.ok) return false;
@@ -121,7 +148,8 @@ export const checkServerConnection = async (): Promise<boolean> => {
 
 export const getCredentials = async (): Promise<Credential[]> => {
     // Admin işlemleri kritik olduğu için retry sayısı azaltıldı
-    const response = await fetchWithRetry(`${SCRIPT_URL}?action=getCredentials`, { method: 'GET', redirect: 'follow' }, 1);
+    const url = buildUrl(SCRIPT_URL, { action: 'getCredentials' });
+    const response = await fetchWithRetry(url, { method: 'GET' }, 1);
     return handleResponse<Credential[]>(response);
 };
 
@@ -139,8 +167,12 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
     }
 
     // 2. Cache'de yoksa sunucuya git
-    const url = `${SCRIPT_URL}?action=findCustomer&installationNumber=${encodeURIComponent(installationNumber)}`;
-    const response = await fetchWithRetry(url, { method: 'GET', redirect: 'follow' });
+    const url = buildUrl(SCRIPT_URL, { 
+        action: 'findCustomer',
+        installationNumber: installationNumber // encodeURIComponent buildUrl içinde otomatik yapılır (URLSearchParams) ama yine de string gider.
+    });
+    
+    const response = await fetchWithRetry(url, { method: 'GET' });
     const data = await handleResponse<Customer>(response);
 
     // 3. Sonucu Cache'e yaz
@@ -163,8 +195,7 @@ export const authenticateUser = async (username: string, password: string, devic
     // Login işlemi kritik ama uzun sürmemeli, retry var.
     const response = await fetchWithRetry(SCRIPT_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
-        redirect: 'follow'
+        body: JSON.stringify(payload)
     });
     
     await handleResponse(response);
@@ -182,8 +213,7 @@ export const logSearchQuery = async (username: string, installationNumber: strin
     try {
         await fetchWithTimeout(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(payload),
-            redirect: 'follow'
+            body: JSON.stringify(payload)
         }, 5000);
     } catch (e) {
         console.warn("Loglama sunucu yoğunluğu nedeniyle atlandı:", e);
@@ -191,7 +221,8 @@ export const logSearchQuery = async (username: string, installationNumber: strin
 };
 
 export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
-    const response = await fetchWithRetry(`${SCRIPT_URL}?action=getUserActivityStats`, { method: 'GET', redirect: 'follow' }, 1);
+    const url = buildUrl(SCRIPT_URL, { action: 'getUserActivityStats' });
+    const response = await fetchWithRetry(url, { method: 'GET' }, 1);
     return handleResponse<UserActivityStat[]>(response);
 };
 
@@ -204,8 +235,7 @@ export const addCredential = async (credential: Credential): Promise<Credential[
     };
     const response = await fetchWithRetry(SCRIPT_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
-        redirect: 'follow'
+        body: JSON.stringify(payload)
     }, 1);
     return handleResponse<Credential[]>(response);
 };
@@ -217,8 +247,7 @@ export const deleteCredential = async (username: string): Promise<Credential[]> 
     };
     const response = await fetchWithRetry(SCRIPT_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
-        redirect: 'follow'
+        body: JSON.stringify(payload)
     }, 1);
     return handleResponse<Credential[]>(response);
 };
@@ -230,8 +259,7 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
     };
     const response = await fetchWithRetry(SCRIPT_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
-        redirect: 'follow'
+        body: JSON.stringify(payload)
     }, 1);
     return handleResponse<Credential[]>(response);
 };
