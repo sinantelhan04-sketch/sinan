@@ -58,6 +58,7 @@ const fetchWithTimeout = async (resource: string, options: RequestInit = {}, tim
 /**
  * Fetch with Retry:
  * Hata durumunda işlemi (exponential backoff ile) tekrar dener.
+ * Sadece ağ hatalarında (Network Error) devreye girer.
  */
 const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 2, backoff = 1000): Promise<Response> => {
     try {
@@ -89,6 +90,7 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
     }
 
     if (!result.success) {
+        // Sunucu tarafından dönen mantıksal hatalar burada fırlatılır
         throw new Error(result.error || 'İşlem başarısız.');
     }
 
@@ -167,11 +169,40 @@ export const authenticateUser = async (username: string, password: string, devic
         action: 'authenticateUser',
         data: { username, password, deviceId }
     };
-    const response = await fetchWithRetry(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    });
-    await handleResponse(response);
+    
+    // --- AKILLI TEKRAR DENEME (RETRY) ---
+    // Eğer sunucu "yoğun" hatası verirse, 2 saniye bekleyip tekrar dener.
+    // Toplam 3 deneme hakkı vardır.
+    let lastError: any;
+    
+    for (let i = 0; i < 3; i++) {
+        try {
+            // fetchWithRetry'yi burada kullanmıyoruz, çünkü hatayı kendimiz yönetmek istiyoruz.
+            const response = await fetchWithTimeout(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            }, 15000); // Login için 15sn timeout
+            
+            await handleResponse(response);
+            return; // Başarılı olursa fonksiyondan çık
+            
+        } catch (err: any) {
+            lastError = err;
+            const errorMessage = err.message || "";
+            
+            // Eğer hata "yoğun" kelimesini içeriyorsa (Backend'den gelen hata)
+            if (errorMessage.toLowerCase().includes("yoğun") || errorMessage.toLowerCase().includes("busy")) {
+                console.warn(`Sunucu yoğun (Deneme ${i+1}/3). Bekleniyor...`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 saniye bekle
+                continue; // Döngüyü tekrar et
+            }
+            
+            // Başka bir hataysa döngüyü kır ve hatayı fırlat
+            throw err;
+        }
+    }
+    
+    throw lastError;
 };
 
 export const logSearchQuery = async (username: string, installationNumber: string): Promise<void> => {

@@ -237,18 +237,18 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 gap-4">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Yönetici Paneli</h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">Sistem durumunu ve kullanıcıları yönetin</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Yönetici Paneli</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Sistem durumunu ve kullanıcıları yönetin</p>
             </div>
-            <div className="flex gap-3 mt-4 sm:mt-0">
+            <div className="flex gap-3 w-full md:w-auto">
                 <button 
                     onClick={fetchData} 
                     disabled={isLoading}
-                    className="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium"
+                    className="flex-1 md:flex-none justify-center flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium text-sm"
                 >
                     <span className={`mr-2 ${isLoading ? 'animate-spin' : ''}`}>
                          <RefreshIcon />
@@ -257,7 +257,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </button>
                 <button 
                     onClick={onLogout}
-                    className="flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg transition-colors font-medium border border-red-200 dark:border-red-800"
+                    className="flex-1 md:flex-none justify-center flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg transition-colors font-medium border border-red-200 dark:border-red-800 text-sm"
                 >
                     Çıkış Yap
                 </button>
@@ -265,7 +265,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         </div>
 
         {/* Dashboard Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center">
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl mr-4">
                     <UserGroupIcon />
@@ -302,10 +302,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
             
             {/* Toolbar */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Kullanıcı Listesi</h2>
+            <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white w-full md:w-auto text-left">Kullanıcı Listesi</h2>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                    <div className="relative">
+                    <div className="relative w-full sm:w-auto">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                             <SearchIcon />
                         </div>
@@ -319,7 +319,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     </div>
                     <button 
                         onClick={() => setIsAddModalOpen(true)}
-                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center whitespace-nowrap"
+                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center whitespace-nowrap w-full sm:w-auto"
                     >
                         + Yeni Kullanıcı
                     </button>
@@ -327,11 +327,55 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             </div>
 
             {/* Notifications */}
-            {error && <div className="mx-6 mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg border-l-4 border-red-500">{error}</div>}
-            {successMsg && <div className="mx-6 mt-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-lg border-l-4 border-green-500">{successMsg}</div>}
+            {error && <div className="mx-4 sm:mx-6 mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg border-l-4 border-red-500 text-sm">{error}</div>}
+            {successMsg && <div className="mx-4 sm:mx-6 mt-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-lg border-l-4 border-green-500 text-sm">{successMsg}</div>}
 
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Mobile Card View (Visible on small screens) */}
+            <div className="block md:hidden p-4 space-y-4">
+                {isLoading ? (
+                    <div className="text-center py-8 text-gray-500">Yükleniyor...</div>
+                ) : filteredUsers.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 italic">Kayıt bulunamadı.</div>
+                ) : (
+                    filteredUsers.map((user) => (
+                        <div key={user.username} className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 className="font-bold text-gray-900 dark:text-white text-lg font-mono">{user.username}</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Son Giriş: {user.lastLogin}</p>
+                                </div>
+                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${user.queryCount > 100 ? 'bg-orange-100 text-orange-800' : 'bg-gray-200 text-gray-700'}`}>
+                                    {user.queryCount} Sorgu
+                                </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                                <div className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-100 dark:border-gray-600">
+                                    <p className="text-xs text-gray-400 uppercase">Şifre</p>
+                                    <p className="font-mono">{showPasswords ? user.password : '••••••'}</p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-100 dark:border-gray-600">
+                                    <p className="text-xs text-gray-400 uppercase">Cihaz</p>
+                                    {user.allowedDeviceId ? (
+                                        <p className="text-green-600 dark:text-green-400 font-bold text-xs truncate">Eşleşmiş</p>
+                                    ) : (
+                                        <p className="text-yellow-600 dark:text-yellow-400 font-bold text-xs">Bekliyor</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-600 pt-3">
+                                <button onClick={() => handleResetStats(user.username)} className="p-2 bg-orange-50 text-orange-600 rounded-lg text-xs font-medium flex-1">Sıfırla</button>
+                                <button onClick={() => handleOpenEditModal(user)} className="p-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium flex-1">Düzenle</button>
+                                <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-50 text-red-600 rounded-lg text-xs font-medium flex-1">Sil</button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table View (Hidden on small screens) */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase text-xs font-semibold tracking-wider">
                         <tr>
@@ -443,25 +487,25 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
       {/* Add User Modal */}
       {isAddModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsAddModalOpen(false)}>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100" onClick={e => e.stopPropagation()}>
-                  <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4 border-gray-100 dark:border-gray-700">Yeni Kullanıcı</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4 border-gray-100 dark:border-gray-700">Yeni Kullanıcı</h2>
                   <form onSubmit={handleAddUser} className="space-y-4">
                       <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sicil Numarası</label>
-                          <input type="text" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Örn: 12345" autoFocus />
+                          <input type="text" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-base" placeholder="Örn: 12345" autoFocus />
                       </div>
                       <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Şifre</label>
-                          <input type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Güçlü bir şifre" />
+                          <input type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-base" placeholder="Güçlü bir şifre" />
                       </div>
                       <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cihaz ID (Opsiyonel)</label>
                           <input type="text" value={newDeviceId} onChange={e => setNewDeviceId(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono text-xs" placeholder="Boş bırakılırsa ilk cihaz kilitlenir" />
                       </div>
                       <div className="flex justify-end gap-3 mt-8">
-                          <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">İptal</button>
-                          <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-md disabled:opacity-50">
-                              {isSubmitting ? 'Ekleniyor...' : 'Kullanıcıyı Ekle'}
+                          <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-1 sm:flex-none">İptal</button>
+                          <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-md disabled:opacity-50 flex-1 sm:flex-none">
+                              {isSubmitting ? 'Ekleniyor...' : 'Ekle'}
                           </button>
                       </div>
                   </form>
@@ -472,16 +516,16 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
       {/* Edit User Modal */}
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsEditModalOpen(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4 border-gray-100 dark:border-gray-700">Düzenle: {editingUser.username}</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4 border-gray-100 dark:border-gray-700">Düzenle: {editingUser.username}</h2>
             <form onSubmit={handleUpdateUser} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sicil Numarası</label>
-                    <input type="text" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    <input type="text" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-base" />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Şifre</label>
-                    <input type="text" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    <input type="text" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-base" />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cihaz ID</label>
@@ -491,9 +535,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-8">
-                    <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">İptal</button>
-                    <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-md disabled:opacity-50">
-                        {isSubmitting ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+                    <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-1 sm:flex-none">İptal</button>
+                    <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-md disabled:opacity-50 flex-1 sm:flex-none">
+                        {isSubmitting ? 'Kaydediliyor...' : 'Kaydet'}
                     </button>
                 </div>
             </form>

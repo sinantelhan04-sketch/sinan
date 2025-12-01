@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface LegalScreenProps {
@@ -7,16 +8,16 @@ interface LegalScreenProps {
 
 const LegalScreen: React.FC<LegalScreenProps> = ({ onAccept, onDecline }) => {
   return (
-    <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6 text-center">
+    <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 text-center">
       <div className="flex justify-center items-center mb-4">
         <img 
           src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" 
           alt="Aksa Doğalgaz Logo" 
-          className="h-16"
+          className="h-12 sm:h-16"
         />
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Yasal Uyarı ve Gizlilik Taahhüdü</h2>
-      <p className="text-gray-600 dark:text-gray-300 text-left leading-relaxed">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Yasal Uyarı ve Gizlilik Taahhüdü</h2>
+      <p className="text-gray-600 dark:text-gray-300 text-left leading-relaxed text-sm sm:text-base">
         Program kapsamında tarafıma sunulan tüm bilgi ve verilerin gizli olduğunu, 
         bu bilgileri yalnızca belirlenen amaçlar doğrultusunda kullanacağımı, 
         üçüncü kişilerle paylaşmayacağımı ve farklı herhangi bir amaçla kullanmayacağımı 

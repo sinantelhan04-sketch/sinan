@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserIcon, LockIcon } from './icons';
 
@@ -69,19 +70,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 border-t-4 border-blue-600">
+    <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 sm:space-y-8 border-t-4 border-blue-600">
       <div className="text-center">
         <div 
             className="flex justify-center items-center mb-6 animate-entry"
             style={{ animationDelay: '0ms' }}
         >
-           <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-14 w-auto object-contain" />
+           <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10 sm:h-14 w-auto object-contain" />
         </div>
         <div 
             className="animate-entry"
             style={{ animationDelay: '100ms' }}
         >
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Personel Girişi</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Personel Girişi</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Lütfen sicil numaranızla giriş yapın</p>
         </div>
       </div>
@@ -101,7 +102,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 type="text"
                 autoComplete="username"
                 required
-                className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
                 placeholder="Sicil Numarası"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -118,7 +119,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
                 placeholder="Şifre"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
