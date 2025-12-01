@@ -10,23 +10,18 @@ interface AdminScreenProps {
   onLogout: () => void;
 }
 
-const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
+export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [users, setUsers] = useState<AdminUserData[]>([]);
-  
-  // Yeni Kullanıcı Formu
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newDeviceId, setNewDeviceId] = useState('');
-  
   const [error, setError] = useState('');
   const [dataWarning, setDataWarning] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUserData | null>(null);
   const [editForm, setEditForm] = useState({ username: '', password: '', allowedDeviceId: '' });
-
   const [showPasswords, setShowPasswords] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys; direction: 'ascending' | 'descending' }>({ key: 'queryCount', direction: 'descending' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,11 +51,6 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
       }));
 
       setUsers(mergedData);
-
-      const allStatsAreZero = mergedData.length > 0 && mergedData.every(u => u.queryCount === 0 && u.lastLogin === 'Giriş Yapmadı');
-      if (allStatsAreZero) {
-        setDataWarning("Dikkat: İstatistikler eşleşmedi. Lütfen sicil numaralarının tüm sayfalarda aynı formatta olduğundan emin olun.");
-      }
 
     } catch (err: any) {
       setError(err.message || 'Veri yüklenirken bir hata oluştu.');
@@ -119,7 +109,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         await sheetService.addCredential({ 
             username: newUsername.trim(), 
             password: newPassword.trim(),
-            allowedDeviceId: newDeviceId.trim() // Yeni ID'yi gönder
+            allowedDeviceId: newDeviceId.trim() 
         });
         setNewUsername('');
         setNewPassword('');
@@ -212,102 +202,105 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
         <h1 className="text-2xl font-bold mb-6 text-center">Yönetici Paneli</h1>
 
-        <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
-          <h2 className="text-lg font-semibold mb-4">Yeni Kullanıcı Ekle</h2>
-          <form onSubmit={handleAddUser} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-            <div className="col-span-1">
-                <input type="text" placeholder="Sicil Numarası" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} disabled={isSubmitting} className="input-style w-full"/>
-            </div>
-            <div className="col-span-1">
-                <input type="text" placeholder="Şifre" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} className="input-style w-full"/>
-            </div>
-            <div className="col-span-1">
-                <input type="text" placeholder="Cihaz ID (Opsiyonel)" value={newDeviceId} onChange={(e) => setNewDeviceId(e.target.value)} disabled={isSubmitting} className="input-style w-full text-xs"/>
-            </div>
-            <div className="col-span-1">
-                <button type="submit" disabled={isSubmitting} className="px-6 w-full py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
-                {isSubmitting ? 'Ekleniyor...' : 'Ekle'}
-                </button>
-            </div>
-          </form>
-          <p className="text-xs text-gray-500 mt-2 dark:text-gray-400">Not: Cihaz ID boş bırakılırsa, kullanıcının ilk giriş yaptığı cihaz otomatik olarak kilitlenir.</p>
-        </div>
-
-         {error && !isEditModalOpen && <p className="text-red-500 text-sm my-4 text-center p-3 bg-red-100 rounded-md">{error}</p>}
-
-        <div className="overflow-x-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-              <h2 className="text-lg font-semibold">Kullanıcı Listesi</h2>
-              <div className="relative w-full sm:w-64">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <SearchIcon />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Sicil No'ya göre ara..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg input-style"
-                    />
+        {/* --- USERS CONTENT --- */}
+        <div>
+            <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
+            <h2 className="text-lg font-semibold mb-4">Yeni Kullanıcı Ekle</h2>
+            <form onSubmit={handleAddUser} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                <div className="col-span-1">
+                    <input type="text" placeholder="Sicil Numarası" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} disabled={isSubmitting} className="input-style w-full"/>
                 </div>
-          </div>
-
-          {dataWarning && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-md" role="alert">
-              <p>{dataWarning}</p>
+                <div className="col-span-1">
+                    <input type="text" placeholder="Şifre" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} className="input-style w-full"/>
+                </div>
+                <div className="col-span-1">
+                    <input type="text" placeholder="Cihaz ID (Opsiyonel)" value={newDeviceId} onChange={(e) => setNewDeviceId(e.target.value)} disabled={isSubmitting} className="input-style w-full text-xs"/>
+                </div>
+                <div className="col-span-1">
+                    <button type="submit" disabled={isSubmitting} className="px-6 w-full py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
+                    {isSubmitting ? 'Ekleniyor...' : 'Ekle'}
+                    </button>
+                </div>
+            </form>
+            <p className="text-xs text-gray-500 mt-2 dark:text-gray-400">Not: Cihaz ID boş bırakılırsa, kullanıcının ilk giriş yaptığı cihaz otomatik olarak kilitlenir.</p>
             </div>
-          )}
 
-          <div className="border rounded-lg overflow-hidden shadow-sm">
-              {isLoading ? (
-                  <p className="text-center text-gray-500 p-8">Veriler yükleniyor...</p>
-              ) : (
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th onClick={() => requestSort('username')} className="th-style">Sicil No {getSortIndicator('username')}</th>
-                      <th className="th-style text-left flex items-center">
-                        Şifre
-                        <div className="flex items-center ml-4">
-                            <input 
-                                type="checkbox" 
-                                id="showpass" 
-                                checked={showPasswords} 
-                                onChange={(e) => setShowPasswords(e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="showpass" className="ml-2 text-xs font-medium text-gray-500 dark:text-gray-300 normal-case">Göster</label>
+            {error && !isEditModalOpen && <p className="text-red-500 text-sm my-4 text-center p-3 bg-red-100 rounded-md">{error}</p>}
+
+            <div className="overflow-x-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <h2 className="text-lg font-semibold">Kullanıcı Listesi</h2>
+                <div className="relative w-full sm:w-64">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <SearchIcon />
                         </div>
-                      </th>
-                      <th className="th-style">Tanımlı Cihaz ID</th>
-                      <th onClick={() => requestSort('queryCount')} className="th-style">Sorgu {getSortIndicator('queryCount')}</th>
-                      <th onClick={() => requestSort('lastLogin')} className="th-style">Son Giriş {getSortIndicator('lastLogin')}</th>
-                      <th className="th-style text-right">Eylemler</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-                      {filteredUsers.map((user) => (
-                        <tr key={user.username} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                            <td className="td-style font-mono">{user.username}</td>
-                            <td className="td-style font-mono text-gray-500 dark:text-gray-400">{showPasswords ? user.password : '********'}</td>
-                            <td className="td-style font-mono text-xs text-gray-500 max-w-[150px] truncate" title={user.allowedDeviceId}>
-                                {user.allowedDeviceId || <span className="text-yellow-600 italic">Tanımlanmamış</span>}
-                            </td>
-                            <td className="td-style text-center font-semibold">{user.queryCount}</td>
-                            <td className="td-style text-center text-sm">{user.lastLogin}</td>
-                            <td className="td-style text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                    <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 rounded-full transition-colors" title="Düzenle"><EditIcon /></button>
-                                    <button onClick={() => handleDeleteUser(user.username)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 rounded-full transition-colors" title="Sil"><TrashIcon /></button>
-                                </div>
-                            </td>
+                        <input
+                            type="text"
+                            placeholder="Sicil No'ya göre ara..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border rounded-lg input-style"
+                        />
+                    </div>
+            </div>
+
+            {dataWarning && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-md" role="alert">
+                <p>{dataWarning}</p>
+                </div>
+            )}
+
+            <div className="border rounded-lg overflow-hidden shadow-sm">
+                {isLoading ? (
+                    <p className="text-center text-gray-500 p-8">Veriler yükleniyor...</p>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                        <th onClick={() => requestSort('username')} className="th-style">Sicil No {getSortIndicator('username')}</th>
+                        <th className="th-style text-left flex items-center">
+                            Şifre
+                            <div className="flex items-center ml-4">
+                                <input 
+                                    type="checkbox" 
+                                    id="showpass" 
+                                    checked={showPasswords} 
+                                    onChange={(e) => setShowPasswords(e.target.checked)}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor="showpass" className="ml-2 text-xs font-medium text-gray-500 dark:text-gray-300 normal-case">Göster</label>
+                            </div>
+                        </th>
+                        <th className="th-style">Tanımlı Cihaz ID</th>
+                        <th onClick={() => requestSort('queryCount')} className="th-style">Sorgu {getSortIndicator('queryCount')}</th>
+                        <th onClick={() => requestSort('lastLogin')} className="th-style">Son Giriş {getSortIndicator('lastLogin')}</th>
+                        <th className="th-style text-right">Eylemler</th>
                         </tr>
-                      ))}
-                  </tbody>
-                </table>
-              )}
-          </div>
-        </div>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
+                        {filteredUsers.map((user) => (
+                            <tr key={user.username} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                <td className="td-style font-mono">{user.username}</td>
+                                <td className="td-style font-mono text-gray-500 dark:text-gray-400">{showPasswords ? user.password : '********'}</td>
+                                <td className="td-style font-mono text-xs text-gray-500 max-w-[150px] truncate" title={user.allowedDeviceId}>
+                                    {user.allowedDeviceId || <span className="text-yellow-600 italic">Tanımlanmamış</span>}
+                                </td>
+                                <td className="td-style text-center font-semibold">{user.queryCount}</td>
+                                <td className="td-style text-center text-sm">{user.lastLogin}</td>
+                                <td className="td-style text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 rounded-full transition-colors" title="Düzenle"><EditIcon /></button>
+                                        <button onClick={() => handleDeleteUser(user.username)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-gray-600 rounded-full transition-colors" title="Sil"><TrashIcon /></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                    </table>
+                )}
+            </div>
+            </div>
+
       </div>
 
       {isEditModalOpen && editingUser && (
@@ -355,7 +348,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         Sıfırla
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Cihaz ID'yi silerseniz, kullanıcı bir sonraki girişinde kullandığı cihazı otomatik olarak kilitleyecektir.</p>
+                  <p className="text-xs text-gray-500 mt-1">Cihaz ID'yi silerseniz, kullanıcı bir sonraki girişinde kullandığı cihazı otomatik olarak kilitlenir.</p>
                 </div>
               </div>
               {error && isEditModalOpen && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
@@ -381,5 +374,3 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     </>
   );
 };
-
-export default AdminScreen;

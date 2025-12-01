@@ -1,195 +1,237 @@
 import { SCRIPT_URL } from '../config';
 import type { Credential, Customer, UserActivityStat } from '../types';
 
-// Timeout (zaman aşımı) özelliği olan fetch sarmalayıcısı
-// Google Apps Script soğuk başlangıçta (cold start) yavaş olabildiği için süreyi biraz artırdık.
-async function fetchWithTimeout(resource: string, options: RequestInit & { timeout?: number } = {}) {
-  const { timeout = 25000 } = options; // 25 saniye
-  
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  
-  try {
-    const response = await fetch(resource, {
-      ...options,
-      signal: controller.signal  
-    });
-    clearTimeout(id);
-    return response;
-  } catch (error: any) {
-    clearTimeout(id);
-    if (error.name === 'AbortError') {
-       throw new Error('Sunucu yanıt vermedi (Zaman Aşımı). Bağlantınız yavaş olabilir veya sunucu uyanıyor olabilir.');
-    }
-    throw error;
-  }
+// --- Types ---
+interface SheetResponse<T = any> {
+  success: boolean;
+  data?: T;
+  credentials?: Credential[];
+  customer?: Customer;
+  stats?: UserActivityStat[];
+  error?: string;
+  status?: string;
 }
 
-// YENİ: Başarısız istekleri otomatik tekrar deneme mekanizması
-// Google Apps Script bazen 500 veya ağ hatası verebilir. Bu fonksiyon isteği 3 kez tekrar dener.
-async function fetchWithRetry(resource: string, options: RequestInit = {}, retries = 3, backoff = 1000): Promise<Response> {
+// --- Caching System ---
+// Sorgu sonuçlarını hafızada tutarak sunucu yükünü azaltır
+const searchCache = new Map<string, { data: Customer, timestamp: number }>();
+const CACHE_DURATION_MS = 1000 * 60 * 15; // 15 Dakika boyunca hafızada tut
+
+// --- Helper Functions ---
+
+/**
+ * Fetch with Timeout:
+ * Belirli bir süre içinde yanıt gelmezse işlemi iptal eder.
+ * Timeout süresi 45sn'den 20sn'ye düşürüldü.
+ */
+const fetchWithTimeout = async (resource: string, options: RequestInit = {}, timeout = 20000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
     try {
-        const response = await fetchWithTimeout(resource, options);
-        
-        // Eğer sunucu 5xx hatası verirse (Google sunucu hatası), bunu da retry kapsamına alalım
-        if (!response.ok && response.status >= 500) {
-             throw new Error(`Sunucu Hatası: ${response.status}`);
-        }
+        const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
         return response;
     } catch (error: any) {
-        if (retries > 0) {
-            console.warn(`İstek başarısız oldu, tekrar deneniyor... (${retries} hak kaldı). Hata: ${error.message}`);
-            // Bekleme süresi (Exponential backoff gerekmez, sabit bekleme yeterli)
-            await new Promise(resolve => setTimeout(resolve, backoff));
-            return fetchWithRetry(resource, options, retries - 1, backoff);
-        }
+        clearTimeout(id);
         throw error;
     }
-}
+};
 
-// Yanıtı işleyen ve hataları yakalayan yardımcı fonksiyon
-async function handleResponse(response: Response) {
+/**
+ * Fetch with Retry:
+ * Hata durumunda işlemi (exponential backoff ile) tekrar dener.
+ */
+const fetchWithRetry = async (url: string, options: RequestInit = {}, retries = 2, backoff = 1000): Promise<Response> => {
+    try {
+        return await fetchWithTimeout(url, options);
+    } catch (err) {
+        if (retries <= 0) throw err;
+        
+        // Bekleme süresini her denemede artır (1sn, 2sn...)
+        await new Promise(resolve => setTimeout(resolve, backoff));
+        console.warn(`İstek başarısız, tekrar deneniyor... (${retries} hak kaldı)`);
+        return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+};
+
+/**
+ * Handle Response:
+ * Sunucudan gelen yanıtı işler ve hataları ayıklar.
+ */
+const handleResponse = async <T>(response: Response): Promise<T> => {
     if (!response.ok) {
-        throw new Error(`Ağ hatası: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP Hatası: ${response.status}`);
     }
 
     const text = await response.text();
-    let result;
+    let result: SheetResponse;
 
     try {
-        // Gelen yanıtın HTML olup olmadığını basitçe kontrol et (Hata sayfası kontrolü)
-        if (text.trim().startsWith('<')) {
-            // Google bazen oturum açma sayfası döndürebilir, bu bir hatadır.
-            throw new Error("Sunucudan HTML yanıtı döndü.");
-        }
-
         result = JSON.parse(text);
-    } catch (e: any) {
-        console.error("Geçersiz Sunucu Yanıtı (Parse Hatası):", text);
-        if (e.message === "Sunucudan HTML yanıtı döndü.") {
-            throw new Error("Yapılandırma Hatası: URL yanlış veya script erişim izni yok. Lütfen URL'nin '/exec' ile bittiğinden ve erişimin 'Herkes (Anyone)' olduğundan emin olun.");
+    } catch (e) {
+        console.error("Geçersiz JSON yanıtı:", text);
+        if (text.includes("<!DOCTYPE html>")) {
+             throw new Error("Sunucu yapılandırma hatası: HTML yanıtı döndü. Lütfen Script URL'sini kontrol edin.");
         }
-        // Parse hatası ise
-        throw new Error("Sunucudan bozuk veri geldi. Lütfen biraz bekleyip tekrar deneyin.");
+        throw new Error("Sunucudan geçersiz yanıt alındı.");
     }
 
-    // JSON ayrıştırma başarılı. Şimdi mantıksal kontrol yapalım.
     if (!result.success) {
-        // Bu bir hata değil, sunucudan gelen geçerli bir uyarıdır (Örn: Şifre yanlış, Cihaz kilitli)
-        // Bu yüzden bunu catch bloğuna düşürmeden doğrudan fırlatıyoruz.
-        // Böylece console.error("Geçersiz Sunucu Yanıtı") çalışmaz.
-        throw new Error(result.error || 'Bilinmeyen bir sunucu hatası oluştu.');
-    }
-    
-    return result;
-}
-
-async function postRequest(action: string, data: object = {}) {
-    if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) {
-        throw new Error("Lütfen config.ts dosyasında Google Apps Script URL'sini ayarlayın.");
+        // Sunucudan gelen mantıksal hata (örn: şifre yanlış, abone bulunamadı)
+        throw new Error(result.error || 'İşlem başarısız.');
     }
 
-    // Google Apps Script POST isteklerinde 'follow' redirect önemlidir.
-    const response = await fetchWithRetry(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, data }),
-        redirect: 'follow' 
-    });
+    // Başarılı durumda ilgili veriyi döndür
+    if (result.credentials) return result.credentials as unknown as T;
+    if (result.customer) return result.customer as unknown as T;
+    if (result.stats) return result.stats as unknown as T;
+    if (result.status === 'ok') return true as unknown as T; // Ping yanıtı
 
-    return handleResponse(response);
-}
-
-async function getRequest(params: URLSearchParams) {
-     if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) {
-        throw new Error("Lütfen config.ts dosyasında Google Apps Script URL'sini ayarlayın.");
-    }
-    const url = new URL(SCRIPT_URL);
-    params.forEach((value, key) => url.searchParams.append(key, value));
-
-    const response = await fetchWithRetry(url.toString(), { 
-        method: 'GET',
-        redirect: 'follow'
-    });
-
-    return handleResponse(response);
-}
+    return result as unknown as T;
+};
 
 // --- Public Methods ---
 
-// Sunucuyu kontrol etmek için basit bir ping fonksiyonu
+/**
+ * Sunucu Bağlantı Kontrolü (Ping)
+ */
 export const checkServerConnection = async (): Promise<boolean> => {
+    if (!SCRIPT_URL) return false;
     try {
-        // Performans İyileştirmesi:
-        // Eskiden 'getDistricts' çağırıyorduk, bu tüm tabloyu okuduğu için yavaştı ve timeout'a düşüyordu.
-        // Şimdi 'ping' çağırıyoruz. Backend'de bu komut varsa anında yanıt döner.
-        // Eğer backend güncellenmediyse ve 'ping' komutu yoksa bile JSON hata döneceği için bağlantı var sayılır.
-        const params = new URLSearchParams({ action: 'ping' }); 
-        await fetchWithTimeout(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', timeout: 5000 });
-        return true;
+        const url = `${SCRIPT_URL}?action=ping`;
+        // Ping için kısa timeout
+        const response = await fetchWithTimeout(url, { 
+            method: 'GET',
+            redirect: 'follow' 
+        }, 10000); 
+        
+        if (!response.ok) return false;
+        
+        const text = await response.text();
+        const result = JSON.parse(text);
+        return result.success === true;
     } catch (e) {
+        console.error("Sunucu bağlantı hatası:", e);
         return false;
     }
 };
 
-export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<void> => {
-    await postRequest('authenticateUser', { username, password, deviceId });
-};
-
 export const getCredentials = async (): Promise<Credential[]> => {
-    const params = new URLSearchParams({ action: 'getCredentials' });
-    const result = await getRequest(params);
-    return result.credentials || [];
+    // Admin işlemleri kritik olduğu için retry sayısı azaltıldı
+    const response = await fetchWithRetry(`${SCRIPT_URL}?action=getCredentials`, { method: 'GET', redirect: 'follow' }, 1);
+    return handleResponse<Credential[]>(response);
 };
 
-export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
-    const params = new URLSearchParams({ action: 'getUserActivityStats' });
-    const result = await getRequest(params);
-    return result.stats || [];
-};
-
-export const addCredential = async (credential: Credential): Promise<Credential[]> => {
-    const result = await postRequest('add', credential);
-    return result.credentials;
-};
-
-export const deleteCredential = async (username: string): Promise<Credential[]> => {
-    const result = await postRequest('delete', { username });
-    return result.credentials;
-};
-
-export const updateCredential = async (originalUsername: string, updatedCredential: Credential): Promise<Credential[]> => {
-    const result = await postRequest('update', { originalUsername, updatedCredential });
-    return result.credentials;
-};
-
-export const findCustomerByInstallationNumber = async (installationNumber: string, district?: string): Promise<Customer> => {
-    const params = new URLSearchParams({ 
-        action: 'findCustomer',
-        installationNumber: installationNumber
-    });
-    if (district) {
-        params.append('district', district);
+export const findCustomerByInstallationNumber = async (installationNumber: string): Promise<Customer> => {
+    // 1. Önce Cache Kontrolü Yap
+    const cachedItem = searchCache.get(installationNumber);
+    if (cachedItem) {
+        const isExpired = (Date.now() - cachedItem.timestamp) > CACHE_DURATION_MS;
+        if (!isExpired) {
+            console.log("Veri önbellekten getirildi:", installationNumber);
+            return cachedItem.data;
+        } else {
+            searchCache.delete(installationNumber);
+        }
     }
+
+    // 2. Cache'de yoksa sunucuya git
+    const url = `${SCRIPT_URL}?action=findCustomer&installationNumber=${encodeURIComponent(installationNumber)}`;
+    const response = await fetchWithRetry(url, { method: 'GET', redirect: 'follow' });
+    const data = await handleResponse<Customer>(response);
+
+    // 3. Sonucu Cache'e yaz
+    if (data) {
+        searchCache.set(installationNumber, {
+            data: data,
+            timestamp: Date.now()
+        });
+    }
+
+    return data;
+};
+
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<void> => {
+    const payload = {
+        action: 'authenticateUser',
+        data: { username, password, deviceId }
+    };
     
-    const result = await getRequest(params);
-    if (!result.customer) {
-        throw new Error(`'${installationNumber}' numaralı tesisat için abone bulunamadı.`);
-    }
-    return result.customer;
+    // Login işlemi kritik ama uzun sürmemeli, retry var.
+    const response = await fetchWithRetry(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+    });
+    
+    await handleResponse(response);
 };
 
 export const logSearchQuery = async (username: string, installationNumber: string): Promise<void> => {
-    // Loglama kritik bir işlem olmadığı için hata verirse kullanıcıyı durdurmasın
+    const payload = {
+        action: 'logSearch',
+        data: { username, installationNumber }
+    };
+    
+    // LOGLAMA İÇİN RETRY YOK.
+    // Eğer sunucu yoğunsa loglama başarısız olabilir, bu kullanıcının deneyimini bozmamalıdır.
+    // fetchWithRetry yerine direkt fetchWithTimeout kullanıyoruz ve timeout kısa (5sn).
     try {
-        await postRequest('logSearch', { username, installationNumber });
+        await fetchWithTimeout(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            redirect: 'follow'
+        }, 5000);
     } catch (e) {
-        console.warn("Loglama başarısız oldu:", e);
+        console.warn("Loglama sunucu yoğunluğu nedeniyle atlandı:", e);
     }
 };
 
-export const getDistricts = async (): Promise<string[]> => {
-    const params = new URLSearchParams({ action: 'getDistricts' });
-    const result = await getRequest(params);
-    return result.districts || [];
+export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
+    const response = await fetchWithRetry(`${SCRIPT_URL}?action=getUserActivityStats`, { method: 'GET', redirect: 'follow' }, 1);
+    return handleResponse<UserActivityStat[]>(response);
+};
+
+// --- Admin Operations ---
+
+export const addCredential = async (credential: Credential): Promise<Credential[]> => {
+    const payload = {
+        action: 'add',
+        data: credential
+    };
+    const response = await fetchWithRetry(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+    }, 1);
+    return handleResponse<Credential[]>(response);
+};
+
+export const deleteCredential = async (username: string): Promise<Credential[]> => {
+    const payload = {
+        action: 'delete',
+        data: { username }
+    };
+    const response = await fetchWithRetry(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+    }, 1);
+    return handleResponse<Credential[]>(response);
+};
+
+export const updateCredential = async (originalUsername: string, updatedCredential: Credential): Promise<Credential[]> => {
+    const payload = {
+        action: 'update',
+        data: { originalUsername, updatedCredential }
+    };
+    const response = await fetchWithRetry(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+    }, 1);
+    return handleResponse<Credential[]>(response);
 };

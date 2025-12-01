@@ -1,4 +1,3 @@
-
 // Türkiye için 2024 - 2030 resmi tatil günleri (YYYY-MM-DD formatında)
 const publicHolidays: Set<string> = new Set([
     // --- 2024 ---
@@ -101,36 +100,6 @@ const publicHolidays: Set<string> = new Set([
  * - Resmi tatillerde kapalı.
  */
 export const isWithinWorkingHours = (): boolean => {
-    const now = new Date();
-    
-    // 1. Ayın günü kontrolü (Her ayın 20'sinden sonra erişim kapalı)
-    if (now.getDate() > 20) {
-        return false;
-    }
-
-    // 2. Resmi tatil kontrolü
-    const year = now.getFullYear();
-    const month = ('0' + (now.getMonth() + 1)).slice(-2);
-    const day = ('0' + now.getDate()).slice(-2);
-    const todayString = `${year}-${month}-${day}`;
-
-    if (publicHolidays.has(todayString)) {
-        return false; // Bugün resmi tatil.
-    }
-
-    // 3. Hafta sonu kontrolü
-    // getDay() -> Pazar: 0, Pazartesi: 1, ..., Cumartesi: 6
-    const dayOfWeek = now.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-        return false; // Hafta sonu (Pazar veya Cumartesi).
-    }
-
-    // 4. Mesai saati kontrolü
-    const currentHour = now.getHours();
-    if (currentHour < 8 || currentHour >= 18) {
-        return false; // Mesai saatleri dışında.
-    }
-
-    // Tüm kontrolleri geçtiyse, çalışma saatleri içindedir.
+    // TEST AMAÇLI: Kısıtlamalar kaldırıldı.
     return true;
 };

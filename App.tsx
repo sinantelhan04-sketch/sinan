@@ -3,8 +3,7 @@ import LoginScreen from './components/LoginScreen';
 import MainScreen from './components/MainScreen';
 import LegalScreen from './components/LegalScreen';
 import OfflineScreen from './components/OfflineScreen';
-import AdminScreen from './components/AdminScreen';
-import DistrictSelectionScreen from './components/DistrictSelectionScreen';
+import { AdminScreen } from './components/AdminScreen';
 import { isWithinWorkingHours } from './utils/time';
 import * as sheetService from './services/sheetService';
 import { SCRIPT_URL } from './config';
@@ -17,31 +16,23 @@ const App: React.FC = () => {
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
 
   useEffect(() => {
-     // 1. URL Varlık Kontrolü
-     if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) {
-        setAppError("Uygulama yapılandırılmamış. Lütfen config.ts dosyasını kontrol edin.");
+     // 1. URL Kontrolü
+     if (!SCRIPT_URL || !SCRIPT_URL.includes("/exec")) {
+        setAppError("Yapılandırma Hatası: Geçerli bir Google Apps Script URL'si bulunamadı. Lütfen config.ts dosyasını kontrol edin.");
         return;
     }
 
-    // 2. URL Format Kontrolü (/exec ile bitmeli)
-    if (!SCRIPT_URL.endsWith('/exec')) {
-        setAppError("Hatalı Yapılandırma: config.ts dosyasındaki URL bir Web Uygulaması URL'si değil. URL'nin sonunda '/edit' yerine '/exec' olduğundan emin olun.");
-        return;
-    }
-
-    // 3. Sunucu Isıtma (Warm-up) ve Bağlantı Kontrolü
-    // Uygulama açılır açılmaz sunucuya ufak bir istek atarak "uyandırıyoruz".
-    const warmUpServer = async () => {
+    // 2. Sunucu Bağlantı Kontrolü (Warm-up)
+    const checkConnection = async () => {
         setServerStatus('checking');
         const isOnline = await sheetService.checkServerConnection();
         setServerStatus(isOnline ? 'online' : 'offline');
     };
-    warmUpServer();
+    checkConnection();
 
     const interval = setInterval(() => {
         setIsWorkingTime(isWithinWorkingHours());
@@ -50,7 +41,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = useCallback(async (username: string, password: string, deviceId: string) => {
-    // Admin login is a local check, no need for network request or device locking
+    // Admin login is a local check
     if (username === 'admin' && password === 'admin123') {
         setIsAuthenticated(true);
         setIsAdmin(true);
@@ -59,10 +50,9 @@ const App: React.FC = () => {
         return;
     }
    
-    // For regular users, call the new, optimized authentication service with Device ID
+    // Apps Script Authentication
     await sheetService.authenticateUser(username, password, deviceId);
     
-    // If the above line does not throw an error, authentication is successful
     setIsAuthenticated(true);
     setIsAdmin(false);
     setCurrentUser(username);
@@ -74,7 +64,6 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setCurrentUser(null);
     setLegalAccepted(false);
-    setSelectedDistrict(null);
   }, []);
 
   const handleAcceptLegal = useCallback(() => {
@@ -84,14 +73,6 @@ const App: React.FC = () => {
   const handleDeclineLegal = useCallback(() => {
     handleLogout(); // Log out if legal is declined
   }, [handleLogout]);
-
-  const handleDistrictSelect = useCallback((district: string) => {
-    setSelectedDistrict(district);
-  }, []);
-  
-  const handleChangeDistrict = useCallback(() => {
-    setSelectedDistrict(null);
-  }, []);
 
 
   const renderContent = () => {
@@ -107,7 +88,7 @@ const App: React.FC = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-4 rounded-md border border-red-100 dark:border-red-800">
                     {appError}
                   </p>
-                  <p className="text-xs text-gray-500">Lütfen geliştiricinizle iletişime geçin.</p>
+                  <p className="text-xs text-gray-500">Lütfen config.ts dosyasını düzenleyin.</p>
               </div>
           );
       }
@@ -119,8 +100,20 @@ const App: React.FC = () => {
                 <div className="text-xs text-gray-400 flex items-center gap-2">
                     Sunucu Bağlantısı: 
                     {serverStatus === 'checking' && <span className="text-yellow-500 animate-pulse">Kontrol Ediliyor...</span>}
-                    {serverStatus === 'online' && <span className="text-green-500 font-bold">Aktif</span>}
-                    {serverStatus === 'offline' && <span className="text-red-500 font-bold">Başarısız (İnternetinizi kontrol edin)</span>}
+                    {serverStatus === 'online' && <span className="text-green-500 font-bold">Hazır</span>}
+                    {serverStatus === 'offline' && <span className="text-red-500 font-bold">Başarısız</span>}
+                    {serverStatus === 'offline' && (
+                        <button 
+                            onClick={async () => {
+                                setServerStatus('checking');
+                                const isOnline = await sheetService.checkServerConnection();
+                                setServerStatus(isOnline ? 'online' : 'offline');
+                            }}
+                            className="text-xs underline text-blue-500 hover:text-blue-700 ml-1"
+                        >
+                            Tekrar Dene
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -135,15 +128,9 @@ const App: React.FC = () => {
           return <OfflineScreen />;
       }
       
-      if (!selectedDistrict) {
-          return <DistrictSelectionScreen onDistrictSelect={handleDistrictSelect} onLogout={handleLogout} />;
-      }
-
       return <MainScreen 
                 onLogout={handleLogout} 
                 username={currentUser!}
-                district={selectedDistrict}
-                onChangeDistrict={handleChangeDistrict}
              />;
   }
 
