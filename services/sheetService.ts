@@ -12,10 +12,35 @@ interface SheetResponse<T = any> {
   status?: string;
 }
 
-// --- Caching System ---
-// Sorgu sonuçlarını hafızada tutarak sunucu yükünü azaltır
-const searchCache = new Map<string, { data: Customer, timestamp: number }>();
-const CACHE_DURATION_MS = 1000 * 60 * 15; // 15 Dakika boyunca hafızada tut
+// --- Caching System (Persistent) ---
+// Sorgu sonuçlarını LocalStorage'da tutarak sayfa yenilendiğinde bile hızlı yanıt verir.
+const CACHE_PREFIX = 'qs_cache_v1_';
+const CACHE_DURATION_MS = 1000 * 60 * 30; // 30 Dakika boyunca hafızada tut
+
+const getFromCache = (key: string): Customer | null => {
+    try {
+        const stored = localStorage.getItem(CACHE_PREFIX + key);
+        if (!stored) return null;
+        
+        const record = JSON.parse(stored);
+        if (Date.now() - record.timestamp > CACHE_DURATION_MS) {
+            localStorage.removeItem(CACHE_PREFIX + key);
+            return null;
+        }
+        return record.data;
+    } catch (e) {
+        return null;
+    }
+};
+
+const saveToCache = (key: string, data: Customer) => {
+    try {
+        const record = { data, timestamp: Date.now() };
+        localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(record));
+    } catch (e) {
+        console.error("Cache saving failed", e);
+    }
+};
 
 // --- Helper Functions ---
 
@@ -133,15 +158,10 @@ export const getCredentials = async (): Promise<Credential[]> => {
 };
 
 export const findCustomerByInstallationNumber = async (installationNumber: string): Promise<Customer> => {
-    // 1. Önce Cache Kontrolü
-    const cachedItem = searchCache.get(installationNumber);
-    if (cachedItem) {
-        const isExpired = (Date.now() - cachedItem.timestamp) > CACHE_DURATION_MS;
-        if (!isExpired) {
-            return cachedItem.data;
-        } else {
-            searchCache.delete(installationNumber);
-        }
+    // 1. Önce Cache Kontrolü (LocalStorage)
+    const cachedData = getFromCache(installationNumber);
+    if (cachedData) {
+        return cachedData;
     }
 
     // 2. Sunucuya Git
@@ -155,10 +175,7 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
 
     // 3. Cache'e Yaz
     if (data) {
-        searchCache.set(installationNumber, {
-            data: data,
-            timestamp: Date.now()
-        });
+        saveToCache(installationNumber, data);
     }
 
     return data;
