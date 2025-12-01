@@ -100,6 +100,35 @@ const publicHolidays: Set<string> = new Set([
  * - Resmi tatillerde kapalı.
  */
 export const isWithinWorkingHours = (): boolean => {
-    // TEST AMAÇLI: Kısıtlamalar kaldırıldı.
+    const now = new Date();
+
+    // 1. Ayın 20'sinden sonra kontrolü
+    if (now.getDate() > 20) {
+        return false;
+    }
+
+    // 2. Hafta sonu kontrolü (0: Pazar, 6: Cumartesi)
+    const dayOfWeek = now.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        return false;
+    }
+
+    // 3. Saat kontrolü (08:00 - 18:00 arası açık)
+    const hour = now.getHours();
+    if (hour < 8 || hour >= 18) {
+        return false;
+    }
+
+    // 4. Resmi tatil kontrolü
+    // Tarihi YYYY-MM-DD formatına çevir
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    if (publicHolidays.has(formattedDate)) {
+        return false;
+    }
+
     return true;
 };
