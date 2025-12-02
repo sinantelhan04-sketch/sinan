@@ -220,6 +220,24 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     }));
 };
 
+export const getUserLogs = async (username: string): Promise<{installationNumber: string, timestamp: string}[]> => {
+    const client = ensureClient();
+    // Assuming 'search_logs' has 'created_at' column.
+    const { data, error } = await client
+        .from('search_logs')
+        .select('installation_number, created_at')
+        .eq('username', username)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+    if (error) throw new Error(error.message);
+
+    return data.map((log: any) => ({
+        installationNumber: log.installation_number,
+        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'
+    }));
+};
+
 // --- Admin Operations ---
 
 export const addCredential = async (credential: Credential): Promise<Credential[]> => {

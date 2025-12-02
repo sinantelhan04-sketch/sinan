@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import ReactDOM from 'react-dom/client';
 import LoginScreen from './components/LoginScreen';
 import MainScreen from './components/MainScreen';
 import LegalScreen from './components/LegalScreen';
@@ -8,21 +9,24 @@ import { isWithinWorkingHours } from './utils/time';
 import * as sheetService from './services/sheetService';
 import { SUPABASE_URL, SUPABASE_KEY } from './config';
 
+const SESSION_KEY = 'app_session_v1';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [canViewDetails, setCanViewDetails] = useState<boolean>(false); // Yeni State
+  const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [isSessionRestoring, setIsSessionRestoring] = useState(true);
 
-
+  // Oturum Kurtarma ve Kontrol
   useEffect(() => {
      if (!SUPABASE_URL || SUPABASE_URL.includes("your-project-id") || !SUPABASE_KEY) {
         setAppError("Yapılandırma Hatası: config.ts dosyasında Supabase URL ve Key ayarlanmamış.");
+        setIsSessionRestoring(false);
         return;
     }
 
@@ -33,10 +37,51 @@ const App: React.FC = () => {
     };
     checkConnection();
 
+    // Oturumu LocalStorage'dan kurtar
+    const savedSession = localStorage.getItem(SESSION_KEY);
+    if (savedSession) {
+        try {
+            const session = JSON.parse(savedSession);
+            // Oturum süresi kontrolü (Örn: 12 saat)
+            const isValid = session.timestamp && (Date.now() - session.timestamp < 12 * 60 * 60 * 1000);
+            
+            if (isValid) {
+                setIsAuthenticated(true);
+                setCurrentUser(session.username);
+                setCanViewDetails(session.canViewDetails);
+                if (session.username === 'admin') {
+                    setIsAdmin(true);
+                    setLegalAccepted(true);
+                }
+            } else {
+                localStorage.removeItem(SESSION_KEY);
+            }
+        } catch (e) {
+            localStorage.removeItem(SESSION_KEY);
+        }
+    }
+    setIsSessionRestoring(false);
+
     const interval = setInterval(() => {
         setIsWorkingTime(isWithinWorkingHours());
     }, 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Sekmeler arası çıkış senkronizasyonu
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === SESSION_KEY && event.newValue === null) {
+            // Başka bir sekmede çıkış yapıldıysa burada da çık
+            setIsAuthenticated(false);
+            setIsAdmin(false);
+            setCurrentUser(null);
+            setCanViewDetails(false);
+            setLegalAccepted(false);
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleLogin = useCallback(async (username: string, password: string, deviceId: string) => {
@@ -45,22 +90,36 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
         setIsAdmin(true);
         setCurrentUser('admin');
-        setCanViewDetails(true); // Admin her şeyi görür
+        setCanViewDetails(true); 
         setLegalAccepted(true);
+        
+        // Oturumu Kaydet
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+            username: 'admin',
+            canViewDetails: true,
+            timestamp: Date.now()
+        }));
         return;
     }
    
-    // Authentication - Artık izinleri de döndürüyor
     const permissions = await sheetService.authenticateUser(username, password, deviceId);
     
     setIsAuthenticated(true);
     setIsAdmin(false);
     setCurrentUser(username);
-    setCanViewDetails(permissions.canViewDetails); // İzni set et
+    setCanViewDetails(permissions.canViewDetails); 
     setLegalAccepted(false);
+
+    // Oturumu Kaydet
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+        username,
+        canViewDetails: permissions.canViewDetails,
+        timestamp: Date.now()
+    }));
   }, []);
   
   const handleLogout = useCallback(() => {
+    localStorage.removeItem(SESSION_KEY);
     setIsAuthenticated(false);
     setIsAdmin(false);
     setCurrentUser(null);
@@ -76,6 +135,16 @@ const App: React.FC = () => {
     handleLogout();
   }, [handleLogout]);
 
+  if (isSessionRestoring) {
+      return (
+          <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-500 text-sm font-medium">Oturum kontrol ediliyor...</p>
+              </div>
+          </div>
+      );
+  }
 
   const renderContent = () => {
       if (appError) {
@@ -152,10 +221,9 @@ const App: React.FC = () => {
       return <MainScreen 
                 onLogout={handleLogout} 
                 username={currentUser!}
-                canViewDetails={canViewDetails} // Yetkiyi gönder
+                canViewDetails={canViewDetails}
              />;
   }
-
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 font-sans">

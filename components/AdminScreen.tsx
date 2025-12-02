@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
@@ -5,6 +6,7 @@ import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIc
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
 type SortableKeys = 'username' | 'queryCount' | 'lastLogin';
+type Tab = 'users' | 'details';
 
 interface AdminScreenProps {
   onLogout: () => void;
@@ -14,6 +16,18 @@ interface AdminScreenProps {
 const DatabaseIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+);
+
+const ContactlessIcon = () => (
+    <svg className="h-6 w-6 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+    </svg>
+);
+
+const DownloadIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
 );
 
@@ -83,6 +97,13 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('users');
+
+  // --- States for User Detail View ---
+  const [selectedDetailUserUsername, setSelectedDetailUserUsername] = useState<string>('');
+  const [userLogs, setUserLogs] = useState<{installationNumber: string, timestamp: string}[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -147,6 +168,27 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     fetchData();
   }, [fetchData]);
 
+  // Fetch logs when selectedDetailUserUsername changes
+  useEffect(() => {
+      if (activeTab === 'details' && selectedDetailUserUsername) {
+          const fetchLogs = async () => {
+              setLogsLoading(true);
+              try {
+                  const logs = await sheetService.getUserLogs(selectedDetailUserUsername);
+                  setUserLogs(logs);
+                  setIsCardFlipped(false); // Reset flip on user change
+              } catch (e) {
+                  console.error(e);
+              } finally {
+                  setLogsLoading(false);
+              }
+          };
+          fetchLogs();
+      } else {
+          setUserLogs([]);
+      }
+  }, [selectedDetailUserUsername, activeTab]);
+
   const dashboardStats = useMemo(() => {
       const totalUsers = users.length;
       const totalQueries = users.reduce((acc, user) => acc + user.queryCount, 0);
@@ -182,6 +224,11 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         String(user.username).toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [sortedUsers, searchTerm]);
+
+  // Find the user object for the selected detail user
+  const selectedDetailUserObj = useMemo(() => {
+      return users.find(u => u.username === selectedDetailUserUsername);
+  }, [users, selectedDetailUserUsername]);
 
   const requestSort = (key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -237,6 +284,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         setSuccessMsg('Kullanıcı silindi.');
         setTimeout(() => setSuccessMsg(''), 3000);
         await fetchData();
+        if (selectedDetailUserUsername === username) setSelectedDetailUserUsername('');
       } catch (err: any) {
         setError(err.message || 'Kullanıcı silinemedi.');
       } finally {
@@ -308,6 +356,25 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     }
   };
 
+  const downloadLogsAsCSV = () => {
+      if (userLogs.length === 0) return;
+      
+      const headers = ['Tarih', 'Tesisat Numarası'];
+      const csvContent = [
+          headers.join(','),
+          ...userLogs.map(log => `${log.timestamp},${log.installationNumber}`)
+      ].join('\n');
+      
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sorgu_gecmisi_${selectedDetailUserUsername}_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-8 min-h-screen">
         {/* Header */}
@@ -340,7 +407,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
         {/* Dashboard Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
-            {/* Card 0: Toplam Müşteri Sayısı */}
+            {/* ... Existing Stat Cards ... */}
              <div className="relative overflow-hidden bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg transform transition-all hover:scale-[1.02]">
                 <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-white opacity-10 blur-xl"></div>
                 <div className="relative z-10 flex justify-between items-start">
@@ -357,7 +424,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </div>
             </div>
 
-            {/* Card 1: Total Users */}
             <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg transform transition-all hover:scale-[1.02]">
                 <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-white opacity-10 blur-xl"></div>
                 <div className="relative z-10 flex justify-between items-start">
@@ -378,7 +444,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </div>
             </div>
 
-            {/* Card 2: Total Queries */}
             <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg transform transition-all hover:scale-[1.02]">
                 <div className="absolute bottom-0 left-0 -ml-4 -mb-4 w-24 h-24 rounded-full bg-white opacity-10 blur-xl"></div>
                 <div className="relative z-10 flex justify-between items-start">
@@ -395,7 +460,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </div>
             </div>
 
-            {/* Card 3: Top Performer */}
             <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg transform transition-all hover:scale-[1.02]">
                 <div className="absolute top-0 left-1/2 -ml-12 -mt-4 w-32 h-32 rounded-full bg-white opacity-10 blur-2xl"></div>
                 <div className="relative z-10 flex justify-between items-start">
@@ -425,270 +489,484 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         </div>
 
         {/* Main Content Area */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-[600px]">
             
-            {/* Toolbar */}
-            <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50 dark:bg-gray-800/50">
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg text-blue-600 dark:text-blue-400">
-                        <UserGroupIcon />
-                    </div>
-                    <h2 className="text-lg font-bold text-gray-800 dark:text-white">Kullanıcı Listesi</h2>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                    <div className="relative w-full sm:w-auto group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                            <SearchIcon />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Sicil No Ara..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 transition-all shadow-sm"
-                        />
-                    </div>
-                    <button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-600/40 transition-all transform active:scale-95 flex items-center justify-center whitespace-nowrap w-full sm:w-auto"
-                    >
-                        + Yeni Kullanıcı
-                    </button>
-                </div>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+                <button
+                    onClick={() => setActiveTab('users')}
+                    className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${
+                        activeTab === 'users'
+                            ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    }`}
+                >
+                    Kullanıcı Listesi
+                </button>
+                <button
+                    onClick={() => setActiveTab('details')}
+                    className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${
+                        activeTab === 'details'
+                            ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    }`}
+                >
+                    Personel Detayı
+                </button>
             </div>
 
             {/* Notifications */}
             {error && <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-xl border border-red-100 dark:border-red-800 flex items-center gap-2 text-sm font-medium">{error}</div>}
             {successMsg && <div className="mx-6 mt-4 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-xl border border-green-100 dark:border-green-800 flex items-center gap-2 text-sm font-medium">{successMsg}</div>}
 
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50/50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                        <tr>
-                            <th onClick={() => requestSort('username')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <div className="flex items-center">Sicil No {getSortIndicator('username')}</div>
-                            </th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                <div className="flex items-center gap-2">
-                                    Şifre
-                                    <input 
-                                        type="checkbox" 
-                                        checked={showPasswords} 
-                                        onChange={(e) => setShowPasswords(e.target.checked)}
-                                        className="cursor-pointer h-3 w-3 accent-blue-600 rounded"
-                                        title="Şifreleri Göster/Gizle"
-                                    />
-                                </div>
-                            </th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cihaz Durumu</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yetkiler</th>
-                            <th onClick={() => requestSort('queryCount')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-1/5">
-                                <div className="flex items-center">Aktivite (Sorgu) {getSortIndicator('queryCount')}</div>
-                            </th>
-                            <th onClick={() => requestSort('lastLogin')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <div className="flex items-center">Durum / Son Giriş {getSortIndicator('lastLogin')}</div>
-                            </th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan={7} className="px-6 py-20 text-center">
-                                    <div className="flex justify-center items-center gap-3">
-                                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
-                                        <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                        <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                    </div>
-                                    <p className="mt-4 text-gray-500 font-medium">Veriler yükleniyor...</p>
-                                </td>
-                            </tr>
-                        ) : filteredUsers.length === 0 ? (
-                            <tr>
-                                <td colSpan={7} className="px-6 py-12 text-center text-gray-400 italic">Kayıt bulunamadı.</td>
-                            </tr>
-                        ) : (
-                            filteredUsers.map((user) => {
-                                const maxQ = dashboardStats.maxQueryCount || 1;
-                                const widthPercent = (user.queryCount / maxQ) * 100;
-                                const statusColor = getStatusColor(user.lastLogin);
-                                const statusLabel = getStatusLabel(user.lastLogin);
-                                const isOnline = statusLabel === 'Çevrimiçi';
+            {/* === Tab Content: USER LIST === */}
+            {activeTab === 'users' && (
+                <>
+                    {/* Toolbar */}
+                    <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg text-blue-600 dark:text-blue-400">
+                                <UserGroupIcon />
+                            </div>
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Personel Yönetimi</h2>
+                        </div>
 
-                                return (
-                                <tr key={user.username} className="group hover:bg-blue-50/40 dark:hover:bg-gray-700/40 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className={`flex-shrink-0 h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold shadow-sm ring-2 ring-white dark:ring-gray-700`}>
-                                                {user.username.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">{user.username}</div>
-                                            </div>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                            <div className="relative w-full sm:w-auto group">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                                    <SearchIcon />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Sicil No Ara..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 transition-all shadow-sm"
+                                />
+                            </div>
+                            <button 
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-600/40 transition-all transform active:scale-95 flex items-center justify-center whitespace-nowrap w-full sm:w-auto"
+                            >
+                                + Yeni Kullanıcı
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50/50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <th onClick={() => requestSort('username')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <div className="flex items-center">Sicil No {getSortIndicator('username')}</div>
+                                    </th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            Şifre
+                                            <input 
+                                                type="checkbox" 
+                                                checked={showPasswords} 
+                                                onChange={(e) => setShowPasswords(e.target.checked)}
+                                                className="cursor-pointer h-3 w-3 accent-blue-600 rounded"
+                                                title="Şifreleri Göster/Gizle"
+                                            />
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-700/50 inline-block px-2 py-1 rounded">
-                                            {showPasswords ? user.password : '••••••'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {user.skipDeviceLock ? (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 w-fit">
-                                                Kilitsiz (Serbest)
-                                            </span>
-                                        ) : user.allowedDeviceId ? (
-                                            <div className="flex flex-col">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 w-fit">
-                                                    Eşleşmiş
-                                                </span>
-                                                <span className="text-[10px] text-gray-400 mt-1 font-mono">{user.allowedDeviceId.slice(0,8)}...</span>
-                                            </div>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                                                Bekliyor
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-xs">
-                                        <div className="flex flex-col gap-1">
-                                            {user.canViewDetails ? (
-                                                <span className="text-green-600 font-bold">Tam İsim</span>
-                                            ) : (
-                                                <span className="text-gray-500">Maskeli</span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="w-full max-w-xs">
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="font-bold text-gray-700 dark:text-gray-300">{user.queryCount}</span>
-                                            </div>
-                                            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                                                <div 
-                                                    className={`h-2 rounded-full transition-all duration-1000 ease-out ${user.queryCount > 100 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-blue-400 to-indigo-500'}`} 
-                                                    style={{ width: `${Math.max(widthPercent, 5)}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center mb-1">
-                                                <div className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${statusColor} mr-2 ${isOnline ? 'animate-pulse' : ''}`}></div>
-                                                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                    {statusLabel}
-                                                </div>
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono pl-4">
-                                                {user.lastLogin !== 'Giriş Yapmadı' ? user.lastLogin : '-'}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <button 
-                                                onClick={() => handleResetStats(user.username)}
-                                                className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
-                                                title="İstatistikleri Sıfırla"
-                                            >
-                                                <RefreshIcon />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleOpenEditModal(user)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                                title="Düzenle"
-                                            >
-                                                <EditIcon />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteUser(user.username)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="Sil"
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
-                                    </td>
+                                    </th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cihaz Durumu</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yetkiler</th>
+                                    <th onClick={() => requestSort('queryCount')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-1/5">
+                                        <div className="flex items-center">Aktivite (Sorgu) {getSortIndicator('queryCount')}</div>
+                                    </th>
+                                    <th onClick={() => requestSort('lastLogin')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <div className="flex items-center">Durum / Son Giriş {getSortIndicator('lastLogin')}</div>
+                                    </th>
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşlemler</th>
                                 </tr>
-                            )})
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Mobile Card View (New) */}
-            <div className="md:hidden">
-                {isLoading ? (
-                    <div className="p-12 text-center">
-                        <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="mt-4 text-gray-500">Yükleniyor...</p>
-                    </div>
-                ) : filteredUsers.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">Kayıt bulunamadı.</div>
-                ) : (
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                        {filteredUsers.map((user) => {
-                            const statusColor = getStatusColor(user.lastLogin);
-                            const statusLabel = getStatusLabel(user.lastLogin);
-                            
-                            return (
-                                <div key={user.username} className="p-4 bg-white dark:bg-gray-800">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold`}>
-                                                {user.username.substring(0, 2).toUpperCase()}
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-20 text-center">
+                                            <div className="flex justify-center items-center gap-3">
+                                                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                                                <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                                <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                                             </div>
-                                            <div>
-                                                <div className="font-bold text-gray-900 dark:text-white">{user.username}</div>
-                                                <div className="text-xs text-gray-500 flex items-center gap-1">
-                                                    <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
-                                                    {statusLabel}
+                                            <p className="mt-4 text-gray-500 font-medium">Veriler yükleniyor...</p>
+                                        </td>
+                                    </tr>
+                                ) : filteredUsers.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-gray-400 italic">Kayıt bulunamadı.</td>
+                                    </tr>
+                                ) : (
+                                    filteredUsers.map((user) => {
+                                        const maxQ = dashboardStats.maxQueryCount || 1;
+                                        const widthPercent = (user.queryCount / maxQ) * 100;
+                                        const statusColor = getStatusColor(user.lastLogin);
+                                        const statusLabel = getStatusLabel(user.lastLogin);
+                                        const isOnline = statusLabel === 'Çevrimiçi';
+
+                                        return (
+                                        <tr key={user.username} className="group hover:bg-blue-50/40 dark:hover:bg-gray-700/40 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className={`flex-shrink-0 h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold shadow-sm ring-2 ring-white dark:ring-gray-700`}>
+                                                        {user.username.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">{user.username}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-500 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-700/50 inline-block px-2 py-1 rounded">
+                                                    {showPasswords ? user.password : '••••••'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {user.skipDeviceLock ? (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 w-fit">
+                                                        Kilitsiz (Serbest)
+                                                    </span>
+                                                ) : user.allowedDeviceId ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 w-fit">
+                                                            Eşleşmiş
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400 mt-1 font-mono">{user.allowedDeviceId.slice(0,8)}...</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                                                        Bekliyor
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-xs">
+                                                <div className="flex flex-col gap-1">
+                                                    {user.canViewDetails ? (
+                                                        <span className="text-green-600 font-bold">Tam İsim</span>
+                                                    ) : (
+                                                        <span className="text-gray-500">Maskeli</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="w-full max-w-xs">
+                                                    <div className="flex justify-between text-xs mb-1">
+                                                        <span className="font-bold text-gray-700 dark:text-gray-300">{user.queryCount}</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                                        <div 
+                                                            className={`h-2 rounded-full transition-all duration-1000 ease-out ${user.queryCount > 100 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-blue-400 to-indigo-500'}`} 
+                                                            style={{ width: `${Math.max(widthPercent, 5)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center mb-1">
+                                                        <div className={`flex-shrink-0 h-2.5 w-2.5 rounded-full ${statusColor} mr-2 ${isOnline ? 'animate-pulse' : ''}`}></div>
+                                                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            {statusLabel}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 font-mono pl-4">
+                                                        {user.lastLogin !== 'Giriş Yapmadı' ? user.lastLogin : '-'}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                                    <button 
+                                                        onClick={() => handleResetStats(user.username)}
+                                                        className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                                                        title="İstatistikleri Sıfırla"
+                                                    >
+                                                        <RefreshIcon />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleOpenEditModal(user)}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                        title="Düzenle"
+                                                    >
+                                                        <EditIcon />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteUser(user.username)}
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                        title="Sil"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )})
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View (Existing) */}
+                    <div className="md:hidden">
+                        {isLoading ? (
+                            <div className="p-12 text-center">
+                                <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="mt-4 text-gray-500">Yükleniyor...</p>
+                            </div>
+                        ) : filteredUsers.length === 0 ? (
+                            <div className="p-8 text-center text-gray-500">Kayıt bulunamadı.</div>
+                        ) : (
+                            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {filteredUsers.map((user) => {
+                                    const statusColor = getStatusColor(user.lastLogin);
+                                    const statusLabel = getStatusLabel(user.lastLogin);
+                                    
+                                    return (
+                                        <div key={user.username} className="p-4 bg-white dark:bg-gray-800">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold`}>
+                                                        {user.username.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-gray-900 dark:text-white">{user.username}</div>
+                                                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                                                            <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
+                                                            {statusLabel}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button onClick={() => handleOpenEditModal(user)} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-blue-600">
+                                                        <EditIcon />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600">
+                                                        <TrashIcon />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                                                <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                                    <span className="block text-gray-400 mb-1">Cihaz</span>
+                                                    {user.skipDeviceLock ? (
+                                                        <span className="text-purple-600 font-bold">Kilitsiz</span>
+                                                    ) : user.allowedDeviceId ? (
+                                                        <span className="text-green-600 font-bold">Eşleşmiş</span>
+                                                    ) : (
+                                                        <span className="text-yellow-600 font-bold">Bekliyor</span>
+                                                    )}
+                                                </div>
+                                                <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                                    <span className="block text-gray-400 mb-1">Yetki</span>
+                                                    {user.canViewDetails ? 'Tam İsim' : 'Maskeli'}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center text-xs">
+                                                <span className="text-gray-500">Sorgu Sayısı:</span>
+                                                <span className="font-bold text-lg text-gray-800 dark:text-gray-200">{user.queryCount}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* === Tab Content: PERSONNEL DETAIL === */}
+            {activeTab === 'details' && (
+                <div className="p-6 md:p-8 space-y-8 animate-fade-in">
+                    
+                    {/* User Selection */}
+                    <div className="max-w-md mx-auto text-center">
+                        <label className="block text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">İncelenecek Personeli Seçin</label>
+                        <select 
+                            value={selectedDetailUserUsername}
+                            onChange={(e) => setSelectedDetailUserUsername(e.target.value)}
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow text-lg"
+                        >
+                            <option value="">-- Personel Seçin --</option>
+                            {users.map(u => (
+                                <option key={u.username} value={u.username}>{u.username}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {selectedDetailUserObj && (
+                        <div className="space-y-12">
+                            {/* FLIP CARD CONTAINER */}
+                            <div className="flex justify-center flex-col items-center">
+                                <div 
+                                    className="group perspective w-[24rem] h-56 cursor-pointer"
+                                    onClick={() => setIsCardFlipped(!isCardFlipped)}
+                                >
+                                    <div className={`relative w-full h-full duration-700 preserve-3d transition-all ${isCardFlipped ? 'rotate-y-180' : ''}`}>
+                                        
+                                        {/* --- FRONT FACE --- */}
+                                        <div className="absolute w-full h-full backface-hidden rounded-2xl overflow-hidden shadow-2xl border border-gray-700/50">
+                                            {/* Background Layer */}
+                                            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#1a237e] to-slate-900"></div>
+                                            
+                                            {/* Pattern Layer */}
+                                            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
+                                            
+                                            {/* Glow Effects */}
+                                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20 translate-x-1/2 -translate-y-1/2"></div>
+                                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-400 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -translate-x-1/2 translate-y-1/2"></div>
+                                            
+                                            {/* Holographic Sheen */}
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+                                            {/* Content Layer */}
+                                            <div className="relative h-full flex flex-col justify-between p-6 z-10">
+                                                {/* Header: Logo & Title */}
+                                                <div className="flex justify-between items-start">
+                                                    <img 
+                                                        src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" 
+                                                        alt="Aksa Logo" 
+                                                        className="h-8 bg-white rounded-md p-1 shadow-md object-contain"
+                                                    />
+                                                    <div className="text-right">
+                                                        <h3 className="text-xs font-bold text-white/80 tracking-[0.2em] uppercase">Personel Kimlik</h3>
+                                                        <p className="text-[10px] text-cyan-300 font-mono tracking-widest opacity-80">AKSA-ID</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Middle: Chip & Contactless */}
+                                                <div className="flex items-center gap-4 my-2 pl-1">
+                                                    {/* Realistic Gold Chip */}
+                                                    <div className="w-12 h-9 rounded-md bg-gradient-to-br from-yellow-200 via-yellow-500 to-yellow-700 shadow-sm border border-yellow-600/50 relative overflow-hidden">
+                                                        <div className="absolute inset-0 border-[1px] border-black/20 rounded-md m-[2px]"></div>
+                                                        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-black/20"></div>
+                                                        <div className="absolute top-0 bottom-0 left-1/3 w-[1px] bg-black/20"></div>
+                                                        <div className="absolute top-0 bottom-0 right-1/3 w-[1px] bg-black/20"></div>
+                                                    </div>
+                                                    <ContactlessIcon />
+                                                </div>
+
+                                                {/* Bottom: Name & Info */}
+                                                <div>
+                                                    <div className="text-xl font-mono text-white tracking-widest font-bold drop-shadow-lg" style={{textShadow: '0 2px 4px rgba(0,0,0,0.8)'}}>
+                                                        {selectedDetailUserObj.username}
+                                                    </div>
+                                                    <div className="flex justify-between items-end mt-3">
+                                                        <div className="text-[10px] text-gray-300 font-medium tracking-wide">
+                                                            SİCİL NO: <span className="text-white font-mono text-xs">{selectedDetailUserObj.username.replace(/\D/g,'') || '0000'}</span>
+                                                        </div>
+                                                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm shadow-lg border ${selectedDetailUserObj.canViewDetails ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>
+                                                            {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-1">
-                                            <button onClick={() => handleOpenEditModal(user)} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-blue-600">
-                                                <EditIcon />
-                                            </button>
-                                            <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600">
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                                        <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
-                                            <span className="block text-gray-400 mb-1">Cihaz</span>
-                                            {user.skipDeviceLock ? (
-                                                <span className="text-purple-600 font-bold">Kilitsiz</span>
-                                            ) : user.allowedDeviceId ? (
-                                                <span className="text-green-600 font-bold">Eşleşmiş</span>
-                                            ) : (
-                                                <span className="text-yellow-600 font-bold">Bekliyor</span>
-                                            )}
-                                        </div>
-                                        <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
-                                            <span className="block text-gray-400 mb-1">Yetki</span>
-                                            {user.canViewDetails ? 'Tam İsim' : 'Maskeli'}
-                                        </div>
-                                    </div>
 
-                                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center text-xs">
-                                        <span className="text-gray-500">Sorgu Sayısı:</span>
-                                        <span className="font-bold text-lg text-gray-800 dark:text-gray-200">{user.queryCount}</span>
+                                        {/* --- BACK FACE --- */}
+                                        <div className="absolute w-full h-full backface-hidden rotate-y-180 rounded-2xl overflow-hidden shadow-2xl bg-gray-900 border border-gray-700/50">
+                                            {/* Magnetic Strip */}
+                                            <div className="w-full h-10 bg-black mt-4"></div>
+                                            
+                                            <div className="p-6">
+                                                 {/* Signature Area & CVV */}
+                                                 <div className="flex items-center gap-3 mt-1">
+                                                     <div className="flex-grow h-8 bg-white flex items-center px-2">
+                                                         <span className="font-handwriting text-gray-600 text-lg transform -rotate-2 select-none" style={{ fontFamily: 'cursive' }}>
+                                                            {selectedDetailUserObj.username}
+                                                         </span>
+                                                     </div>
+                                                     <div className="w-10 h-8 bg-white/10 flex items-center justify-center border border-white/20">
+                                                         <span className="text-xs text-white font-mono italic">000</span>
+                                                     </div>
+                                                 </div>
+
+                                                 <div className="flex mt-6 gap-4">
+                                                     {/* Mock QR Code */}
+                                                     <div className="w-16 h-16 bg-white p-1 rounded-sm">
+                                                         <div className="w-full h-full bg-gray-900" style={{ backgroundImage: 'radial-gradient(black 50%, transparent 50%)', backgroundSize: '4px 4px' }}></div>
+                                                     </div>
+                                                     
+                                                     <div className="flex-1 text-[8px] text-gray-400 leading-tight text-justify">
+                                                         <p>Bu kart Aksa Doğalgaz Dağıtım A.Ş. personeline aittir. Bulunması halinde lütfen en yakın şubeye teslim ediniz.</p>
+                                                         <p className="mt-2 text-white/60">Yetkili İmzası: <span className="text-white/30 italic">Sistem Yöneticisi</span></p>
+                                                         <p className="mt-2 text-blue-400">7/24 Destek Hattı: 444 4 187</p>
+                                                     </div>
+                                                 </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+                                <p className="mt-4 text-xs text-gray-400 animate-pulse">Kartı çevirmek için üzerine tıklayın</p>
+                            </div>
+
+                            {/* Search History Table */}
+                            <div className="max-w-3xl mx-auto">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                                        <span className="w-1 h-6 bg-blue-500 rounded-full mr-2"></span>
+                                        Son Yapılan Sorgular (Son 100)
+                                    </h3>
+                                    
+                                    <button 
+                                        onClick={downloadLogsAsCSV}
+                                        disabled={logsLoading || userLogs.length === 0}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="Tabloyu Excel (CSV) olarak indir"
+                                    >
+                                        <DownloadIcon />
+                                        Excel İndir
+                                    </button>
+                                </div>
+
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                    {logsLoading ? (
+                                        <div className="p-8 text-center">
+                                            <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="mt-2 text-sm text-gray-500">Geçmiş yükleniyor...</p>
+                                        </div>
+                                    ) : userLogs.length === 0 ? (
+                                        <div className="p-8 text-center text-gray-500 italic">
+                                            Bu personel henüz bir sorgu yapmamış.
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto max-h-[400px] overflow-y-auto custom-scrollbar">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Tarih</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Tesisat Numarası</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                                    {userLogs.map((log, index) => (
+                                                        <tr key={index} className="hover:bg-blue-50/30 dark:hover:bg-gray-700/30 transition-colors">
+                                                            <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">
+                                                                {log.timestamp}
+                                                            </td>
+                                                            <td className="px-6 py-3 text-sm text-gray-900 dark:text-white font-bold font-mono">
+                                                                {log.installationNumber}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
 
-      {/* Add User Modal */}
+      {/* Add User Modal - Same as before */}
       {isAddModalOpen && (
           <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsAddModalOpen(false)}>
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100" onClick={e => e.stopPropagation()}>
@@ -746,7 +1024,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
           </div>
       )}
 
-      {/* Edit User Modal */}
+      {/* Edit User Modal - Same as before */}
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsEditModalOpen(false)}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -809,8 +1087,42 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         </div>
       )}
       <style>{`
-        .animate-fade-in { animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+        /* 3D Flip Utilities */
+        .perspective {
+            perspective: 1000px;
+        }
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
       `}</style>
     </div>
   );

@@ -6,10 +6,9 @@ import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIco
 interface MainScreenProps {
     onLogout: () => void;
     username: string;
-    canViewDetails: boolean; // Yeni Prop
+    canViewDetails: boolean;
 }
 
-const RECENT_SEARCHES_KEY = 'recent_searches';
 const MAX_RECENT_SEARCHES = 5;
 
 // İsim Maskeleme Fonksiyonu
@@ -35,16 +34,22 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, canViewDeta
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [showRecents, setShowRecents] = useState(false);
 
+    // Her kullanıcı için ayrı bir geçmiş anahtarı oluştur
+    const recentSearchesKey = `recent_searches_${username}`;
+
     useEffect(() => {
         try {
-            const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+            const saved = localStorage.getItem(recentSearchesKey);
             if (saved) {
                 setRecentSearches(JSON.parse(saved));
+            } else {
+                setRecentSearches([]);
             }
         } catch (e) {
             console.error("Geçmiş yüklenirken hata:", e);
+            setRecentSearches([]);
         }
-    }, []);
+    }, [recentSearchesKey]);
 
     const saveToRecents = (term: string) => {
         let updated = [term, ...recentSearches.filter(s => s !== term)];
@@ -52,12 +57,12 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, canViewDeta
             updated = updated.slice(0, MAX_RECENT_SEARCHES);
         }
         setRecentSearches(updated);
-        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+        localStorage.setItem(recentSearchesKey, JSON.stringify(updated));
     };
 
     const clearRecents = () => {
         setRecentSearches([]);
-        localStorage.removeItem(RECENT_SEARCHES_KEY);
+        localStorage.removeItem(recentSearchesKey);
     };
 
     const handleClear = useCallback(() => {
@@ -199,7 +204,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, canViewDeta
                     {showRecents && recentSearches.length > 0 && !searchTerm && (
                         <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-100 dark:border-gray-600 overflow-hidden animate-fade-in z-30">
                             <div className="flex justify-between items-center px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-600">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Son Aramalar</span>
+                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Son Aramalar ({username})</span>
                                 <button onClick={clearRecents} className="text-xs text-red-500 hover:text-red-700 hover:underline">Temizle</button>
                             </div>
                             <ul>
