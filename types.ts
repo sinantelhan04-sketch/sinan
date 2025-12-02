@@ -11,6 +11,9 @@ export interface Credential {
   username: string;
   password: string;
   allowedDeviceId?: string;
+  // Yeni Alanlar
+  skipDeviceLock?: boolean;   // Cihaz kilidini atla
+  canViewDetails?: boolean;   // İsim soyisim açık gör
 }
 
 export interface UserActivityStat {

@@ -6,13 +6,14 @@ import OfflineScreen from './components/OfflineScreen';
 import { AdminScreen } from './components/AdminScreen';
 import { isWithinWorkingHours } from './utils/time';
 import * as sheetService from './services/sheetService';
-import { SCRIPT_URL } from './config';
+import { SUPABASE_URL, SUPABASE_KEY } from './config';
 
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [canViewDetails, setCanViewDetails] = useState<boolean>(false); // Yeni State
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
@@ -20,13 +21,11 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-     // 1. URL Kontrolü
-     if (!SCRIPT_URL || !SCRIPT_URL.includes("/exec")) {
-        setAppError("Yapılandırma Hatası: Geçerli bir Google Apps Script URL'si bulunamadı. Lütfen config.ts dosyasını kontrol edin.");
+     if (!SUPABASE_URL || SUPABASE_URL.includes("your-project-id") || !SUPABASE_KEY) {
+        setAppError("Yapılandırma Hatası: config.ts dosyasında Supabase URL ve Key ayarlanmamış.");
         return;
     }
 
-    // 2. Sunucu Bağlantı Kontrolü (Warm-up)
     const checkConnection = async () => {
         setServerStatus('checking');
         const isOnline = await sheetService.checkServerConnection();
@@ -36,7 +35,7 @@ const App: React.FC = () => {
 
     const interval = setInterval(() => {
         setIsWorkingTime(isWithinWorkingHours());
-    }, 60000); // Check every minute
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -46,23 +45,26 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
         setIsAdmin(true);
         setCurrentUser('admin');
-        setLegalAccepted(true); // Admin doesn't need legal screen
+        setCanViewDetails(true); // Admin her şeyi görür
+        setLegalAccepted(true);
         return;
     }
    
-    // Apps Script Authentication
-    await sheetService.authenticateUser(username, password, deviceId);
+    // Authentication - Artık izinleri de döndürüyor
+    const permissions = await sheetService.authenticateUser(username, password, deviceId);
     
     setIsAuthenticated(true);
     setIsAdmin(false);
     setCurrentUser(username);
-    setLegalAccepted(false); // Always show legal screen for normal users
+    setCanViewDetails(permissions.canViewDetails); // İzni set et
+    setLegalAccepted(false);
   }, []);
   
   const handleLogout = useCallback(() => {
     setIsAuthenticated(false);
     setIsAdmin(false);
     setCurrentUser(null);
+    setCanViewDetails(false);
     setLegalAccepted(false);
   }, []);
 
@@ -71,7 +73,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleDeclineLegal = useCallback(() => {
-    handleLogout(); // Log out if legal is declined
+    handleLogout();
   }, [handleLogout]);
 
 
@@ -86,12 +88,12 @@ const App: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sistem Yapılandırma Hatası</h2>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Uygulama sunucuya bağlanamıyor.</p>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Veritabanı bağlantı ayarları eksik.</p>
                   </div>
                   <div className="text-left text-sm text-gray-600 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-800 font-mono text-xs overflow-x-auto">
                     {appError}
                   </div>
-                  <p className="text-xs text-gray-400">Teknik destek için yönetici ile iletişime geçin.</p>
+                  <p className="text-xs text-gray-400">config.ts dosyasını kontrol edin.</p>
               </div>
           );
       }
@@ -100,7 +102,6 @@ const App: React.FC = () => {
             <div className="flex flex-col items-center gap-6 w-full max-w-md">
                 <LoginScreen onLogin={handleLogin} />
                 
-                {/* Sunucu Durum Barı */}
                 <div className={`w-full rounded-lg py-2 px-4 flex items-center justify-between text-xs font-medium transition-colors ${
                     serverStatus === 'online' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
                     serverStatus === 'offline' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
@@ -116,9 +117,9 @@ const App: React.FC = () => {
                           }`}></span>
                         </span>
                         <span>
-                            {serverStatus === 'online' && "Sunucu Bağlantısı Aktif"}
-                            {serverStatus === 'offline' && "Sunucuya Erişilemiyor"}
-                            {serverStatus === 'checking' && "Sunucu Bağlantısı Kontrol Ediliyor..."}
+                            {serverStatus === 'online' && "Supabase Veritabanı Aktif"}
+                            {serverStatus === 'offline' && "Veritabanına Erişilemiyor"}
+                            {serverStatus === 'checking' && "Bağlantı Kontrol Ediliyor..."}
                         </span>
                     </div>
                     
@@ -151,6 +152,7 @@ const App: React.FC = () => {
       return <MainScreen 
                 onLogout={handleLogout} 
                 username={currentUser!}
+                canViewDetails={canViewDetails} // Yetkiyi gönder
              />;
   }
 

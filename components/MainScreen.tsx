@@ -1,18 +1,30 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import type { Customer } from '../types';
 import * as sheetService from '../services/sheetService';
-import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, ClockIcon, SearchIcon, TrashIcon } from './icons';
+import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIcon } from './icons';
 
 interface MainScreenProps {
     onLogout: () => void;
     username: string;
+    canViewDetails: boolean; // Yeni Prop
 }
 
 const RECENT_SEARCHES_KEY = 'recent_searches';
 const MAX_RECENT_SEARCHES = 5;
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
+// İsim Maskeleme Fonksiyonu
+const maskName = (fullName: string): string => {
+    if (!fullName) return '';
+    const parts = fullName.trim().split(/\s+/);
+    
+    return parts.map(part => {
+        if (part.length < 3) return part; // Çok kısa isimleri maskeleme
+        // İlk 2 harfi al, geri kalan uzunluk kadar yıldız koy (max 3 yıldız estetik için)
+        return part.substring(0, 2) + '***'; 
+    }).join(' ');
+};
+
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, canViewDetails }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -23,7 +35,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [showRecents, setShowRecents] = useState(false);
 
-    // Load recent searches on mount
     useEffect(() => {
         try {
             const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
@@ -68,19 +79,17 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
         setFoundCustomer(null);
         setMapEmbedUrl(null);
         setExternalMapUrl(null);
-        setShowRecents(false); // Hide recents dropdown
+        setShowRecents(false);
 
         try {
             const customer = await sheetService.findCustomerByInstallationNumber(term.trim());
             
             setFoundCustomer(customer);
-            saveToRecents(term.trim()); // Save to history on success
+            saveToRecents(term.trim());
 
-            // Harita URL oluşturma işlemleri
             let gmapsEmbedUrl = '';
             let extMapUrl = '';
 
-            // Koordinat temizleme ve parse işlemi
             const cleanLat = String(customer.latitude || '').replace(',', '.').trim();
             const cleanLon = String(customer.longitude || '').replace(',', '.').trim();
             
@@ -88,11 +97,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
             const lon = parseFloat(cleanLon);
 
             if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
-                // Koordinat varsa
                 gmapsEmbedUrl = `https://maps.google.com/maps?q=${lat},${lon}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
                 extMapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
             } else if (customer.address && customer.address.trim() !== '') {
-                // Adres varsa
                 const encodedAddress = encodeURIComponent(customer.address);
                 gmapsEmbedUrl = `https://maps.google.com/maps?q=${encodedAddress}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
                 extMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
@@ -101,7 +108,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
             if (gmapsEmbedUrl) setMapEmbedUrl(gmapsEmbedUrl);
             if (extMapUrl) setExternalMapUrl(extMapUrl);
             
-            // Loglama (Fire and forget)
             sheetService.logSearchQuery(username, term.trim()).catch(e => console.warn("Loglama uyarısı:", e));
 
         } catch (err: any) {
@@ -129,7 +135,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                         <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10 sm:h-12 w-auto" />
                         <div className="ml-3 sm:ml-4">
                             <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Tesisat Sorgulama</h1>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Yetkili Personel Ekranı</p>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                Yetkili Personel Ekranı ({canViewDetails ? 'Tam Yetki' : 'Kısıtlı Görünüm'})
+                            </p>
                         </div>
                     </div>
                     <button 
@@ -151,7 +159,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                                     setShowRecents(true);
                                 }}
                                 onFocus={() => setShowRecents(true)}
-                                onBlur={() => setTimeout(() => setShowRecents(false), 200)} // Delay for click handling
+                                onBlur={() => setTimeout(() => setShowRecents(false), 200)}
                                 placeholder="Tesisat No (Örn: 100123456)"
                                 disabled={loading}
                                 className="w-full appearance-none rounded-lg border-2 border-gray-200 dark:border-gray-600 px-4 py-3 pl-11 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-600 transition-all font-mono text-base sm:text-lg"
@@ -188,7 +196,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                         </div>
                     </div>
 
-                    {/* Son Aramalar Dropdown */}
                     {showRecents && recentSearches.length > 0 && !searchTerm && (
                         <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-100 dark:border-gray-600 overflow-hidden animate-fade-in z-30">
                             <div className="flex justify-between items-center px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-600">
@@ -199,7 +206,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                                 {recentSearches.map((term, index) => (
                                     <li key={index}>
                                         <button 
-                                            onMouseDown={() => handleRecentClick(term)} // onMouseDown fires before onBlur
+                                            onMouseDown={() => handleRecentClick(term)}
                                             className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-600 flex items-center justify-between group transition-colors"
                                         >
                                             <span className="font-mono text-gray-700 dark:text-gray-200">{term}</span>
@@ -258,7 +265,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Ad Soyad</label>
                                     <p className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                                        {foundCustomer.name}
+                                        {/* İsim Maskeleme Kontrolü */}
+                                        {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
@@ -318,7 +326,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username }) => {
                                             </a>
                                         )}
                                     </div>
-                                    {/* Mobil uyumlu harita yüksekliği */}
                                     <div className="relative w-full h-64 sm:h-[400px] bg-gray-100 rounded-b-lg overflow-hidden">
                                         <iframe
                                             src={mapEmbedUrl}
