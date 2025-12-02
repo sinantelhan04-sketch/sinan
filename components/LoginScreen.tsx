@@ -67,35 +67,40 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
   };
 
-  const copyToClipboard = () => {
-      navigator.clipboard.writeText(deviceId).then(() => {
+  const copyToClipboard = async () => {
+      try {
+          await navigator.clipboard.writeText(deviceId);
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
-      });
+      } catch (err) {
+          console.error('Kopyalama başarısız:', err);
+          // Fallback: Kullanıcıya manuel kopyalaması gerektiğini hissettir
+          setError('Otomatik kopyalama başarısız, lütfen ID\'yi manuel seçip kopyalayın.');
+      }
   };
 
   return (
-    <div className="w-full max-w-sm sm:max-w-md mx-auto">
-        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700 animate-fade-in-up">
+    <div className="w-full max-w-sm sm:max-w-md mx-auto p-4">
+        {/* Main Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 animate-fade-in-up">
             
-            {/* Logo Area - Modernized */}
-            <div className="relative pt-10 pb-6 text-center">
-                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/20 pointer-events-none"></div>
-                <div className="relative z-10 flex flex-col items-center justify-center">
-                    <div className="w-28 h-28 bg-white dark:bg-white/10 p-4 rounded-2xl shadow-lg shadow-blue-100 dark:shadow-none mb-4 flex items-center justify-center transform transition-transform hover:scale-105 duration-300">
+            {/* Header / Logo */}
+            <div className="relative pt-10 pb-2 text-center bg-gray-50/50 dark:bg-gray-800/50">
+                <div className="flex flex-col items-center justify-center">
+                    <div className="w-24 h-24 bg-white dark:bg-white/10 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-600 mb-4 flex items-center justify-center">
                          <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Logo" className="w-full h-full object-contain" />
                     </div>
-                    <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
                         Tesisat Sorgulama
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">
-                        Yetkili Personel Girişi
+                        Yetkili Personel Giriş Paneli
                     </p>
                 </div>
             </div>
 
             {/* Form Area */}
-            <div className="px-8 pb-8">
+            <div className="px-8 py-6">
                 <form onSubmit={handleSubmit} className="space-y-5">
                     
                     {/* Username Input */}
@@ -112,7 +117,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 disabled={isLoggingIn}
-                                className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all font-medium outline-none text-base"
+                                className="block w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium outline-none"
                                 placeholder="Sicil numaranız"
                                 autoComplete="username"
                             />
@@ -133,7 +138,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={isLoggingIn}
-                                className="block w-full pl-11 pr-12 py-3.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all font-medium outline-none text-base"
+                                className="block w-full pl-11 pr-12 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium outline-none"
                                 placeholder="••••••••"
                                 autoComplete="current-password"
                             />
@@ -157,8 +162,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                     </div>
 
                     {/* Remember Me */}
-                    <div className="flex items-center justify-between">
-                        <label className="flex items-center cursor-pointer group">
+                    <div className="flex items-center justify-between pt-1">
+                        <label className="flex items-center cursor-pointer group select-none">
                             <div className="relative flex items-center">
                                 <input
                                     type="checkbox"
@@ -187,37 +192,52 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                     <button
                         type="submit"
                         disabled={isLoggingIn}
-                        className={`w-full py-4 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 dark:shadow-blue-900/40 transform transition-all active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/30 text-base ${isLoggingIn ? 'opacity-80 cursor-wait' : ''}`}
+                        className={`w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transform transition-all active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/30 text-base flex items-center justify-center ${isLoggingIn ? 'opacity-80 cursor-wait' : ''}`}
                     >
                         {isLoggingIn ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span>Giriş Yapılıyor...</span>
-                            </div>
+                                Giriş Yapılıyor...
+                            </>
                         ) : 'Giriş Yap'}
                     </button>
                 </form>
 
-                {/* Device ID */}
-                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-3">Güvenli Cihaz ID</p>
-                    <button 
-                        onClick={copyToClipboard}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group relative border border-gray-200 dark:border-gray-600 max-w-full overflow-hidden"
-                    >
-                        <code className="text-[10px] sm:text-xs font-mono text-gray-600 dark:text-gray-400 truncate max-w-[200px] sm:max-w-xs">{deviceId}</code>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        {copied && (
-                            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[10px] py-1 px-2 rounded shadow-lg animate-fade-in whitespace-nowrap">
-                                Kopyalandı
+                {/* Device ID Section */}
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex flex-col items-center">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-bold mb-2">Bu Cihazın Kimliği</p>
+                        <button 
+                            type="button"
+                            onClick={copyToClipboard}
+                            className="group relative w-full flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-900 rounded-lg transition-all active:scale-95 cursor-pointer"
+                        >
+                            <code className="flex-1 text-xs font-mono text-gray-600 dark:text-gray-400 truncate text-center select-all">
+                                {deviceId}
+                            </code>
+                            <div className="flex items-center justify-center w-6 h-6 rounded bg-gray-200 dark:bg-gray-600 group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
+                                {copied ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                )}
                             </div>
-                        )}
-                    </button>
+                            
+                            {/* Tooltip for success */}
+                            {copied && (
+                                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs font-bold py-1.5 px-3 rounded shadow-lg animate-fade-in z-10">
+                                    Kopyalandı!
+                                </div>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
             

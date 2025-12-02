@@ -618,6 +618,74 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Mobile Card View (New) */}
+            <div className="md:hidden">
+                {isLoading ? (
+                    <div className="p-12 text-center">
+                        <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="mt-4 text-gray-500">Yükleniyor...</p>
+                    </div>
+                ) : filteredUsers.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">Kayıt bulunamadı.</div>
+                ) : (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {filteredUsers.map((user) => {
+                            const statusColor = getStatusColor(user.lastLogin);
+                            const statusLabel = getStatusLabel(user.lastLogin);
+                            
+                            return (
+                                <div key={user.username} className="p-4 bg-white dark:bg-gray-800">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold`}>
+                                                {user.username.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-gray-900 dark:text-white">{user.username}</div>
+                                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
+                                                    {statusLabel}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button onClick={() => handleOpenEditModal(user)} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-blue-600">
+                                                <EditIcon />
+                                            </button>
+                                            <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600">
+                                                <TrashIcon />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                            <span className="block text-gray-400 mb-1">Cihaz</span>
+                                            {user.skipDeviceLock ? (
+                                                <span className="text-purple-600 font-bold">Kilitsiz</span>
+                                            ) : user.allowedDeviceId ? (
+                                                <span className="text-green-600 font-bold">Eşleşmiş</span>
+                                            ) : (
+                                                <span className="text-yellow-600 font-bold">Bekliyor</span>
+                                            )}
+                                        </div>
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                            <span className="block text-gray-400 mb-1">Yetki</span>
+                                            {user.canViewDetails ? 'Tam İsim' : 'Maskeli'}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center text-xs">
+                                        <span className="text-gray-500">Sorgu Sayısı:</span>
+                                        <span className="font-bold text-lg text-gray-800 dark:text-gray-200">{user.queryCount}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
         </div>
 
       {/* Add User Modal */}
