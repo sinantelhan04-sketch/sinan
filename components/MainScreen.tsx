@@ -292,6 +292,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                     )}
                 </div>
 
+                {/* Üst Reklam Alanı - Görünürlüğü Yüksek */}
+                <AdBanner className="mb-6" />
+
                 {error && (
                     <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-r-lg mb-6 flex items-center animate-shake" role="alert">
                          <svg className="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -315,7 +318,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                      <div className="flex-grow flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-12 opacity-50">
                         <SearchIcon />
                         <p className="mt-4 text-sm text-center">Sorgulama yapmak için tesisat numarası girin.</p>
-                        <AdBanner className="mt-12" />
                     </div>
                 )}
 
@@ -372,6 +374,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                 </div>
                             </div>
                         </div>
+
+                        {/* Ara Reklam (Gelir Artırmak İçin) */}
+                        <AdBanner className="my-6" />
                         
                         {/* Harita Kartı */}
                         <div 

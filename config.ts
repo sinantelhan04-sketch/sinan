@@ -17,7 +17,7 @@ export const ADSENSE_PUBLISHER_ID = "ca-pub-1812481333949389";
 
 // AdSense panelinden oluşturduğunuz reklam biriminin SLOT ID'si (Örn: 1234567890)
 // DİKKAT: Buraya AdMob ID'si (ca-app-pub...) YAZMAYIN, çalışmaz. Sadece sayısal Slot ID yazın.
-export const ADSENSE_SLOT_ID = "1234567890"; 
+export const ADSENSE_SLOT_ID = "ca-pub-1812481333949389"; 
 
 
 // 2. MOBİL UYGULAMA REKLAMLARI (GOOGLE ADMOB)
