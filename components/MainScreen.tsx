@@ -141,14 +141,40 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     };
     
     // Aksiyon Loglama (Arama veya SMS)
-    const handleAction = (type: 'call' | 'sms', contactValue: string) => {
+    const logAction = (type: 'call' | 'sms') => {
         if (currentLogId) {
             sheetService.updateSearchLogAction(currentLogId, type);
         }
+    };
+
+    // Android/iOS Uyumlu Arama Başlatıcı
+    const handleCallClick = (e: React.MouseEvent, phone: string) => {
+        e.preventDefault();
         
-        // Browser'ın normal davranışını simüle etmek için linki açıyoruz
-        // Ancak react onClick içinde href navigasyonu otomatik olmayabilir veya preventDefault yapmamalıyız.
-        // Bu fonksiyon butonun onClick eventinde çağrılacak.
+        // Önce logla
+        logAction('call');
+
+        // Numarayı temizle (boşlukları sil)
+        const cleanPhone = String(phone).replace(/\s/g, "").replace(/[^0-9+]/g, "");
+        
+        // Tarayıcıyı zorla yönlendir
+        window.location.href = `tel:${cleanPhone}`;
+    };
+
+    // Android/iOS Uyumlu SMS Başlatıcı
+    const handleSmsClick = (e: React.MouseEvent, phone: string, name: string) => {
+        e.preventDefault();
+
+        // Önce logla
+        logAction('sms');
+
+        const cleanPhone = String(phone).replace(/\s/g, "").replace(/[^0-9+]/g, "");
+        const messageBody = `Sayın ${name}, Aksa Doğalgaz tesisat kontrolü için adresinize geldik ancak size ulaşamadık.`;
+        
+        // Standart SMS URI şeması
+        const smsUri = `sms:${cleanPhone}?body=${encodeURIComponent(messageBody)}`;
+        
+        window.location.href = smsUri;
     };
 
     return (
@@ -302,16 +328,16 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                         <span className="text-lg font-medium text-gray-900 dark:text-white">{foundCustomer.phone}</span>
                                         <div className="flex gap-2">
                                             <a 
-                                                href={`tel:${String(foundCustomer.phone).replace(/\s/g, "")}`}
-                                                onClick={() => handleAction('call', foundCustomer.phone)}
+                                                href="#"
+                                                onClick={(e) => handleCallClick(e, foundCustomer.phone)}
                                                 className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors cursor-pointer"
                                                 title="Hemen Ara"
                                             >
                                                 <PhoneIconSolid />
                                             </a>
                                             <a 
-                                                href={`sms:${String(foundCustomer.phone).replace(/\s/g, "")}?body=${encodeURIComponent(`Sayın ${foundCustomer.name}, Aksa Doğalgaz tesisat kontrolü için adresinize geldik ancak size ulaşamadık.`)}`}
-                                                onClick={() => handleAction('sms', foundCustomer.phone)}
+                                                href="#"
+                                                onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
                                                 className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
                                                 title="SMS Gönder"
                                             >

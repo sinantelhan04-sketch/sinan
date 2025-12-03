@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
@@ -214,6 +215,19 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     }
   }, []);
 
+  const fetchLogs = useCallback(async () => {
+      if (!selectedDetailUserUsername) return;
+      setLogsLoading(true);
+      try {
+          const logs = await sheetService.getUserLogs(selectedDetailUserUsername);
+          setUserLogs(logs);
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setLogsLoading(false);
+      }
+  }, [selectedDetailUserUsername]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -221,23 +235,17 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   // Fetch logs when selectedDetailUserUsername changes
   useEffect(() => {
       if (activeTab === 'details' && selectedDetailUserUsername) {
-          const fetchLogs = async () => {
-              setLogsLoading(true);
-              try {
-                  const logs = await sheetService.getUserLogs(selectedDetailUserUsername);
-                  setUserLogs(logs);
-                  setIsCardFlipped(false); // Reset flip on user change
-              } catch (e) {
-                  console.error(e);
-              } finally {
-                  setLogsLoading(false);
-              }
-          };
           fetchLogs();
+          setIsCardFlipped(false); // Reset flip on user change
       } else {
           setUserLogs([]);
       }
-  }, [selectedDetailUserUsername, activeTab]);
+  }, [selectedDetailUserUsername, activeTab, fetchLogs]);
+
+  const handleRefresh = () => {
+      fetchData();
+      if (activeTab === 'details') fetchLogs();
+  };
 
   const dashboardStats = useMemo(() => {
       const totalUsers = users.length;
@@ -453,7 +461,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             </div>
             <div className="flex gap-3 w-full md:w-auto">
                 <button 
-                    onClick={fetchData} 
+                    onClick={handleRefresh} 
                     disabled={isLoading}
                     className="flex-1 md:flex-none justify-center flex items-center px-4 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-all font-medium text-sm shadow-sm border border-gray-200 dark:border-gray-600"
                 >

@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_KEY } from '../config';
 import type { Credential, Customer, UserActivityStat } from '../types';
@@ -188,11 +189,18 @@ export const authenticateUser = async (username: string, password: string, devic
 export const logSearchQuery = async (username: string, installationNumber: string): Promise<number | null> => {
     try {
         const client = ensureClient();
+        // ID'yi alabilmek için select() yetkisi gerekir (RLS)
         const { data, error } = await client.from('search_logs').insert([
             { username, installation_number: installationNumber }
         ]).select('id').single();
         
-        if (error) throw error;
+        if (error) {
+            if (error.code === "42501") {
+                console.warn("Loglama yapıldı ancak ID alınamadı. RLS Politikaları eksik olabilir. (INSERT başarılı, SELECT başarısız)");
+                return null;
+            }
+            throw error;
+        }
         return data?.id || null;
     } catch (e) {
         console.warn("Loglama hatası:", e);
@@ -220,6 +228,8 @@ export const updateSearchLogAction = async (logId: number, actionType: 'call' | 
              } else {
                  console.error("Aksiyon loglama hatası:", error);
              }
+        } else {
+            // console.log("Aksiyon loglandı:", actionType);
         }
     } catch (e) {
         console.error("Aksiyon update hatası:", e);
