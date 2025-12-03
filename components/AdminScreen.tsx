@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
 import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon } from './icons';
+import AdBanner from './AdBanner';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
 type SortableKeys = 'username' | 'queryCount' | 'lastLogin' | 'fullName';
@@ -1015,6 +1016,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </div>
             )}
         </div>
+        
+        {/* Ad Banner Bottom */}
+        <AdBanner />
 
       {/* Add User Modal */}
       {isAddModalOpen && (

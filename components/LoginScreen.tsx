@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserIcon, LockIcon } from './icons';
+import AdBanner from './AdBanner';
 
 interface LoginScreenProps {
   onLogin: (username: string, password: string, deviceId: string) => Promise<void>;
@@ -253,6 +254,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 </p>
             </div>
         </div>
+        
+        {/* Ad Banner for Revenue */}
+        <AdBanner />
 
         {/* Styles */}
         <style>{`

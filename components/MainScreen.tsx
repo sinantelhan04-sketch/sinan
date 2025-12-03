@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import type { Customer } from '../types';
 import * as sheetService from '../services/sheetService';
 import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIcon } from './icons';
+import AdBanner from './AdBanner';
 
 interface MainScreenProps {
     onLogout: () => void;
@@ -252,6 +253,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                      <div className="flex-grow flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-12 opacity-50">
                         <SearchIcon />
                         <p className="mt-4 text-sm text-center">Sorgulama yapmak için tesisat numarası girin.</p>
+                        <AdBanner className="mt-12" />
                     </div>
                 )}
 
@@ -358,6 +360,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                         </div>
                     </div>
                 )}
+                
+                {/* Alt Reklam */}
+                <AdBanner />
             </div>
              <style>{`
                 .animate-fade-in { animation: fadeIn 0.2s ease-out; }
