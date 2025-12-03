@@ -343,26 +343,24 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Telefon</label>
-                                    <div className="flex items-center flex-wrap gap-3">
-                                        <span className="text-lg font-medium text-gray-900 dark:text-white">{foundCustomer.phone}</span>
-                                        <div className="flex gap-2">
-                                            <a 
-                                                href="#"
-                                                onClick={(e) => handleCallClick(e, foundCustomer.phone)}
-                                                className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors cursor-pointer"
-                                                title="Hemen Ara"
-                                            >
-                                                <PhoneIconSolid />
-                                            </a>
-                                            <a 
-                                                href="#"
-                                                onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
-                                                className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
-                                                title="SMS Gönder"
-                                            >
-                                                <MessageIcon />
-                                            </a>
-                                        </div>
+                                    {/* Telefon Numarası Gizlendi, Sadece Butonlar Gösteriliyor */}
+                                    <div className="flex flex-wrap gap-3 mt-1">
+                                        <button 
+                                            onClick={(e) => handleCallClick(e, foundCustomer.phone)}
+                                            className="flex items-center justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm active:scale-95 group"
+                                            title="Hemen Ara"
+                                        >
+                                            <div className="mr-2 group-hover:animate-bounce"><PhoneIconSolid /></div>
+                                            <span className="font-semibold text-sm">Ara</span>
+                                        </button>
+                                        <button 
+                                            onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
+                                            className="flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm active:scale-95 group"
+                                            title="SMS Gönder"
+                                        >
+                                            <div className="mr-2 group-hover:animate-pulse"><MessageIcon /></div>
+                                            <span className="font-semibold text-sm">Mesaj At</span>
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="md:col-span-2 space-y-1">
