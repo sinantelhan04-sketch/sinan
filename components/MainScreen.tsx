@@ -118,13 +118,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
             if (gmapsEmbedUrl) setMapEmbedUrl(gmapsEmbedUrl);
             if (extMapUrl) setExternalMapUrl(extMapUrl);
             
-            // Log the search and store the ID
+            // Log the search and save the ID
             const logId = await sheetService.logSearchQuery(username, term.trim());
-            setCurrentLogId(logId);
+            if (logId) setCurrentLogId(logId);
 
         } catch (err: any) {
             setError(err.message || 'Bir hata oluştu.');
-            // Hata olsa bile loglamak isteyebiliriz, ancak ID alamayabiliriz
+            // Hata olsa bile loglamak isteyebiliriz
             sheetService.logSearchQuery(username, term.trim()).catch(e => console.warn("Log hatası:", e));
         } finally {
             setLoading(false);
@@ -139,17 +139,16 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         setSearchTerm(term);
         performSearch(term);
     };
-
-    const handleCallClick = () => {
+    
+    // Aksiyon Loglama (Arama veya SMS)
+    const handleAction = (type: 'call' | 'sms', contactValue: string) => {
         if (currentLogId) {
-            sheetService.updateLogInteraction(currentLogId, 'call');
+            sheetService.updateSearchLogAction(currentLogId, type);
         }
-    };
-
-    const handleSmsClick = () => {
-        if (currentLogId) {
-            sheetService.updateLogInteraction(currentLogId, 'sms');
-        }
+        
+        // Browser'ın normal davranışını simüle etmek için linki açıyoruz
+        // Ancak react onClick içinde href navigasyonu otomatik olmayabilir veya preventDefault yapmamalıyız.
+        // Bu fonksiyon butonun onClick eventinde çağrılacak.
     };
 
     return (
@@ -304,7 +303,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                         <div className="flex gap-2">
                                             <a 
                                                 href={`tel:${String(foundCustomer.phone).replace(/\s/g, "")}`}
-                                                onClick={handleCallClick}
+                                                onClick={() => handleAction('call', foundCustomer.phone)}
                                                 className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors cursor-pointer"
                                                 title="Hemen Ara"
                                             >
@@ -312,7 +311,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                             </a>
                                             <a 
                                                 href={`sms:${String(foundCustomer.phone).replace(/\s/g, "")}?body=${encodeURIComponent(`Sayın ${foundCustomer.name}, Aksa Doğalgaz tesisat kontrolü için adresinize geldik ancak size ulaşamadık.`)}`}
-                                                onClick={handleSmsClick}
+                                                onClick={() => handleAction('sms', foundCustomer.phone)}
                                                 className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
                                                 title="SMS Gönder"
                                             >

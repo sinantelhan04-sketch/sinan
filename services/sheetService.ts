@@ -200,17 +200,29 @@ export const logSearchQuery = async (username: string, installationNumber: strin
     }
 };
 
-export const updateLogInteraction = async (logId: number, type: 'call' | 'sms'): Promise<void> => {
+export const updateSearchLogAction = async (logId: number, actionType: 'call' | 'sms'): Promise<void> => {
     try {
         const client = ensureClient();
-        const updateData = type === 'call' ? { called: true } : { messaged: true };
+        const updates: any = {};
         
-        await client
+        if (actionType === 'call') updates.called = true;
+        if (actionType === 'sms') updates.sms_sent = true;
+
+        const { error } = await client
             .from('search_logs')
-            .update(updateData)
+            .update(updates)
             .eq('id', logId);
+
+        if (error) {
+             // Suppress specific column missing error to avoid console noise if not migrated
+             if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+                 console.warn("Veritabanı şeması güncel değil: 'called' veya 'sms_sent' sütunları eksik. Lütfen Supabase SQL Editor'den bu sütunları ekleyin.");
+             } else {
+                 console.error("Aksiyon loglama hatası:", error);
+             }
+        }
     } catch (e) {
-        console.warn("Etkileşim loglama hatası:", e);
+        console.error("Aksiyon update hatası:", e);
     }
 };
 
@@ -243,18 +255,16 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
 
 export const getUserLogs = async (username: string): Promise<{
     installationNumber: string, 
-    timestamp: string, 
-    called: boolean, 
-    messaged: boolean
+    timestamp: string,
+    called?: boolean,
+    smsSent?: boolean
 }[]> => {
     const client = ensureClient();
     
-    // called ve messaged sütunlarını da seçiyoruz.
-    // Eğer veritabanında bu sütunlar yoksa Supabase hata verebilir, 
-    // ancak kullanıcıdan eklenmesi istendiği varsayılıyor.
+    // Select * kullanılarak, eğer sütunlar henüz eklenmediyse hata vermesi engellenir.
     const { data, error } = await client
         .from('search_logs')
-        .select('installation_number, created_at, called, messaged')
+        .select('*')
         .eq('username', username)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -264,8 +274,8 @@ export const getUserLogs = async (username: string): Promise<{
     return data.map((log: any) => ({
         installationNumber: log.installation_number,
         timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
-        called: !!log.called,
-        messaged: !!log.messaged
+        called: log.called || false,
+        smsSent: log.sms_sent || false
     }));
 };
 
