@@ -37,6 +37,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [showRecents, setShowRecents] = useState(false);
     const [currentLogId, setCurrentLogId] = useState<number | null>(null);
+    
+    // Reklam yenileme tetikleyicisi
+    const [adRefreshTrigger, setAdRefreshTrigger] = useState(0);
 
     // Her kullanıcı için ayrı bir geçmiş anahtarı oluştur
     const recentSearchesKey = `recent_searches_${username}`;
@@ -82,6 +85,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
 
     const performSearch = async (term: string) => {
         if (!term.trim()) return;
+
+        // Her aramada reklamı yenilemek için sayacı artır
+        setAdRefreshTrigger(prev => prev + 1);
 
         setSearchPerformed(true);
         setError('');
@@ -292,9 +298,6 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                     )}
                 </div>
 
-                {/* Üst Reklam Alanı - Görünürlüğü Yüksek */}
-                <AdBanner className="mb-6" />
-
                 {error && (
                     <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-r-lg mb-6 flex items-center animate-shake" role="alert">
                          <svg className="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -375,16 +378,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                             </div>
                         </div>
 
-                        {/* Ara Reklam (Gelir Artırmak İçin) */}
-                        <AdBanner className="my-6" />
-                        
                         {/* Harita Kartı */}
                         <div 
                             className="animate-soft-slide-up"
                             style={{ animationDelay: '200ms', animationFillMode: 'both' }}
                         >
                             {mapEmbedUrl ? (
-                                <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-1 rounded-xl shadow-md">
+                                <div className="bg-white dark:bg-700 border border-gray-200 dark:border-gray-600 p-1 rounded-xl shadow-md">
                                     <div className="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-t-lg border-b border-gray-200 dark:border-gray-600">
                                         <h3 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
                                             <MapPinIcon /> Lokasyon
@@ -428,8 +428,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                     </div>
                 )}
                 
-                {/* Alt Reklam */}
-                <AdBanner />
+                {/* Alt Reklam - Key özelliği ile her aramada yenilenir */}
+                <AdBanner key={`bot-${adRefreshTrigger}`} className="mt-auto pt-6" />
             </div>
              <style>{`
                 .animate-fade-in { animation: fadeIn 0.2s ease-out; }
