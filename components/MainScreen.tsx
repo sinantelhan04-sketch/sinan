@@ -35,6 +35,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     const [searchPerformed, setSearchPerformed] = useState(false);
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [showRecents, setShowRecents] = useState(false);
+    const [currentLogId, setCurrentLogId] = useState<number | null>(null);
 
     // Her kullanıcı için ayrı bir geçmiş anahtarı oluştur
     const recentSearchesKey = `recent_searches_${username}`;
@@ -75,6 +76,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         setMapEmbedUrl(null);
         setExternalMapUrl(null);
         setSearchPerformed(false);
+        setCurrentLogId(null);
     }, []);
 
     const performSearch = async (term: string) => {
@@ -87,6 +89,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         setMapEmbedUrl(null);
         setExternalMapUrl(null);
         setShowRecents(false);
+        setCurrentLogId(null);
 
         try {
             const customer = await sheetService.findCustomerByInstallationNumber(term.trim());
@@ -115,10 +118,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
             if (gmapsEmbedUrl) setMapEmbedUrl(gmapsEmbedUrl);
             if (extMapUrl) setExternalMapUrl(extMapUrl);
             
-            sheetService.logSearchQuery(username, term.trim()).catch(e => console.warn("Loglama uyarısı:", e));
+            // Log the search and store the ID
+            const logId = await sheetService.logSearchQuery(username, term.trim());
+            setCurrentLogId(logId);
 
         } catch (err: any) {
             setError(err.message || 'Bir hata oluştu.');
+            // Hata olsa bile loglamak isteyebiliriz, ancak ID alamayabiliriz
             sheetService.logSearchQuery(username, term.trim()).catch(e => console.warn("Log hatası:", e));
         } finally {
             setLoading(false);
@@ -132,6 +138,18 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     const handleRecentClick = (term: string) => {
         setSearchTerm(term);
         performSearch(term);
+    };
+
+    const handleCallClick = () => {
+        if (currentLogId) {
+            sheetService.updateLogInteraction(currentLogId, 'call');
+        }
+    };
+
+    const handleSmsClick = () => {
+        if (currentLogId) {
+            sheetService.updateLogInteraction(currentLogId, 'sms');
+        }
     };
 
     return (
@@ -286,14 +304,16 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                         <div className="flex gap-2">
                                             <a 
                                                 href={`tel:${String(foundCustomer.phone).replace(/\s/g, "")}`}
-                                                className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
+                                                onClick={handleCallClick}
+                                                className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors cursor-pointer"
                                                 title="Hemen Ara"
                                             >
                                                 <PhoneIconSolid />
                                             </a>
                                             <a 
                                                 href={`sms:${String(foundCustomer.phone).replace(/\s/g, "")}?body=${encodeURIComponent(`Sayın ${foundCustomer.name}, Aksa Doğalgaz tesisat kontrolü için adresinize geldik ancak size ulaşamadık.`)}`}
-                                                className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+                                                onClick={handleSmsClick}
+                                                className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
                                                 title="SMS Gönder"
                                             >
                                                 <MessageIcon />

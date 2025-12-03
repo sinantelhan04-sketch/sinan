@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
-import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon } from './icons';
+import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon } from './icons';
 import AdBanner from './AdBanner';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
@@ -142,7 +142,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
   // --- States for User Detail View ---
   const [selectedDetailUserUsername, setSelectedDetailUserUsername] = useState<string>('');
-  const [userLogs, setUserLogs] = useState<{installationNumber: string, timestamp: string}[]>([]);
+  const [userLogs, setUserLogs] = useState<{installationNumber: string, timestamp: string, called: boolean, messaged: boolean}[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   
@@ -420,10 +420,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const downloadLogsAsCSV = () => {
       if (userLogs.length === 0) return;
       
-      const headers = ['Tarih', 'Tesisat Numarası'];
+      const headers = ['Tarih', 'Tesisat Numarası', 'Arama', 'Mesaj'];
       const csvContent = [
           headers.join(','),
-          ...userLogs.map(log => `${log.timestamp},${log.installationNumber}`)
+          ...userLogs.map(log => `${log.timestamp},${log.installationNumber},${log.called ? 'Evet' : 'Hayır'},${log.messaged ? 'Evet' : 'Hayır'}`)
       ].join('\n');
       
       const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1017,6 +1017,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                     <tr>
                                                         <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Tarih</th>
                                                         <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Tesisat Numarası</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Arama</th>
+                                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Mesaj</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -1027,6 +1029,24 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                             </td>
                                                             <td className="px-6 py-3 text-sm text-gray-900 dark:text-white font-bold font-mono">
                                                                 {log.installationNumber}
+                                                            </td>
+                                                            <td className="px-6 py-3 text-center">
+                                                                {log.called ? (
+                                                                    <div className="inline-flex p-1 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" title="Arama Yapıldı">
+                                                                        <PhoneIconSolid />
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-300 dark:text-gray-600 text-lg">•</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-3 text-center">
+                                                                {log.messaged ? (
+                                                                    <div className="inline-flex p-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" title="Mesaj Gönderildi">
+                                                                        <MessageIcon />
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-300 dark:text-gray-600 text-lg">•</span>
+                                                                )}
                                                             </td>
                                                         </tr>
                                                     ))}

@@ -185,14 +185,32 @@ export const authenticateUser = async (username: string, password: string, devic
     };
 };
 
-export const logSearchQuery = async (username: string, installationNumber: string): Promise<void> => {
+export const logSearchQuery = async (username: string, installationNumber: string): Promise<number | null> => {
     try {
         const client = ensureClient();
-        await client.from('search_logs').insert([
+        const { data, error } = await client.from('search_logs').insert([
             { username, installation_number: installationNumber }
-        ]);
+        ]).select('id').single();
+        
+        if (error) throw error;
+        return data?.id || null;
     } catch (e) {
         console.warn("Loglama hatası:", e);
+        return null;
+    }
+};
+
+export const updateLogInteraction = async (logId: number, type: 'call' | 'sms'): Promise<void> => {
+    try {
+        const client = ensureClient();
+        const updateData = type === 'call' ? { called: true } : { messaged: true };
+        
+        await client
+            .from('search_logs')
+            .update(updateData)
+            .eq('id', logId);
+    } catch (e) {
+        console.warn("Etkileşim loglama hatası:", e);
     }
 };
 
@@ -223,12 +241,20 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     }));
 };
 
-export const getUserLogs = async (username: string): Promise<{installationNumber: string, timestamp: string}[]> => {
+export const getUserLogs = async (username: string): Promise<{
+    installationNumber: string, 
+    timestamp: string, 
+    called: boolean, 
+    messaged: boolean
+}[]> => {
     const client = ensureClient();
-    // Assuming 'search_logs' has 'created_at' column.
+    
+    // called ve messaged sütunlarını da seçiyoruz.
+    // Eğer veritabanında bu sütunlar yoksa Supabase hata verebilir, 
+    // ancak kullanıcıdan eklenmesi istendiği varsayılıyor.
     const { data, error } = await client
         .from('search_logs')
-        .select('installation_number, created_at')
+        .select('installation_number, created_at, called, messaged')
         .eq('username', username)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -237,7 +263,9 @@ export const getUserLogs = async (username: string): Promise<{installationNumber
 
     return data.map((log: any) => ({
         installationNumber: log.installation_number,
-        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'
+        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
+        called: !!log.called,
+        messaged: !!log.messaged
     }));
 };
 
@@ -246,8 +274,6 @@ export const getUserLogs = async (username: string): Promise<{installationNumber
 export const addCredential = async (credential: Credential): Promise<Credential[]> => {
     const client = ensureClient();
     
-    // Veritabanı şeması güncellenene kadar hata vermemesi için insert nesnesini dinamik oluşturabiliriz
-    // Ancak insert işlemi kesin sütun gerektirir. Kullanıcı SQL'i çalıştırmalı.
     const { error } = await client.from('users').insert([
         {
             username: credential.username,

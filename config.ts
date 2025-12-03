@@ -10,16 +10,19 @@ export const SCRIPT_URL = "";
 
 // --- REKLAM AYARLARI ---
 
-// Web (AdSense) Ayarları
-// Bu ID web tarayıcısında reklam göstermek için kullanılır.
+// 1. WEB SİTESİ REKLAMLARI (GOOGLE ADSENSE)
+// Tarayıcıda (Chrome, Safari vb.) reklam göstermek için bunu kullanın.
+// AdSense panelinden alacağınız Yayıncı Kimliği (ca-pub-...)
 export const ADSENSE_PUBLISHER_ID = "ca-pub-1812481333949389"; 
 
-// Google AdSense panelinden oluşturduğunuz "Esnek" veya "Sabit" reklam biriminin ID'sini buraya yazın.
-// Şu anki değer test içindir, gerçek reklamlar için kendi Slot ID'nizi girmelisiniz.
+// AdSense panelinden oluşturduğunuz reklam biriminin SLOT ID'si (Örn: 1234567890)
+// DİKKAT: Buraya AdMob ID'si (ca-app-pub...) YAZMAYIN, çalışmaz. Sadece sayısal Slot ID yazın.
 export const ADSENSE_SLOT_ID = "1234567890"; 
 
-// Mobil Uygulama (AdMob) Kimlikleri
-// Eğer bu projeyi WebView ile mobil uygulamaya çevirirseniz bu kimlikler gerekecektir.
+
+// 2. MOBİL UYGULAMA REKLAMLARI (GOOGLE ADMOB)
+// Bu ayarlar SADECE uygulamanızı Google Play veya App Store'a yüklediğinizde (APK/IPA) kullanılır.
+// Web sürümünde bu ID'ler kullanılmaz.
 export const ADMOB_CONFIG = {
     androidAppId: "ca-app-pub-1812481333949389~6106353706",
     iosAppId: "ca-app-pub-1812481333949389~4417867519"
