@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import type { Customer } from '../types';
 import * as sheetService from '../services/sheetService';
@@ -147,28 +148,46 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         }
     };
 
-    // Android/iOS Uyumlu Arama Başlatıcı
+    // Android/iOS Uyumlu Arama Başlatıcı (+90 Eklemeli)
     const handleCallClick = (e: React.MouseEvent, phone: string) => {
         e.preventDefault();
         
         // Önce logla
         logAction('call');
 
-        // Numarayı temizle (boşlukları sil)
-        const cleanPhone = String(phone).replace(/\s/g, "").replace(/[^0-9+]/g, "");
+        // Numarayı temizle (sadece rakamlar)
+        let cleanPhone = String(phone).replace(/[^0-9]/g, "");
+        
+        // Formatlama: +90 ekle
+        if (cleanPhone.startsWith('90')) {
+            cleanPhone = '+' + cleanPhone;
+        } else {
+            if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
+            cleanPhone = '+90' + cleanPhone;
+        }
         
         // Tarayıcıyı zorla yönlendir
         window.location.href = `tel:${cleanPhone}`;
     };
 
-    // Android/iOS Uyumlu SMS Başlatıcı
+    // Android/iOS Uyumlu SMS Başlatıcı (+90 Eklemeli)
     const handleSmsClick = (e: React.MouseEvent, phone: string, name: string) => {
         e.preventDefault();
 
         // Önce logla
         logAction('sms');
 
-        const cleanPhone = String(phone).replace(/\s/g, "").replace(/[^0-9+]/g, "");
+        // Numarayı temizle (sadece rakamlar)
+        let cleanPhone = String(phone).replace(/[^0-9]/g, "");
+        
+        // Formatlama: +90 ekle
+        if (cleanPhone.startsWith('90')) {
+            cleanPhone = '+' + cleanPhone;
+        } else {
+            if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
+            cleanPhone = '+90' + cleanPhone;
+        }
+
         const messageBody = `Sayın ${name}, Aksa Doğalgaz tesisat kontrolü için adresinize geldik ancak size ulaşamadık.`;
         
         // Standart SMS URI şeması
