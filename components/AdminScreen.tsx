@@ -59,10 +59,25 @@ const getStatusColor = (dateStr: string | undefined) => {
     const date = parseTRDate(dateStr);
     if (!date) return 'bg-gray-400';
     
-    const diffMins = (new Date().getTime() - date.getTime()) / (1000 * 60);
+    const now = new Date();
+    const diffMins = (now.getTime() - date.getTime()) / (1000 * 60);
     
+    // 15 dk içindeyse Online (Yeşil)
     if (diffMins < 15) return 'bg-green-500'; 
-    if (diffMins < 60 * 24) return 'bg-blue-500';
+    
+    // Tarih karşılaştırması için saatleri sıfırla
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const loginDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Bugün ise Mavi
+    if (loginDay.getTime() === today.getTime()) return 'bg-blue-500';
+    
+    // Dün ise Turuncu
+    if (loginDay.getTime() === yesterday.getTime()) return 'bg-orange-400';
+
+    // Daha eski ise Gri
     return 'bg-gray-400';
 };
 
@@ -70,10 +85,20 @@ const getStatusLabel = (dateStr: string | undefined) => {
     const date = parseTRDate(dateStr);
     if (!date) return 'Çevrimdışı';
     
-    const diffMins = (new Date().getTime() - date.getTime()) / (1000 * 60);
+    const now = new Date();
+    const diffMins = (now.getTime() - date.getTime()) / (1000 * 60);
     
     if (diffMins < 15) return 'Çevrimiçi';
-    if (diffMins < 60 * 24) return 'Bugün Aktif';
+
+    // Tarih karşılaştırması
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const loginDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (loginDay.getTime() === today.getTime()) return 'Bugün Aktif';
+    if (loginDay.getTime() === yesterday.getTime()) return 'Dün Aktifti';
+
     return 'Çevrimdışı';
 };
 

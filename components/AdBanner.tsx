@@ -1,15 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ADSENSE_PUBLISHER_ID, ADSENSE_SLOT_ID } from '../config';
 
 interface AdBannerProps {
-  slotId?: string; // AdSense reklam birimi ID'si
+  slotId?: string; // AdSense reklam birimi ID'si (Opsiyonel, verilmezse config'den alır)
   format?: 'auto' | 'fluid' | 'rectangle';
   className?: string;
 }
 
 const AdBanner: React.FC<AdBannerProps> = ({ slotId, format = 'auto', className = '' }) => {
+  // Localhost'ta reklamlar görünmez, ancak production'da görünmesi için true yapıyoruz.
   const isProduction = true; 
   const adRef = useRef<HTMLDivElement>(null);
   const [isAdPushed, setIsAdPushed] = useState(false);
+  
+  // Eğer prop olarak slotId gelmediyse config dosyasındaki varsayılan ID'yi kullan
+  const finalSlotId = slotId || ADSENSE_SLOT_ID;
 
   useEffect(() => {
     if (!isProduction || isAdPushed) return;
@@ -41,14 +46,15 @@ const AdBanner: React.FC<AdBannerProps> = ({ slotId, format = 'auto', className 
         clearTimeout(timer1);
         clearTimeout(timer2);
     };
-  }, [isProduction, isAdPushed, slotId]);
+  }, [isProduction, isAdPushed, finalSlotId]);
 
   if (!isProduction) {
-    // TEST MODU
+    // TEST MODU GÖRÜNÜMÜ
     return (
       <div className={`w-full my-4 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 text-center transition-all hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer group ${className}`}>
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 group-hover:text-blue-500">Sponsorlu Alan</p>
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200">Reklamlar Burada Gösterilecek</p>
+        <p className="text-[10px] text-gray-400 mt-1">ID: {finalSlotId}</p>
       </div>
     );
   }
@@ -61,8 +67,8 @@ const AdBanner: React.FC<AdBannerProps> = ({ slotId, format = 'auto', className 
         {/* Google AdSense Kodu */}
         <ins className="adsbygoogle"
             style={{ display: 'block', width: '100%' }}
-            data-ad-client="ca-pub-1812481333949389"
-            data-ad-slot={slotId || "1234567890"}
+            data-ad-client={ADSENSE_PUBLISHER_ID}
+            data-ad-slot={finalSlotId}
             data-ad-format={format}
             data-full-width-responsive="true"></ins>
     </div>
