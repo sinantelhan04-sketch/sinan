@@ -71,10 +71,10 @@ export const getTotalCustomerCount = async (): Promise<number> => {
 
 export const getCredentials = async (): Promise<Credential[]> => {
     const client = ensureClient();
-    // Yeni sütunları da seçiyoruz
+    // select('*') kullanarak eksik sütun hatasını önlüyoruz (PostgreSQL error mitigation)
     const { data, error } = await client
         .from('users')
-        .select('username, password, allowed_device_id, last_login, skip_device_lock, can_view_details')
+        .select('*')
         .order('username');
 
     if (error) throw new Error(error.message);
@@ -82,6 +82,8 @@ export const getCredentials = async (): Promise<Credential[]> => {
     return data.map((user: any) => ({
         username: user.username,
         password: user.password,
+        fullName: user.full_name || '',
+        title: user.title || '',
         allowedDeviceId: user.allowed_device_id,
         skipDeviceLock: user.skip_device_lock,
         canViewDetails: user.can_view_details,
@@ -124,8 +126,8 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
     return customer;
 };
 
-// Authentication artık izinleri de dönüyor
-export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean }> => {
+// Authentication artık isim ve izinleri de dönüyor
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, fullName?: string }> => {
     const client = ensureClient();
 
     const { data: user, error } = await client
@@ -176,9 +178,10 @@ export const authenticateUser = async (username: string, password: string, devic
         }
     }
 
-    // Yetki bilgisini döndür
+    // Yetki ve isim bilgisini döndür
     return {
-        canViewDetails: user.can_view_details || false
+        canViewDetails: user.can_view_details || false,
+        fullName: user.full_name
     };
 };
 
@@ -242,10 +245,15 @@ export const getUserLogs = async (username: string): Promise<{installationNumber
 
 export const addCredential = async (credential: Credential): Promise<Credential[]> => {
     const client = ensureClient();
+    
+    // Veritabanı şeması güncellenene kadar hata vermemesi için insert nesnesini dinamik oluşturabiliriz
+    // Ancak insert işlemi kesin sütun gerektirir. Kullanıcı SQL'i çalıştırmalı.
     const { error } = await client.from('users').insert([
         {
             username: credential.username,
             password: credential.password,
+            full_name: credential.fullName, 
+            title: credential.title,        
             allowed_device_id: credential.allowedDeviceId || null,
             skip_device_lock: credential.skipDeviceLock || false,
             can_view_details: credential.canViewDetails || false
@@ -254,6 +262,9 @@ export const addCredential = async (credential: Credential): Promise<Credential[
 
     if (error) {
         if (error.code === '23505') throw new Error('Bu sicil numarası zaten mevcut.');
+        if (error.message.includes('column') && error.message.includes('does not exist')) {
+            throw new Error('Veritabanı şeması güncel değil. Lütfen Supabase SQL editöründe gerekli sütunları (full_name, title) ekleyin.');
+        }
         throw new Error(error.message);
     }
 
@@ -277,6 +288,8 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
     const updates: any = {
         username: updatedCredential.username,
         password: updatedCredential.password,
+        full_name: updatedCredential.fullName,
+        title: updatedCredential.title,
         skip_device_lock: updatedCredential.skipDeviceLock,
         can_view_details: updatedCredential.canViewDetails
     };
@@ -290,7 +303,12 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
         .update(updates)
         .eq('username', originalUsername);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+         if (error.message.includes('column') && error.message.includes('does not exist')) {
+            throw new Error('Veritabanı şeması güncel değil. "full_name" ve "title" sütunlarını ekleyiniz.');
+        }
+        throw new Error(error.message);
+    }
 
     return getCredentials();
 };

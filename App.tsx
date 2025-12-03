@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
   const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
@@ -48,6 +49,7 @@ const App: React.FC = () => {
             if (isValid) {
                 setIsAuthenticated(true);
                 setCurrentUser(session.username);
+                setCurrentUserFullName(session.fullName);
                 setCanViewDetails(session.canViewDetails);
                 if (session.username === 'admin') {
                     setIsAdmin(true);
@@ -76,6 +78,7 @@ const App: React.FC = () => {
             setIsAuthenticated(false);
             setIsAdmin(false);
             setCurrentUser(null);
+            setCurrentUserFullName(null);
             setCanViewDetails(false);
             setLegalAccepted(false);
         }
@@ -90,30 +93,34 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
         setIsAdmin(true);
         setCurrentUser('admin');
+        setCurrentUserFullName('Sistem Yöneticisi');
         setCanViewDetails(true); 
         setLegalAccepted(true);
         
         // Oturumu Kaydet
         localStorage.setItem(SESSION_KEY, JSON.stringify({
             username: 'admin',
+            fullName: 'Sistem Yöneticisi',
             canViewDetails: true,
             timestamp: Date.now()
         }));
         return;
     }
    
-    const permissions = await sheetService.authenticateUser(username, password, deviceId);
+    const result = await sheetService.authenticateUser(username, password, deviceId);
     
     setIsAuthenticated(true);
     setIsAdmin(false);
     setCurrentUser(username);
-    setCanViewDetails(permissions.canViewDetails); 
+    setCurrentUserFullName(result.fullName || null);
+    setCanViewDetails(result.canViewDetails); 
     setLegalAccepted(false);
 
     // Oturumu Kaydet
     localStorage.setItem(SESSION_KEY, JSON.stringify({
         username,
-        canViewDetails: permissions.canViewDetails,
+        fullName: result.fullName,
+        canViewDetails: result.canViewDetails,
         timestamp: Date.now()
     }));
   }, []);
@@ -123,6 +130,7 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
     setIsAdmin(false);
     setCurrentUser(null);
+    setCurrentUserFullName(null);
     setCanViewDetails(false);
     setLegalAccepted(false);
   }, []);
@@ -221,6 +229,7 @@ const App: React.FC = () => {
       return <MainScreen 
                 onLogout={handleLogout} 
                 username={currentUser!}
+                fullName={currentUserFullName}
                 canViewDetails={canViewDetails}
              />;
   }

@@ -12,6 +12,8 @@ export interface Credential {
   password: string;
   allowedDeviceId?: string;
   // Yeni Alanlar
+  fullName?: string;          // Ad Soyad
+  title?: string;             // Ünvan (Örn: Saha Operasyon Uzmanı)
   skipDeviceLock?: boolean;   // Cihaz kilidini atla
   canViewDetails?: boolean;   // İsim soyisim açık gör
 }

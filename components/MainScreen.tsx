@@ -6,6 +6,7 @@ import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIco
 interface MainScreenProps {
     onLogout: () => void;
     username: string;
+    fullName?: string | null;
     canViewDetails: boolean;
 }
 
@@ -23,7 +24,7 @@ const maskName = (fullName: string): string => {
     }).join(' ');
 };
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, canViewDetails }) => {
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, canViewDetails }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -140,8 +141,10 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, canViewDeta
                         <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10 sm:h-12 w-auto" />
                         <div className="ml-3 sm:ml-4">
                             <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Tesisat Sorgulama</h1>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                Yetkili Personel Ekranı ({canViewDetails ? 'Tam Yetki' : 'Kısıtlı Görünüm'})
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex flex-col sm:flex-row sm:gap-1">
+                                <span>Hoşgeldin, <strong className="text-gray-700 dark:text-gray-200">{fullName || username}</strong></span>
+                                <span className="hidden sm:inline">•</span>
+                                <span>({canViewDetails ? 'Tam Yetki' : 'Kısıtlı Görünüm'})</span>
                             </p>
                         </div>
                     </div>

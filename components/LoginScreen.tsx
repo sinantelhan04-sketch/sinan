@@ -85,16 +85,21 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 animate-fade-in-up">
             
             {/* Header / Logo */}
-            <div className="relative pt-10 pb-2 text-center bg-gray-50/50 dark:bg-gray-800/50">
+            <div className="relative pt-8 pb-4 text-center bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
                 <div className="flex flex-col items-center justify-center">
-                    <div className="w-24 h-24 bg-white dark:bg-white/10 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-600 mb-4 flex items-center justify-center">
-                         <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Logo" className="w-full h-full object-contain" />
+                    
+                    {/* Personnel Avatar / Logo */}
+                    <div className="w-20 h-20 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center mb-3 shadow-lg border-4 border-white dark:border-gray-600 ring-1 ring-gray-100 dark:ring-gray-800">
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-blue-600 dark:text-blue-400">
+                            <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                        </svg>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                         Tesisat Sorgulama
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">
-                        Yetkili Personel Giriş Paneli
+                    <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mt-1 text-blue-600 dark:text-blue-400">
+                        Yetkili Personel Girişi
                     </p>
                 </div>
             </div>
@@ -243,8 +248,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             
             {/* Footer */}
             <div className="bg-gray-50 dark:bg-gray-800/80 p-4 text-center border-t border-gray-100 dark:border-gray-700">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                    © {new Date().getFullYear()} Aksa Doğalgaz Dağıtım A.Ş.
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                    Bu Uygulama Ölçüm Tahakkuk Birimi Tarafından Hazırlanmıştır.
                 </p>
             </div>
         </div>

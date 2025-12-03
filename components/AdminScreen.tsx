@@ -1,16 +1,26 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
 import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon } from './icons';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
-type SortableKeys = 'username' | 'queryCount' | 'lastLogin';
+type SortableKeys = 'username' | 'queryCount' | 'lastLogin' | 'fullName';
 type Tab = 'users' | 'details';
 
 interface AdminScreenProps {
   onLogout: () => void;
 }
+
+// Job Titles List
+const JOB_TITLES = [
+    "Ölçüm ve Tahakkuk Şefi",
+    "Tahakkuk Yetkilisi",
+    "İş Emri Takip Yetkilisi",
+    "Ekip Lideri",
+    "Sayaç Okuma Hizmetleri Görevlisi",
+    "Acil",
+    "İşletme Görevlisi"
+];
 
 // Icon for Customer Count
 const DatabaseIcon = () => (
@@ -90,6 +100,11 @@ const getAvatarColor = (username: string) => {
     return colors[Math.abs(hash) % colors.length];
 };
 
+const formatCreditCardNumber = (str: string) => {
+    const padded = str.padEnd(16, '•'); // Ensure at least 16 chars visual
+    return padded.match(/.{1,4}/g)?.join(' ') || str;
+};
+
 export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [users, setUsers] = useState<AdminUserData[]>([]);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
@@ -110,6 +125,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   
   // New User Form State
   const [newUsername, setNewUsername] = useState('');
+  const [newFullName, setNewFullName] = useState(''); // New
+  const [newTitle, setNewTitle] = useState('');       // New
   const [newPassword, setNewPassword] = useState('');
   const [newDeviceId, setNewDeviceId] = useState('');
   const [newSkipDeviceLock, setNewSkipDeviceLock] = useState(false);
@@ -120,6 +137,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [editForm, setEditForm] = useState({ 
       username: '', 
       password: '', 
+      fullName: '', // New
+      title: '',    // New
       allowedDeviceId: '',
       skipDeviceLock: false,
       canViewDetails: false
@@ -208,6 +227,11 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 const bTime = parseTRDate(b.lastLogin)?.getTime() || 0;
                 return sortConfig.direction === 'ascending' ? aTime - bTime : bTime - aTime;
             }
+            if (sortConfig.key === 'fullName') {
+                const aName = a.fullName || a.username;
+                const bName = b.fullName || b.username;
+                return sortConfig.direction === 'ascending' ? aName.localeCompare(bName) : bName.localeCompare(aName);
+            }
             const aValue = a[sortConfig.key];
             const bValue = b[sortConfig.key];
             if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -220,8 +244,11 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
   const filteredUsers = useMemo(() => {
     if (!searchTerm) return sortedUsers;
+    const lowerTerm = searchTerm.toLowerCase();
     return sortedUsers.filter(user =>
-        String(user.username).toLowerCase().includes(searchTerm.toLowerCase())
+        String(user.username).toLowerCase().includes(lowerTerm) ||
+        String(user.fullName || '').toLowerCase().includes(lowerTerm) ||
+        String(user.title || '').toLowerCase().includes(lowerTerm)
     );
   }, [sortedUsers, searchTerm]);
 
@@ -255,12 +282,16 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         await sheetService.addCredential({ 
             username: newUsername.trim(), 
             password: newPassword.trim(),
+            fullName: newFullName.trim(), // New
+            title: newTitle.trim(),       // New
             allowedDeviceId: newDeviceId.trim(),
             skipDeviceLock: newSkipDeviceLock,
             canViewDetails: newCanViewDetails
         });
         setNewUsername('');
         setNewPassword('');
+        setNewFullName('');
+        setNewTitle('');
         setNewDeviceId('');
         setNewSkipDeviceLock(false);
         setNewCanViewDetails(false);
@@ -315,6 +346,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     setEditForm({ 
         username: String(user.username), 
         password: String(user.password),
+        fullName: String(user.fullName || ''),
+        title: String(user.title || ''),
         allowedDeviceId: String(user.allowedDeviceId || ''),
         skipDeviceLock: user.skipDeviceLock || false,
         canViewDetails: user.canViewDetails || false
@@ -340,6 +373,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         await sheetService.updateCredential(editingUser.username, {
             username: finalUsername, 
             password: finalPassword,
+            fullName: editForm.fullName.trim(),
+            title: editForm.title.trim(),
             allowedDeviceId: String(editForm.allowedDeviceId).trim(),
             skipDeviceLock: editForm.skipDeviceLock,
             canViewDetails: editForm.canViewDetails
@@ -469,10 +504,14 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             {dashboardStats.activeUser ? (
                                 <>
                                     <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold mr-3 border-2 border-white/30">
-                                        {dashboardStats.activeUser.username.substring(0, 2).toUpperCase()}
+                                        {(dashboardStats.activeUser.fullName && dashboardStats.activeUser.fullName.length > 0) 
+                                            ? dashboardStats.activeUser.fullName.substring(0, 1).toUpperCase()
+                                            : dashboardStats.activeUser.username.substring(0, 2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold leading-tight">{dashboardStats.activeUser.username}</h3>
+                                        <h3 className="text-xl font-bold leading-tight truncate max-w-[150px]">
+                                            {dashboardStats.activeUser.fullName || dashboardStats.activeUser.username}
+                                        </h3>
                                         <p className="text-xs text-amber-100">{dashboardStats.activeUser.queryCount} Sorgu</p>
                                     </div>
                                 </>
@@ -538,7 +577,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 </div>
                                 <input
                                     type="text"
-                                    placeholder="Sicil No Ara..."
+                                    placeholder="İsim veya Sicil No Ara..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 transition-all shadow-sm"
@@ -558,8 +597,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-gray-50/50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <th onClick={() => requestSort('username')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                        <div className="flex items-center">Sicil No {getSortIndicator('username')}</div>
+                                    <th onClick={() => requestSort('fullName')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <div className="flex items-center">Kimlik Bilgileri {getSortIndicator('fullName')}</div>
                                     </th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         <div className="flex items-center gap-2">
@@ -576,10 +615,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cihaz Durumu</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yetkiler</th>
                                     <th onClick={() => requestSort('queryCount')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-1/5">
-                                        <div className="flex items-center">Aktivite (Sorgu) {getSortIndicator('queryCount')}</div>
+                                        <div className="flex items-center">Aktivite {getSortIndicator('queryCount')}</div>
                                     </th>
                                     <th onClick={() => requestSort('lastLogin')} className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                        <div className="flex items-center">Durum / Son Giriş {getSortIndicator('lastLogin')}</div>
+                                        <div className="flex items-center">Durum {getSortIndicator('lastLogin')}</div>
                                     </th>
                                     <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">İşlemler</th>
                                 </tr>
@@ -613,10 +652,15 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className={`flex-shrink-0 h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold shadow-sm ring-2 ring-white dark:ring-gray-700`}>
-                                                        {user.username.substring(0, 2).toUpperCase()}
+                                                        {(user.fullName && user.fullName.length > 0) ? user.fullName.substring(0, 1).toUpperCase() : user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <div className="ml-4">
-                                                        <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">{user.username}</div>
+                                                        <div className="text-sm font-bold text-gray-900 dark:text-white">
+                                                            {user.fullName || user.username}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                                                            {user.username} {user.title ? `• ${user.title}` : ''}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -674,7 +718,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                         </div>
                                                     </div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400 font-mono pl-4">
-                                                        {user.lastLogin !== 'Giriş Yapmadı' ? user.lastLogin : '-'}
+                                                        {user.lastLogin !== 'Giriş Yapmadı' ? user.lastLogin.split(' ')[0] : '-'}
                                                     </div>
                                                 </div>
                                             </td>
@@ -730,14 +774,12 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`h-10 w-10 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold`}>
-                                                        {user.username.substring(0, 2).toUpperCase()}
+                                                        {(user.fullName && user.fullName.length > 0) ? user.fullName.substring(0, 1).toUpperCase() : user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-gray-900 dark:text-white">{user.username}</div>
-                                                        <div className="text-xs text-gray-500 flex items-center gap-1">
-                                                            <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
-                                                            {statusLabel}
-                                                        </div>
+                                                        <div className="font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
+                                                        <div className="text-xs text-gray-500 font-mono">{user.username}</div>
+                                                        {user.title && <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">{user.title}</div>}
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-1">
@@ -762,14 +804,12 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                     )}
                                                 </div>
                                                 <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
-                                                    <span className="block text-gray-400 mb-1">Yetki</span>
-                                                    {user.canViewDetails ? 'Tam İsim' : 'Maskeli'}
+                                                    <span className="block text-gray-400 mb-1">Son Giriş</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
+                                                        {statusLabel}
+                                                    </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center text-xs">
-                                                <span className="text-gray-500">Sorgu Sayısı:</span>
-                                                <span className="font-bold text-lg text-gray-800 dark:text-gray-200">{user.queryCount}</span>
                                             </div>
                                         </div>
                                     );
@@ -794,7 +834,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         >
                             <option value="">-- Personel Seçin --</option>
                             {users.map(u => (
-                                <option key={u.username} value={u.username}>{u.username}</option>
+                                <option key={u.username} value={u.username}>
+                                    {u.fullName ? `${u.fullName} (${u.username})` : u.username}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -840,7 +882,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                 </div>
 
                                                 {/* Middle: Chip & Contactless */}
-                                                <div className="flex items-center gap-4 my-2 pl-1">
+                                                <div className="flex items-center gap-4 mt-1 pl-1">
                                                     {/* Realistic Gold Chip */}
                                                     <div className="w-12 h-9 rounded-md bg-gradient-to-br from-yellow-200 via-yellow-500 to-yellow-700 shadow-sm border border-yellow-600/50 relative overflow-hidden">
                                                         <div className="absolute inset-0 border-[1px] border-black/20 rounded-md m-[2px]"></div>
@@ -851,18 +893,24 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                     <ContactlessIcon />
                                                 </div>
 
+                                                {/* Account Number (Sicil No) - Center */}
+                                                <div className="text-lg font-mono text-white/90 tracking-widest font-bold text-center my-1 drop-shadow-md">
+                                                    {formatCreditCardNumber(selectedDetailUserObj.username)}
+                                                </div>
+
                                                 {/* Bottom: Name & Info */}
-                                                <div>
-                                                    <div className="text-xl font-mono text-white tracking-widest font-bold drop-shadow-lg" style={{textShadow: '0 2px 4px rgba(0,0,0,0.8)'}}>
-                                                        {selectedDetailUserObj.username}
+                                                <div className="flex justify-between items-end">
+                                                    <div>
+                                                        <div className="text-[10px] text-gray-400 font-medium tracking-wide uppercase mb-0.5">
+                                                            {selectedDetailUserObj.title || 'PERSONEL'}
+                                                        </div>
+                                                        <div className="text-sm sm:text-base font-mono text-white tracking-widest font-bold uppercase drop-shadow-lg" style={{textShadow: '0 2px 4px rgba(0,0,0,0.8)'}}>
+                                                            {selectedDetailUserObj.fullName || selectedDetailUserObj.username}
+                                                        </div>
                                                     </div>
-                                                    <div className="flex justify-between items-end mt-3">
-                                                        <div className="text-[10px] text-gray-300 font-medium tracking-wide">
-                                                            SİCİL NO: <span className="text-white font-mono text-xs">{selectedDetailUserObj.username.replace(/\D/g,'') || '0000'}</span>
-                                                        </div>
-                                                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm shadow-lg border ${selectedDetailUserObj.canViewDetails ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>
-                                                            {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
-                                                        </div>
+                                                    
+                                                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm shadow-lg border ${selectedDetailUserObj.canViewDetails ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>
+                                                        {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -878,11 +926,13 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                  <div className="flex items-center gap-3 mt-1">
                                                      <div className="flex-grow h-8 bg-white flex items-center px-2">
                                                          <span className="font-handwriting text-gray-600 text-lg transform -rotate-2 select-none" style={{ fontFamily: 'cursive' }}>
-                                                            {selectedDetailUserObj.username}
+                                                            {selectedDetailUserObj.fullName || selectedDetailUserObj.username}
                                                          </span>
                                                      </div>
                                                      <div className="w-10 h-8 bg-white/10 flex items-center justify-center border border-white/20">
-                                                         <span className="text-xs text-white font-mono italic">000</span>
+                                                         <span className="text-xs text-white font-mono italic">
+                                                             {selectedDetailUserObj.username.slice(-3)}
+                                                         </span>
                                                      </div>
                                                  </div>
 
@@ -894,7 +944,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                      
                                                      <div className="flex-1 text-[8px] text-gray-400 leading-tight text-justify">
                                                          <p>Bu kart Aksa Doğalgaz Dağıtım A.Ş. personeline aittir. Bulunması halinde lütfen en yakın şubeye teslim ediniz.</p>
-                                                         <p className="mt-2 text-white/60">Yetkili İmzası: <span className="text-white/30 italic">Sistem Yöneticisi</span></p>
+                                                         <p className="mt-2 text-white/60">Kart Sahibi: <span className="text-white/80">{selectedDetailUserObj.fullName}</span></p>
                                                          <p className="mt-2 text-blue-400">7/24 Destek Hattı: 444 4 187</p>
                                                      </div>
                                                  </div>
@@ -966,10 +1016,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             )}
         </div>
 
-      {/* Add User Modal - Same as before */}
+      {/* Add User Modal */}
       {isAddModalOpen && (
           <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsAddModalOpen(false)}>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Yeni Kullanıcı</h2>
                     <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕</button>
@@ -978,6 +1028,25 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                       <div>
                           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sicil Numarası</label>
                           <input type="text" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all" placeholder="Örn: 12345" autoFocus />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ad Soyad</label>
+                            <input type="text" value={newFullName} onChange={e => setNewFullName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all" placeholder="Ahmet Yılmaz" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ünvan</label>
+                            <select 
+                                value={newTitle} 
+                                onChange={e => setNewTitle(e.target.value)} 
+                                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all appearance-none"
+                            >
+                                <option value="">Seçiniz</option>
+                                {JOB_TITLES.map((title) => (
+                                    <option key={title} value={title}>{title}</option>
+                                ))}
+                            </select>
+                        </div>
                       </div>
                       <div>
                           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Şifre</label>
@@ -1024,10 +1093,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
           </div>
       )}
 
-      {/* Edit User Modal - Same as before */}
+      {/* Edit User Modal */}
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsEditModalOpen(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Düzenle: <span className="text-blue-600">{editingUser.username}</span></h2>
                 <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕</button>
@@ -1036,6 +1105,25 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sicil Numarası</label>
                     <input type="text" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ad Soyad</label>
+                        <input type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ünvan</label>
+                         <select 
+                            value={editForm.title} 
+                            onChange={e => setEditForm({...editForm, title: e.target.value})}
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all appearance-none"
+                        >
+                            <option value="">Seçiniz</option>
+                            {JOB_TITLES.map((title) => (
+                                <option key={title} value={title}>{title}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Şifre</label>
