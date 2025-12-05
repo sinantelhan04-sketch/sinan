@@ -183,8 +183,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys; direction: 'ascending' | 'descending' }>({ key: 'lastLogin', direction: 'descending' });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setError('');
     try {
       const [creds, stats, customerCount, trends] = await Promise.all([
@@ -216,7 +216,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     } catch (err: any) {
       setError(err.message || 'Veri yüklenirken bir hata oluştu.');
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, []);
 
@@ -234,10 +234,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   }, [selectedDetailUserUsername]);
 
   useEffect(() => {
-    fetchData();
-    // Auto-refresh stats every 30 seconds
+    fetchData(true); // İlk yüklemede loading göster
+    // İstatistikleri arka planda sessizce yenile (30 saniyede bir)
     const interval = setInterval(() => {
-        fetchData();
+        fetchData(false); // Loading gösterme (Silent Refresh)
     }, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -253,7 +253,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   }, [selectedDetailUserUsername, activeTab, fetchLogs]);
 
   const handleRefresh = () => {
-      fetchData();
+      fetchData(true); // Manuel yenilemede loading göster
       if (activeTab === 'details') fetchLogs();
   };
 
@@ -349,7 +349,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         setIsAddModalOpen(false);
         setSuccessMsg('Kullanıcı başarıyla eklendi.');
         setTimeout(() => setSuccessMsg(''), 3000);
-        await fetchData();
+        await fetchData(true);
     } catch(err: any) {
         setError(err.message || 'Kullanıcı eklenemedi.');
     } finally {
@@ -365,7 +365,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         await sheetService.deleteCredential(username);
         setSuccessMsg('Kullanıcı silindi.');
         setTimeout(() => setSuccessMsg(''), 3000);
-        await fetchData();
+        await fetchData(true);
         if (selectedDetailUserUsername === username) setSelectedDetailUserUsername('');
       } catch (err: any) {
         setError(err.message || 'Kullanıcı silinemedi.');
@@ -383,7 +383,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             await sheetService.resetUserStats(username);
             setSuccessMsg('Sorgulama sayısı sıfırlandı.');
             setTimeout(() => setSuccessMsg(''), 3000);
-            await fetchData();
+            await fetchData(true);
             // Eğer detay sekmesindeyse orayı da yenile
             if (selectedDetailUserUsername === username && activeTab === 'details') {
                 fetchLogs();
@@ -459,7 +459,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         setEditingUser(null);
         setSuccessMsg('Kullanıcı güncellendi.');
         setTimeout(() => setSuccessMsg(''), 3000);
-        await fetchData();
+        await fetchData(true);
     } catch (err: any) {
         setError(err.message);
     } finally {
