@@ -263,6 +263,36 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     }));
 };
 
+// --- Admin: Get Global Logs for Feed ---
+export const getGlobalLogs = async (limit: number = 20): Promise<{
+    username: string,
+    installationNumber: string, 
+    timestamp: string,
+    called?: boolean,
+    smsSent?: boolean
+}[]> => {
+    const client = ensureClient();
+    
+    const { data, error } = await client
+        .from('search_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error("Global log error:", error);
+        return [];
+    }
+
+    return data.map((log: any) => ({
+        username: log.username,
+        installationNumber: log.installation_number,
+        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
+        called: log.called || false,
+        smsSent: log.sms_sent || false
+    }));
+};
+
 export const getUserLogs = async (username: string): Promise<{
     installationNumber: string, 
     timestamp: string,
@@ -271,7 +301,6 @@ export const getUserLogs = async (username: string): Promise<{
 }[]> => {
     const client = ensureClient();
     
-    // Select * kullanılarak, eğer sütunlar henüz eklenmediyse hata vermesi engellenir.
     const { data, error } = await client
         .from('search_logs')
         .select('*')

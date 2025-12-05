@@ -204,30 +204,30 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
 
     return (
         <div className="w-full max-w-4xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-8 relative min-h-[500px] flex flex-col">
-                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <div className="bg-white/95 backdrop-blur-sm dark:bg-gray-800/90 rounded-3xl shadow-2xl p-4 sm:p-8 relative min-h-[500px] flex flex-col border border-white/20 dark:border-gray-700">
+                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4 border-b border-gray-100 dark:border-gray-700 pb-6">
                     <div className="flex items-center">
-                        <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10 sm:h-12 w-auto" />
+                        <img src="https://www.aksadogalgaz.com.tr/img/kurumsal-kimlik/Aksa_Dogalgaz.jpg" alt="Aksa Doğalgaz Logo" className="h-10 sm:h-12 w-auto mix-blend-multiply dark:mix-blend-normal rounded-md" />
                         <div className="ml-3 sm:ml-4">
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Tesisat Sorgulama</h1>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex flex-col sm:flex-row sm:gap-1">
-                                <span>Hoşgeldin, <strong className="text-gray-700 dark:text-gray-200">{fullName || username}</strong></span>
-                                <span className="hidden sm:inline">•</span>
-                                <span>({canViewDetails ? 'Tam Yetki' : 'Kısıtlı Görünüm'})</span>
+                            <h1 className="text-xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Tesisat Sorgulama</h1>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex flex-col sm:flex-row sm:gap-1 mt-1 font-medium">
+                                <span>Hoşgeldin, <strong className="text-blue-600 dark:text-blue-300">{fullName || username}</strong></span>
+                                <span className="hidden sm:inline text-gray-300">•</span>
+                                <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 rounded-full text-[10px] w-fit font-bold uppercase tracking-wide py-0.5">{canViewDetails ? 'Tam Yetki' : 'Kısıtlı'}</span>
                             </p>
                         </div>
                     </div>
                     <button 
                         onClick={onLogout}
-                        className="self-end sm:self-auto text-xs sm:text-sm text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40 font-medium py-2 px-4 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                        className="self-end sm:self-auto text-xs sm:text-sm text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40 font-bold py-2 px-4 rounded-xl transition-colors border border-red-100 dark:border-red-800 shadow-sm hover:shadow"
                     >
-                        Güvenli Çıkış
+                        Çıkış Yap
                     </button>
                 </div>
                 
-                <div className="relative mb-6 z-20">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <div className="relative flex-grow">
+                <div className="relative mb-8 z-20">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-grow group">
                              <input
                                 type="text"
                                 value={searchTerm}
@@ -239,9 +239,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                 onBlur={() => setTimeout(() => setShowRecents(false), 200)}
                                 placeholder="Tesisat No (Örn: 100123456)"
                                 disabled={loading}
-                                className="w-full appearance-none rounded-lg border-2 border-gray-200 dark:border-gray-600 px-4 py-3 pl-11 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-600 transition-all font-mono text-base sm:text-lg"
+                                className="w-full appearance-none rounded-2xl border-2 border-gray-100 dark:border-gray-600 px-4 py-4 pl-12 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all font-mono text-lg font-bold shadow-inner"
                             />
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
                                 <SearchIcon />
                             </div>
                         </div>
@@ -250,7 +250,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                             <button
                                 onClick={handleSearchClick}
                                 disabled={loading || !searchTerm.trim()}
-                                className="flex-1 sm:flex-none sm:w-auto px-6 sm:px-8 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center min-w-[100px]"
+                                className="flex-1 sm:flex-none sm:w-auto px-6 sm:px-8 py-3 font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-300 disabled:to-blue-400 dark:disabled:from-gray-700 dark:disabled:to-gray-700 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 active:scale-95 flex items-center justify-center min-w-[120px]"
                             >
                                 {loading ? (
                                     <div className="flex items-center">
@@ -265,7 +265,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                             {searchPerformed && !loading && (
                                 <button 
                                     onClick={handleClear}
-                                    className="flex-1 sm:flex-none sm:w-auto px-4 py-3 font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                    className="flex-1 sm:flex-none sm:w-auto px-4 py-3 font-bold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600"
                                 >
                                     Temizle
                                 </button>
@@ -274,20 +274,20 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                     </div>
 
                     {showRecents && recentSearches.length > 0 && !searchTerm && (
-                        <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-100 dark:border-gray-600 overflow-hidden animate-fade-in z-30">
-                            <div className="flex justify-between items-center px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-600">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Son Aramalar ({username})</span>
-                                <button onClick={clearRecents} className="text-xs text-red-500 hover:text-red-700 hover:underline">Temizle</button>
+                        <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-gray-700 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600 overflow-hidden animate-fade-in z-30">
+                            <div className="flex justify-between items-center px-5 py-3 bg-gray-50/80 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-600 backdrop-blur-sm">
+                                <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Son Aramalar</span>
+                                <button onClick={clearRecents} className="text-xs font-bold text-red-500 hover:text-red-700 hover:underline">Tümünü Sil</button>
                             </div>
-                            <ul>
+                            <ul className="py-1">
                                 {recentSearches.map((term, index) => (
                                     <li key={index}>
                                         <button 
                                             onMouseDown={() => handleRecentClick(term)}
-                                            className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-600 flex items-center justify-between group transition-colors"
+                                            className="w-full text-left px-5 py-3 hover:bg-blue-50 dark:hover:bg-gray-600 flex items-center justify-between group transition-colors"
                                         >
-                                            <span className="font-mono text-gray-700 dark:text-gray-200">{term}</span>
-                                            <span className="text-gray-300 group-hover:text-blue-400">
+                                            <span className="font-mono font-bold text-gray-700 dark:text-gray-200">{term}</span>
+                                            <span className="text-gray-300 group-hover:text-blue-500 transition-colors">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                             </span>
                                         </button>
@@ -299,28 +299,30 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-r-lg mb-6 flex items-center animate-shake" role="alert">
+                    <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-r-xl mb-6 flex items-center animate-shake shadow-sm" role="alert">
                          <svg className="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <div>
                             <p className="font-bold">Sorgulama Başarısız</p>
-                            <p className="text-sm">{error}</p>
+                            <p className="text-sm font-medium">{error}</p>
                         </div>
                     </div>
                 )}
                 
                 {loading && (
                     <div className="flex-grow flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 py-12">
-                        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                        <p className="animate-pulse">Veritabanı taranıyor...</p>
+                        <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                        <p className="animate-pulse font-medium">Veritabanı taranıyor...</p>
                     </div>
                 )}
 
                 {!loading && !foundCustomer && !error && !searchPerformed && (
                      <div className="flex-grow flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-12 opacity-50">
-                        <SearchIcon />
-                        <p className="mt-4 text-sm text-center">Sorgulama yapmak için tesisat numarası girin.</p>
+                        <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-full mb-4">
+                            <SearchIcon />
+                        </div>
+                        <p className="text-sm font-medium text-center max-w-xs">Sorgulama yapmak için yukarıdaki alana tesisat numarası girin.</p>
                     </div>
                 )}
 
@@ -328,51 +330,51 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                     <div className="space-y-6">
                         {/* Abone Kartı */}
                         <div 
-                            className="bg-blue-50 dark:bg-gray-700/50 border border-blue-100 dark:border-gray-600 p-6 rounded-xl shadow-sm relative overflow-hidden animate-soft-slide-up"
+                            className="bg-gradient-to-br from-white to-blue-50 dark:from-gray-700 dark:to-gray-800 border border-blue-100 dark:border-gray-600 p-6 rounded-2xl shadow-lg shadow-blue-900/5 relative overflow-hidden animate-soft-slide-up"
                             style={{ animationFillMode: 'both' }}
                         >
-                             <div className="absolute top-0 right-0 p-4 opacity-10">
+                             <div className="absolute top-0 right-0 p-4 opacity-5 text-blue-900 dark:text-white transform scale-150 origin-top-right pointer-events-none">
                                 <UserIcon />
                              </div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white border-b border-blue-200 dark:border-gray-600 pb-3 mb-4 flex items-center">
-                                <span className="bg-blue-600 w-2 h-6 mr-3 rounded-full"></span>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white border-b border-blue-200 dark:border-gray-600 pb-3 mb-6 flex items-center">
+                                <span className="bg-gradient-to-b from-blue-500 to-indigo-600 w-1.5 h-6 mr-3 rounded-full"></span>
                                 Abone Bilgileri
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Ad Soyad</label>
-                                    <p className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ad Soyad</label>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white flex items-center tracking-tight">
                                         {/* İsim Maskeleme Kontrolü */}
                                         {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Telefon</label>
+                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">İletişim</label>
                                     {/* Telefon Numarası Gizlendi, Sadece Butonlar Gösteriliyor */}
                                     <div className="flex flex-wrap gap-3 mt-1">
                                         <button 
                                             onClick={(e) => handleCallClick(e, foundCustomer.phone)}
-                                            className="flex items-center justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm active:scale-95 group"
+                                            className="flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all shadow-md shadow-green-500/30 active:scale-95 group font-bold"
                                             title="Hemen Ara"
                                         >
                                             <div className="mr-2 group-hover:animate-bounce"><PhoneIconSolid /></div>
-                                            <span className="font-semibold text-sm">Ara</span>
+                                            <span className="text-sm">Ara</span>
                                         </button>
                                         <button 
                                             onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
-                                            className="flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm active:scale-95 group"
+                                            className="flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl transition-all shadow-md shadow-blue-500/30 active:scale-95 group font-bold"
                                             title="SMS Gönder"
                                         >
                                             <div className="mr-2 group-hover:animate-pulse"><MessageIcon /></div>
-                                            <span className="font-semibold text-sm">Mesaj At</span>
+                                            <span className="text-sm">Mesaj At</span>
                                         </button>
                                     </div>
                                 </div>
-                                <div className="md:col-span-2 space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Adres</label>
-                                    <p className="text-base text-gray-900 dark:text-gray-200 flex items-start">
-                                        <MapPinIcon />
-                                        <span className="ml-2">{foundCustomer.address}</span>
+                                <div className="md:col-span-2 space-y-2 bg-white/50 dark:bg-gray-900/30 p-4 rounded-xl border border-blue-50 dark:border-gray-700">
+                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Adres</label>
+                                    <p className="text-base font-medium text-gray-800 dark:text-gray-200 flex items-start leading-relaxed">
+                                        <span className="mt-1 mr-2 text-red-500"><MapPinIcon /></span>
+                                        <span>{foundCustomer.address}</span>
                                     </p>
                                 </div>
                             </div>
@@ -384,17 +386,17 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                             style={{ animationDelay: '200ms', animationFillMode: 'both' }}
                         >
                             {mapEmbedUrl ? (
-                                <div className="bg-white dark:bg-700 border border-gray-200 dark:border-gray-600 p-1 rounded-xl shadow-md">
-                                    <div className="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-t-lg border-b border-gray-200 dark:border-gray-600">
+                                <div className="bg-white dark:bg-700 border border-gray-200 dark:border-gray-600 p-1 rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-none">
+                                    <div className="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-t-xl border-b border-gray-200 dark:border-gray-600">
                                         <h3 className="font-bold text-gray-700 dark:text-gray-200 flex items-center">
-                                            <MapPinIcon /> Lokasyon
+                                            <span className="text-red-500 mr-2"><MapPinIcon /></span> Lokasyon
                                         </h3>
                                         {externalMapUrl && (
                                             <a 
                                                 href={externalMapUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition-colors flex items-center shadow-sm"
+                                                className="text-sm font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-md shadow-blue-500/20"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -403,7 +405,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                             </a>
                                         )}
                                     </div>
-                                    <div className="relative w-full h-64 sm:h-[400px] bg-gray-100 rounded-b-lg overflow-hidden">
+                                    <div className="relative w-full h-64 sm:h-[400px] bg-gray-100 rounded-b-xl overflow-hidden">
                                         <iframe
                                             src={mapEmbedUrl}
                                             width="100%"
@@ -417,11 +419,11 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                     </div>
                                 </div>
                             ) : (
-                                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg flex items-center text-yellow-800 dark:text-yellow-200">
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-6 rounded-xl flex items-center text-yellow-800 dark:text-yellow-200">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    <span className="text-sm">Bu kayıt için harita bilgisi oluşturulamadı.</span>
+                                    <span className="font-medium">Bu kayıt için harita bilgisi oluşturulamadı.</span>
                                 </div>
                             )}
                         </div>
