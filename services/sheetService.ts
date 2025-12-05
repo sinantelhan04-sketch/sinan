@@ -265,6 +265,37 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     }));
 };
 
+export const getTopQueriedInstallations = async (limit: number = 5): Promise<{installationNumber: string, count: number}[]> => {
+    try {
+        const client = ensureClient();
+        // Son 1000 kaydı çekip istemci tarafında analiz ediyoruz (View oluşturmadan trend analizi)
+        const { data, error } = await client
+            .from('search_logs')
+            .select('installation_number')
+            .order('created_at', { ascending: false })
+            .limit(1000);
+
+        if (error) throw new Error(error.message);
+
+        const counts: Record<string, number> = {};
+        data?.forEach((row: any) => {
+            if (row.installation_number) {
+                const num = row.installation_number;
+                counts[num] = (counts[num] || 0) + 1;
+            }
+        });
+
+        // Objeyi diziye çevir, sırala ve limitle
+        return Object.entries(counts)
+            .map(([installationNumber, count]) => ({ installationNumber, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, limit);
+    } catch (e) {
+        console.error("Trend analizi hatası:", e);
+        return [];
+    }
+};
+
 // --- Admin: Get Global Logs for Feed ---
 export const getGlobalLogs = async (limit: number = 20): Promise<{
     username: string,

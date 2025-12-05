@@ -135,6 +135,7 @@ const formatDateDisplay = (isoDateStr: string | undefined | null) => {
 export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [users, setUsers] = useState<AdminUserData[]>([]);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
+  const [topQueries, setTopQueries] = useState<{installationNumber: string, count: number}[]>([]);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -184,13 +185,15 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     setIsLoading(true);
     setError('');
     try {
-      const [creds, stats, customerCount] = await Promise.all([
+      const [creds, stats, customerCount, trends] = await Promise.all([
         sheetService.getCredentials(),
         sheetService.getUserActivityStats(),
-        sheetService.getTotalCustomerCount()
+        sheetService.getTotalCustomerCount(),
+        sheetService.getTopQueriedInstallations(10) // Top 10 queries
       ]);
 
       setTotalCustomers(customerCount);
+      setTopQueries(trends);
 
       const statsMap = new Map<string, Omit<UserActivityStat, 'username'>>();
       stats.forEach(stat => {
@@ -555,281 +558,347 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </div>
             </div>
 
-            {/* Main Content Area - Full Width */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-[600px]">
+            {/* --- LAYOUT SPLIT: Main Content (Left) & Sidebar (Right) --- */}
+            <div className="flex flex-col xl:flex-row gap-6 items-start">
                 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-200 dark:border-gray-700">
-                    <button
-                        onClick={() => setActiveTab('users')}
-                        className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
-                            activeTab === 'users'
-                                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
-                                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
-                        }`}
-                    >
-                        Kullanıcı Listesi
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('details')}
-                        className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
-                            activeTab === 'details'
-                                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
-                                : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
-                        }`}
-                    >
-                        Personel Detay & Loglar
-                    </button>
+                {/* LEFT COLUMN: User List & Details (Main Content) */}
+                <div className="flex-grow w-full xl:w-auto bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-[600px]">
+                    
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-200 dark:border-gray-700">
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
+                                activeTab === 'users'
+                                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                                    : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                            }`}
+                        >
+                            Kullanıcı Listesi
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('details')}
+                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
+                                activeTab === 'details'
+                                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                                    : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                            }`}
+                        >
+                            Personel Detay & Loglar
+                        </button>
+                    </div>
+
+                    {/* Notifications */}
+                    {error && <div className="mx-8 mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-xl border border-red-100 dark:border-red-800 flex items-center gap-3 shadow-sm font-medium animate-pulse">{error}</div>}
+                    {successMsg && <div className="mx-8 mt-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-xl border border-green-100 dark:border-green-800 flex items-center gap-3 shadow-sm font-medium">{successMsg}</div>}
+
+                    {/* TAB CONTENT: USERS */}
+                    {activeTab === 'users' && (
+                        <div className="animate-fade-in">
+                            {/* Toolbar */}
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/30 dark:bg-gray-800/50">
+                                <div className="relative w-full sm:w-96 group">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                                        <SearchIcon />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="İsim, sicil no veya ünvan ara..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 w-full transition-all shadow-sm font-medium"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={() => setIsAddModalOpen(true)}
+                                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center whitespace-nowrap w-full sm:w-auto justify-center"
+                                >
+                                    <span className="mr-2 text-xl leading-none">+</span> Yeni Kullanıcı Ekle
+                                </button>
+                            </div>
+
+                            {/* Desktop Table */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-gray-50/80 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-xs uppercase font-bold tracking-wider">
+                                        <tr>
+                                            <th onClick={() => requestSort('fullName')} className="px-8 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <div className="flex items-center">Personel {getSortIndicator('fullName')}</div>
+                                            </th>
+                                            <th className="px-6 py-5">Şifre</th>
+                                            <th className="px-6 py-5 text-center">Cihaz</th>
+                                            <th onClick={() => requestSort('queryCount')} className="px-6 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <div className="flex items-center">Aktivite {getSortIndicator('queryCount')}</div>
+                                            </th>
+                                            <th onClick={() => requestSort('lastLogin')} className="px-6 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <div className="flex items-center">Durum {getSortIndicator('lastLogin')}</div>
+                                            </th>
+                                            <th className="px-8 py-5 text-right">İşlem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                                        {isLoading ? (
+                                            <tr><td colSpan={6} className="p-12 text-center text-gray-500">Veriler Yükleniyor...</td></tr>
+                                        ) : filteredUsers.length === 0 ? (
+                                            <tr><td colSpan={6} className="p-12 text-center text-gray-500 italic">Kayıt bulunamadı.</td></tr>
+                                        ) : (
+                                            filteredUsers.map((user) => {
+                                                const statusColor = getStatusColor(user.lastLogin);
+                                                const statusLabel = getStatusLabel(user.lastLogin);
+                                                return (
+                                                <tr key={user.username} className="group hover:bg-blue-50/40 dark:hover:bg-gray-700/40 transition-colors">
+                                                    <td className="px-8 py-4">
+                                                        <div className="flex items-center">
+                                                            <div className={`flex-shrink-0 h-11 w-11 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold shadow-md ring-2 ring-white dark:ring-gray-800`}>
+                                                                {(user.fullName || user.username).substring(0, 1).toUpperCase()}
+                                                            </div>
+                                                            <div className="ml-4">
+                                                                <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{user.username}</div>
+                                                                <div className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">{user.title}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2 group/pass">
+                                                            <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                                                {showPasswords ? user.password : '••••••'}
+                                                            </span>
+                                                            <input type="checkbox" checked={showPasswords} onChange={e => setShowPasswords(e.target.checked)} className="h-4 w-4 accent-blue-600 rounded cursor-pointer opacity-0 group-hover/pass:opacity-100 transition-opacity" title="Göster" />
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        {user.skipDeviceLock ? (
+                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300" title="Kısıtlama Yok"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg></span>
+                                                        ) : user.allowedDeviceId ? (
+                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" title="Eşleşmiş Cihaz"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300" title="Cihaz Bekleniyor"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{user.queryCount}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center mb-1">
+                                                                <span className={`w-2.5 h-2.5 rounded-full ${statusColor} mr-2.5 ring-2 ring-white dark:ring-gray-800`}></span>
+                                                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{statusLabel}</span>
+                                                            </div>
+                                                            <span className="text-[10px] text-gray-400 font-medium pl-5">{formatDateDisplay(user.lastLogin)}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                                            <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><EditIcon /></button>
+                                                            <button onClick={() => handleDeleteUser(user.username)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><TrashIcon /></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )})
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Mobile List */}
+                            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+                                    {filteredUsers.map((user) => (
+                                    <div key={user.username} className="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`h-12 w-12 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-base font-bold shadow-sm`}>
+                                                {(user.fullName || user.username).substring(0, 1).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
+                                                <div className="text-xs text-gray-500 font-medium">{user.queryCount} İşlem • {getStatusLabel(user.lastLogin)}</div>
+                                                <div className="text-[10px] text-gray-400 mt-0.5">{formatDateDisplay(user.lastLogin)}</div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleOpenEditModal(user)} className="text-blue-600 text-xs font-bold px-4 py-2 bg-blue-50 rounded-lg">Düzenle</button>
+                                    </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB CONTENT: DETAILS */}
+                    {activeTab === 'details' && (
+                            <div className="p-8 md:p-12 space-y-12 animate-fade-in flex flex-col items-center justify-center">
+                            {/* User Selection */}
+                            <div className="w-full max-w-lg">
+                                <label className="block text-xs font-bold text-gray-400 mb-3 uppercase tracking-widest text-center">Görüntülenecek Personeli Seçin</label>
+                                <div className="relative">
+                                    <select 
+                                        value={selectedDetailUserUsername}
+                                        onChange={(e) => setSelectedDetailUserUsername(e.target.value)}
+                                        className="w-full p-4 pl-6 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none text-lg font-medium appearance-none shadow-sm cursor-pointer"
+                                    >
+                                        <option value="">-- Personel Listesinden Seçiniz --</option>
+                                        {users.map(u => (
+                                            <option key={u.username} value={u.username}>{u.fullName ? `${u.fullName}` : u.username} ({u.username})</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {selectedDetailUserObj && (
+                                <div className="w-full max-w-4xl flex flex-col md:flex-row gap-12 items-start">
+                                        {/* VISUAL 3D CARD */}
+                                    <div className="flex-shrink-0 mx-auto md:mx-0">
+                                        <div className="group perspective w-80 h-52 cursor-pointer" onClick={() => setIsCardFlipped(!isCardFlipped)}>
+                                            <div className={`relative w-full h-full duration-700 preserve-3d transition-all ${isCardFlipped ? 'rotate-y-180' : ''}`}>
+                                                {/* Front */}
+                                                <div className="absolute w-full h-full backface-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-black text-white p-6 shadow-2xl border border-slate-700 flex flex-col justify-between">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="text-xs font-mono text-slate-400 tracking-widest">AKSA PERSONEL ID</div>
+                                                        <ContactlessIcon />
+                                                    </div>
+                                                    <div className="text-center font-mono text-2xl tracking-widest font-bold text-slate-200 drop-shadow-lg mt-2">
+                                                        {formatCreditCardNumber(selectedDetailUserObj.username)}
+                                                    </div>
+                                                    <div className="flex justify-between items-end">
+                                                        <div>
+                                                            <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">{selectedDetailUserObj.title || 'SAHA PERSONELİ'}</div>
+                                                            <div className="font-bold text-sm uppercase tracking-wide">{selectedDetailUserObj.fullName || selectedDetailUserObj.username}</div>
+                                                        </div>
+                                                        <div className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide border ${selectedDetailUserObj.canViewDetails ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-yellow-900/40 text-yellow-400 border-yellow-800'}`}>
+                                                            {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Back */}
+                                                <div className="absolute w-full h-full backface-hidden rotate-y-180 rounded-2xl bg-slate-800 text-white p-6 shadow-2xl border border-slate-700 flex flex-col items-center justify-center">
+                                                    <div className="w-full h-10 bg-black -mx-6 mb-4 absolute top-6"></div>
+                                                    <div className="mt-8 text-center">
+                                                        <p className="text-xs text-slate-400 mb-2">Güvenlik Kodu</p>
+                                                        <p className="font-mono text-lg bg-white text-black px-2 rounded">CVV: ***</p>
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-500 mt-auto text-center w-full">Bu kart Aksa Doğalgaz personeline aittir. İzinsiz kullanımı yasaktır.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-center text-xs text-gray-400 mt-4 animate-bounce">Kartı çevirmek için tıklayın</p>
+                                    </div>
+
+                                    {/* LOG TABLE */}
+                                    <div className="flex-grow w-full">
+                                        <div className="flex justify-between items-center mb-5">
+                                            <h3 className="font-bold text-xl text-gray-800 dark:text-white flex items-center">
+                                                <span className="w-2 h-6 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full mr-3"></span>
+                                                Son İşlem Geçmişi
+                                            </h3>
+                                            <button onClick={downloadLogsAsCSV} disabled={userLogs.length === 0} className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors flex items-center shadow-sm">
+                                                <DownloadIcon /> <span className="ml-1">Excel/CSV İndir</span>
+                                            </button>
+                                        </div>
+                                        <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
+                                            <div className="overflow-y-auto max-h-[350px] custom-scrollbar">
+                                                    <table className="w-full text-left text-sm">
+                                                    <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm">
+                                                        <tr>
+                                                            <th className="px-5 py-3 font-bold text-gray-500 uppercase text-xs">Tarih / Saat</th>
+                                                            <th className="px-5 py-3 font-bold text-gray-500 uppercase text-xs">Sorgulanan Tesisat</th>
+                                                            <th className="px-5 py-3 font-bold text-gray-500 uppercase text-xs">Aksiyon</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                                        {logsLoading ? (
+                                                            <tr><td colSpan={3} className="p-8 text-center text-gray-400">Yükleniyor...</td></tr>
+                                                        ) : userLogs.length === 0 ? (
+                                                            <tr><td colSpan={3} className="p-8 text-center text-gray-400">Bu kullanıcı henüz işlem yapmadı.</td></tr>
+                                                        ) : (
+                                                            userLogs.map((log, i) => (
+                                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                                <td className="px-5 py-3 font-mono text-gray-600 dark:text-gray-300 text-xs">{log.timestamp}</td>
+                                                                <td className="px-5 py-3 font-bold text-gray-800 dark:text-white">{log.installationNumber}</td>
+                                                                <td className="px-5 py-3">
+                                                                    <div className="flex gap-2">
+                                                                        {log.called && <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 dark:border-green-800 flex items-center gap-1"><PhoneIconSolid /> Aradı</span>}
+                                                                        {log.smsSent && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 flex items-center gap-1"><MessageIcon /> SMS</span>}
+                                                                        {!log.called && !log.smsSent && <span className="text-gray-300 text-xs">-</span>}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )))}
+                                                    </tbody>
+                                                    </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            </div>
+                    )}
                 </div>
 
-                {/* Notifications */}
-                {error && <div className="mx-8 mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-xl border border-red-100 dark:border-red-800 flex items-center gap-3 shadow-sm font-medium animate-pulse">{error}</div>}
-                {successMsg && <div className="mx-8 mt-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-xl border border-green-100 dark:border-green-800 flex items-center gap-3 shadow-sm font-medium">{successMsg}</div>}
-
-                {/* TAB CONTENT: USERS */}
-                {activeTab === 'users' && (
-                    <div className="animate-fade-in">
-                        {/* Toolbar */}
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/30 dark:bg-gray-800/50">
-                            <div className="relative w-full sm:w-96 group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                                    <SearchIcon />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="İsim, sicil no veya ünvan ara..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 w-full transition-all shadow-sm font-medium"
-                                />
+                {/* RIGHT COLUMN: Sidebar (Trend Analysis) */}
+                <div className="w-full xl:w-80 flex-shrink-0 space-y-6 animate-fade-in order-first xl:order-last">
+                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm sticky top-24">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white">Trend Analizi</h3>
+                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-0.5">En Çok Sorgulananlar</p>
                             </div>
-                            <button 
-                                onClick={() => setIsAddModalOpen(true)}
-                                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center whitespace-nowrap w-full sm:w-auto justify-center"
-                            >
-                                <span className="mr-2 text-xl leading-none">+</span> Yeni Kullanıcı Ekle
-                            </button>
-                        </div>
-
-                        {/* Desktop Table */}
-                        <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-gray-50/80 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-xs uppercase font-bold tracking-wider">
-                                    <tr>
-                                        <th onClick={() => requestSort('fullName')} className="px-8 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                            <div className="flex items-center">Personel {getSortIndicator('fullName')}</div>
-                                        </th>
-                                        <th className="px-6 py-5">Şifre</th>
-                                        <th className="px-6 py-5 text-center">Cihaz</th>
-                                        <th onClick={() => requestSort('queryCount')} className="px-6 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                            <div className="flex items-center">Aktivite {getSortIndicator('queryCount')}</div>
-                                        </th>
-                                        <th onClick={() => requestSort('lastLogin')} className="px-6 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                            <div className="flex items-center">Durum {getSortIndicator('lastLogin')}</div>
-                                        </th>
-                                        <th className="px-8 py-5 text-right">İşlem</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                                    {isLoading ? (
-                                        <tr><td colSpan={6} className="p-12 text-center text-gray-500">Veriler Yükleniyor...</td></tr>
-                                    ) : filteredUsers.length === 0 ? (
-                                        <tr><td colSpan={6} className="p-12 text-center text-gray-500 italic">Kayıt bulunamadı.</td></tr>
-                                    ) : (
-                                        filteredUsers.map((user) => {
-                                            const statusColor = getStatusColor(user.lastLogin);
-                                            const statusLabel = getStatusLabel(user.lastLogin);
-                                            return (
-                                            <tr key={user.username} className="group hover:bg-blue-50/40 dark:hover:bg-gray-700/40 transition-colors">
-                                                <td className="px-8 py-4">
-                                                    <div className="flex items-center">
-                                                        <div className={`flex-shrink-0 h-11 w-11 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-sm font-bold shadow-md ring-2 ring-white dark:ring-gray-800`}>
-                                                            {(user.fullName || user.username).substring(0, 1).toUpperCase()}
-                                                        </div>
-                                                        <div className="ml-4">
-                                                            <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{user.username}</div>
-                                                            <div className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">{user.title}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-2 group/pass">
-                                                        <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                                            {showPasswords ? user.password : '••••••'}
-                                                        </span>
-                                                        <input type="checkbox" checked={showPasswords} onChange={e => setShowPasswords(e.target.checked)} className="h-4 w-4 accent-blue-600 rounded cursor-pointer opacity-0 group-hover/pass:opacity-100 transition-opacity" title="Göster" />
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {user.skipDeviceLock ? (
-                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300" title="Kısıtlama Yok"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg></span>
-                                                    ) : user.allowedDeviceId ? (
-                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" title="Eşleşmiş Cihaz"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300" title="Cihaz Bekleniyor"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{user.queryCount}</span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <div className="flex items-center mb-1">
-                                                            <span className={`w-2.5 h-2.5 rounded-full ${statusColor} mr-2.5 ring-2 ring-white dark:ring-gray-800`}></span>
-                                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{statusLabel}</span>
-                                                        </div>
-                                                        <span className="text-[10px] text-gray-400 font-medium pl-5">{formatDateDisplay(user.lastLogin)}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                                        <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><EditIcon /></button>
-                                                        <button onClick={() => handleDeleteUser(user.username)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><TrashIcon /></button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )})
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Mobile List */}
-                        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
-                                {filteredUsers.map((user) => (
-                                <div key={user.username} className="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`h-12 w-12 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-base font-bold shadow-sm`}>
-                                            {(user.fullName || user.username).substring(0, 1).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
-                                            <div className="text-xs text-gray-500 font-medium">{user.queryCount} İşlem • {getStatusLabel(user.lastLogin)}</div>
-                                            <div className="text-[10px] text-gray-400 mt-0.5">{formatDateDisplay(user.lastLogin)}</div>
-                                        </div>
-                                    </div>
-                                    <button onClick={() => handleOpenEditModal(user)} className="text-blue-600 text-xs font-bold px-4 py-2 bg-blue-50 rounded-lg">Düzenle</button>
-                                </div>
-                                ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* TAB CONTENT: DETAILS */}
-                {activeTab === 'details' && (
-                        <div className="p-8 md:p-12 space-y-12 animate-fade-in flex flex-col items-center justify-center">
-                        {/* User Selection */}
-                        <div className="w-full max-w-lg">
-                            <label className="block text-xs font-bold text-gray-400 mb-3 uppercase tracking-widest text-center">Görüntülenecek Personeli Seçin</label>
-                            <div className="relative">
-                                <select 
-                                    value={selectedDetailUserUsername}
-                                    onChange={(e) => setSelectedDetailUserUsername(e.target.value)}
-                                    className="w-full p-4 pl-6 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none text-lg font-medium appearance-none shadow-sm cursor-pointer"
-                                >
-                                    <option value="">-- Personel Listesinden Seçiniz --</option>
-                                    {users.map(u => (
-                                        <option key={u.username} value={u.username}>{u.fullName ? `${u.fullName}` : u.username} ({u.username})</option>
-                                    ))}
-                                </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
+                            <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 p-2 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
                             </div>
                         </div>
 
-                        {selectedDetailUserObj && (
-                            <div className="w-full max-w-4xl flex flex-col md:flex-row gap-12 items-start">
-                                    {/* VISUAL 3D CARD */}
-                                <div className="flex-shrink-0 mx-auto md:mx-0">
-                                    <div className="group perspective w-80 h-52 cursor-pointer" onClick={() => setIsCardFlipped(!isCardFlipped)}>
-                                        <div className={`relative w-full h-full duration-700 preserve-3d transition-all ${isCardFlipped ? 'rotate-y-180' : ''}`}>
-                                            {/* Front */}
-                                            <div className="absolute w-full h-full backface-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-black text-white p-6 shadow-2xl border border-slate-700 flex flex-col justify-between">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="text-xs font-mono text-slate-400 tracking-widest">AKSA PERSONEL ID</div>
-                                                    <ContactlessIcon />
-                                                </div>
-                                                <div className="text-center font-mono text-2xl tracking-widest font-bold text-slate-200 drop-shadow-lg mt-2">
-                                                    {formatCreditCardNumber(selectedDetailUserObj.username)}
-                                                </div>
-                                                <div className="flex justify-between items-end">
-                                                    <div>
-                                                        <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">{selectedDetailUserObj.title || 'SAHA PERSONELİ'}</div>
-                                                        <div className="font-bold text-sm uppercase tracking-wide">{selectedDetailUserObj.fullName || selectedDetailUserObj.username}</div>
-                                                    </div>
-                                                    <div className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide border ${selectedDetailUserObj.canViewDetails ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-yellow-900/40 text-yellow-400 border-yellow-800'}`}>
-                                                        {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* Back */}
-                                            <div className="absolute w-full h-full backface-hidden rotate-y-180 rounded-2xl bg-slate-800 text-white p-6 shadow-2xl border border-slate-700 flex flex-col items-center justify-center">
-                                                <div className="w-full h-10 bg-black -mx-6 mb-4 absolute top-6"></div>
-                                                <div className="mt-8 text-center">
-                                                    <p className="text-xs text-slate-400 mb-2">Güvenlik Kodu</p>
-                                                    <p className="font-mono text-lg bg-white text-black px-2 rounded">CVV: ***</p>
-                                                </div>
-                                                <p className="text-[10px] text-slate-500 mt-auto text-center w-full">Bu kart Aksa Doğalgaz personeline aittir. İzinsiz kullanımı yasaktır.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p className="text-center text-xs text-gray-400 mt-4 animate-bounce">Kartı çevirmek için tıklayın</p>
-                                </div>
+                        {topQueries.length === 0 ? (
+                            <div className="text-center py-8 text-gray-400 italic text-sm bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-600">
+                                Yeterli veri bulunamadı.
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {topQueries.map((item, index) => {
+                                    // Ranking Styling Logic
+                                    let badgeStyle = "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800";
+                                    let rowStyle = "bg-white hover:bg-gray-50 border-gray-100 dark:bg-gray-700/30 dark:hover:bg-gray-700 dark:border-gray-600";
+                                    let icon = null;
 
-                                {/* LOG TABLE */}
-                                <div className="flex-grow w-full">
-                                    <div className="flex justify-between items-center mb-5">
-                                        <h3 className="font-bold text-xl text-gray-800 dark:text-white flex items-center">
-                                            <span className="w-2 h-6 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full mr-3"></span>
-                                            Son İşlem Geçmişi
-                                        </h3>
-                                        <button onClick={downloadLogsAsCSV} disabled={userLogs.length === 0} className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors flex items-center shadow-sm">
-                                            <DownloadIcon /> <span className="ml-1">Excel/CSV İndir</span>
-                                        </button>
-                                    </div>
-                                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
-                                        <div className="overflow-y-auto max-h-[350px] custom-scrollbar">
-                                                <table className="w-full text-left text-sm">
-                                                <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm">
-                                                    <tr>
-                                                        <th className="px-5 py-3 font-bold text-gray-500 uppercase text-xs">Tarih / Saat</th>
-                                                        <th className="px-5 py-3 font-bold text-gray-500 uppercase text-xs">Sorgulanan Tesisat</th>
-                                                        <th className="px-5 py-3 font-bold text-gray-500 uppercase text-xs">Aksiyon</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                                    {logsLoading ? (
-                                                        <tr><td colSpan={3} className="p-8 text-center text-gray-400">Yükleniyor...</td></tr>
-                                                    ) : userLogs.length === 0 ? (
-                                                        <tr><td colSpan={3} className="p-8 text-center text-gray-400">Bu kullanıcı henüz işlem yapmadı.</td></tr>
-                                                    ) : (
-                                                        userLogs.map((log, i) => (
-                                                        <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                            <td className="px-5 py-3 font-mono text-gray-600 dark:text-gray-300 text-xs">{log.timestamp}</td>
-                                                            <td className="px-5 py-3 font-bold text-gray-800 dark:text-white">{log.installationNumber}</td>
-                                                            <td className="px-5 py-3">
-                                                                <div className="flex gap-2">
-                                                                    {log.called && <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 dark:border-green-800 flex items-center gap-1"><PhoneIconSolid /> Aradı</span>}
-                                                                    {log.smsSent && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 flex items-center gap-1"><MessageIcon /> SMS</span>}
-                                                                    {!log.called && !log.smsSent && <span className="text-gray-300 text-xs">-</span>}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    )))}
-                                                </tbody>
-                                                </table>
+                                    if (index === 0) { // Gold
+                                        badgeStyle = "bg-yellow-100 text-yellow-700 border-yellow-200 ring-2 ring-yellow-400/50 shadow-sm";
+                                        rowStyle = "bg-gradient-to-r from-yellow-50 to-white border-yellow-200 dark:from-yellow-900/20 dark:to-gray-800 dark:border-yellow-800 shadow-sm";
+                                        icon = "👑";
+                                    } else if (index === 1) { // Silver
+                                        badgeStyle = "bg-gray-100 text-gray-700 border-gray-200 ring-2 ring-gray-300/50 shadow-sm";
+                                        rowStyle = "bg-gradient-to-r from-gray-50 to-white border-gray-200 dark:from-gray-800 dark:to-gray-800 dark:border-gray-600";
+                                        icon = "🥈";
+                                    } else if (index === 2) { // Bronze
+                                        badgeStyle = "bg-orange-100 text-orange-800 border-orange-200 ring-2 ring-orange-300/50 shadow-sm";
+                                        rowStyle = "bg-gradient-to-r from-orange-50 to-white border-orange-200 dark:from-orange-900/20 dark:to-gray-800 dark:border-orange-800";
+                                        icon = "🥉";
+                                    }
+
+                                    return (
+                                        <div key={item.installationNumber} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${rowStyle}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${badgeStyle}`}>
+                                                    {icon || index + 1}
+                                                </div>
+                                                <span className="font-mono font-bold text-gray-800 dark:text-gray-200 text-sm tracking-tight">{item.installationNumber}</span>
+                                            </div>
+                                            <div className="text-[10px] font-bold uppercase text-gray-500 bg-white/50 dark:bg-black/20 px-2 py-1 rounded">
+                                                {item.count} Sorgu
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
                         )}
-                        </div>
-                )}
+                     </div>
+                     
+                     {/* Move AdBanner here to balance the layout */}
+                     <AdBanner />
+                </div>
             </div>
             
-            <AdBanner className="mt-8" />
         </div>
 
         {/* Add User Modal */}
