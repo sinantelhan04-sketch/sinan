@@ -88,7 +88,8 @@ export const getCredentials = async (): Promise<Credential[]> => {
         allowedDeviceId: user.allowed_device_id,
         skipDeviceLock: user.skip_device_lock,
         canViewDetails: user.can_view_details,
-        lastLogin: user.last_login ? new Date(user.last_login).toLocaleString('tr-TR') : undefined
+        // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
+        lastLogin: user.last_login 
     }));
 };
 
@@ -259,7 +260,8 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     return users.map((user: any) => ({
         username: user.username,
         queryCount: logCounts[user.username] || 0,
-        lastLogin: user.last_login ? new Date(user.last_login).toLocaleString('tr-TR') : 'Giriş Yapmadı'
+        // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
+        lastLogin: user.last_login
     }));
 };
 

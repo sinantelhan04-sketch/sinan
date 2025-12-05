@@ -37,24 +37,16 @@ const ContactlessIcon = () => (
     </svg>
 );
 
-const parseTRDate = (dateStr: string | undefined | null): Date | null => {
-    if (!dateStr || dateStr === 'Giriş Yapmadı') return null;
-    try {
-        const [datePart, timePart] = dateStr.split(' ');
-        if (!datePart || !timePart) return null;
-        const [day, month, year] = datePart.split('.').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
-        return new Date(year, month - 1, day, hour, minute);
-    } catch (e) {
-        return null;
-    }
-};
-
-const getStatusColor = (dateStr: string | undefined) => {
-    const date = parseTRDate(dateStr);
-    if (!date) return 'bg-gray-400';
+// Helper to check user status based on ISO date string
+const getStatusColor = (isoDateStr: string | undefined | null) => {
+    if (!isoDateStr) return 'bg-gray-400';
     
+    const date = new Date(isoDateStr);
     const now = new Date();
+    
+    // Check if valid date
+    if (isNaN(date.getTime())) return 'bg-gray-400';
+
     const diffMins = (now.getTime() - date.getTime()) / (1000 * 60);
     
     // 15 dk içindeyse Online (Yeşil)
@@ -76,10 +68,12 @@ const getStatusColor = (dateStr: string | undefined) => {
     return 'bg-gray-400';
 };
 
-const getStatusLabel = (dateStr: string | undefined) => {
-    const date = parseTRDate(dateStr);
-    if (!date) return 'Çevrimdışı';
+const getStatusLabel = (isoDateStr: string | undefined | null) => {
+    if (!isoDateStr) return 'Çevrimdışı';
     
+    const date = new Date(isoDateStr);
+    if (isNaN(date.getTime())) return 'Çevrimdışı';
+
     const now = new Date();
     const diffMins = (now.getTime() - date.getTime()) / (1000 * 60);
     
@@ -124,6 +118,18 @@ const getAvatarColor = (username: string) => {
 const formatCreditCardNumber = (str: string) => {
     const padded = str.padEnd(16, '•'); // Ensure at least 16 chars visual
     return padded.match(/.{1,4}/g)?.join(' ') || str;
+};
+
+// Helper for UI date display
+const formatDateDisplay = (isoDateStr: string | undefined | null) => {
+    if (!isoDateStr) return 'Giriş Yapmadı';
+    try {
+        const date = new Date(isoDateStr);
+        if (isNaN(date.getTime())) return 'Hatalı Tarih';
+        return date.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return 'Giriş Yapmadı';
+    }
 };
 
 export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
@@ -197,7 +203,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
       const mergedData: AdminUserData[] = creds.map(cred => ({
         ...cred,
         queryCount: statsMap.get(String(cred.username))?.queryCount ?? 0,
-        lastLogin: statsMap.get(String(cred.username))?.lastLogin ?? 'Giriş Yapmadı',
+        lastLogin: statsMap.get(String(cred.username))?.lastLogin, // ISO String or undefined
       }));
 
       setUsers(mergedData);
@@ -261,8 +267,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     if (sortConfig.key) {
         sortableItems.sort((a, b) => {
             if (sortConfig.key === 'lastLogin') {
-                const aTime = parseTRDate(a.lastLogin)?.getTime() || 0;
-                const bTime = parseTRDate(b.lastLogin)?.getTime() || 0;
+                const aTime = a.lastLogin ? new Date(a.lastLogin).getTime() : 0;
+                const bTime = b.lastLogin ? new Date(b.lastLogin).getTime() : 0;
                 return sortConfig.direction === 'ascending' ? aTime - bTime : bTime - aTime;
             }
             if (sortConfig.key === 'fullName') {
@@ -272,8 +278,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             }
             const aValue = a[sortConfig.key];
             const bValue = b[sortConfig.key];
-            if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-            if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+            if ((aValue ?? '') < (bValue ?? '')) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if ((aValue ?? '') > (bValue ?? '')) return sortConfig.direction === 'ascending' ? 1 : -1;
             return 0;
         });
     }
@@ -668,9 +674,12 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                     <span className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{user.queryCount}</span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="flex items-center">
-                                                        <span className={`w-2.5 h-2.5 rounded-full ${statusColor} mr-2.5 ring-2 ring-white dark:ring-gray-800`}></span>
-                                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{statusLabel}</span>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center mb-1">
+                                                            <span className={`w-2.5 h-2.5 rounded-full ${statusColor} mr-2.5 ring-2 ring-white dark:ring-gray-800`}></span>
+                                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{statusLabel}</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 font-medium pl-5">{formatDateDisplay(user.lastLogin)}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-4 text-right">
@@ -697,6 +706,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                         <div>
                                             <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
                                             <div className="text-xs text-gray-500 font-medium">{user.queryCount} İşlem • {getStatusLabel(user.lastLogin)}</div>
+                                            <div className="text-[10px] text-gray-400 mt-0.5">{formatDateDisplay(user.lastLogin)}</div>
                                         </div>
                                     </div>
                                     <button onClick={() => handleOpenEditModal(user)} className="text-blue-600 text-xs font-bold px-4 py-2 bg-blue-50 rounded-lg">Düzenle</button>
