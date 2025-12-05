@@ -88,6 +88,7 @@ export const getCredentials = async (): Promise<Credential[]> => {
         allowedDeviceId: user.allowed_device_id,
         skipDeviceLock: user.skip_device_lock,
         canViewDetails: user.can_view_details,
+        unlimitedAccess: user.unlimited_access, // Yeni alan
         // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
         lastLogin: user.last_login 
     }));
@@ -129,7 +130,7 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
 };
 
 // Authentication artık isim ve izinleri de dönüyor
-export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, fullName?: string }> => {
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, fullName?: string, unlimitedAccess?: boolean }> => {
     const client = ensureClient();
 
     const { data: user, error } = await client
@@ -183,7 +184,8 @@ export const authenticateUser = async (username: string, password: string, devic
     // Yetki ve isim bilgisini döndür
     return {
         canViewDetails: user.can_view_details || false,
-        fullName: user.full_name
+        fullName: user.full_name,
+        unlimitedAccess: user.unlimited_access || false
     };
 };
 
@@ -364,14 +366,15 @@ export const addCredential = async (credential: Credential): Promise<Credential[
             title: credential.title,        
             allowed_device_id: credential.allowedDeviceId || null,
             skip_device_lock: credential.skipDeviceLock || false,
-            can_view_details: credential.canViewDetails || false
+            can_view_details: credential.canViewDetails || false,
+            unlimited_access: credential.unlimitedAccess || false
         }
     ]);
 
     if (error) {
         if (error.code === '23505') throw new Error('Bu sicil numarası zaten mevcut.');
         if (error.message.includes('column') && error.message.includes('does not exist')) {
-            throw new Error('Veritabanı şeması güncel değil. Lütfen Supabase SQL editöründe gerekli sütunları (full_name, title) ekleyin.');
+            throw new Error('Veritabanı şeması güncel değil. Lütfen Supabase SQL editöründe gerekli sütunları (unlimited_access vb.) ekleyin.');
         }
         throw new Error(error.message);
     }
@@ -399,7 +402,8 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
         full_name: updatedCredential.fullName,
         title: updatedCredential.title,
         skip_device_lock: updatedCredential.skipDeviceLock,
-        can_view_details: updatedCredential.canViewDetails
+        can_view_details: updatedCredential.canViewDetails,
+        unlimited_access: updatedCredential.unlimitedAccess
     };
     
     if (updatedCredential.allowedDeviceId !== undefined) {
@@ -413,7 +417,7 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
 
     if (error) {
          if (error.message.includes('column') && error.message.includes('does not exist')) {
-            throw new Error('Veritabanı şeması güncel değil. "full_name" ve "title" sütunlarını ekleyiniz.');
+            throw new Error('Veritabanı şeması güncel değil. "unlimited_access" vb. sütunları ekleyiniz.');
         }
         throw new Error(error.message);
     }

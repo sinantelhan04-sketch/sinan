@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import LoginScreen from './components/LoginScreen';
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
   const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
+  const [hasUnlimitedAccess, setHasUnlimitedAccess] = useState<boolean>(false); // 7/24 Erişim Yetkisi
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
@@ -51,6 +53,7 @@ const App: React.FC = () => {
                 setCurrentUser(session.username);
                 setCurrentUserFullName(session.fullName);
                 setCanViewDetails(session.canViewDetails);
+                setHasUnlimitedAccess(session.unlimitedAccess || false);
                 if (session.username === 'admin') {
                     setIsAdmin(true);
                     setLegalAccepted(true);
@@ -80,6 +83,7 @@ const App: React.FC = () => {
             setCurrentUser(null);
             setCurrentUserFullName(null);
             setCanViewDetails(false);
+            setHasUnlimitedAccess(false);
             setLegalAccepted(false);
         }
     };
@@ -95,6 +99,7 @@ const App: React.FC = () => {
         setCurrentUser('admin');
         setCurrentUserFullName('Sistem Yöneticisi');
         setCanViewDetails(true); 
+        setHasUnlimitedAccess(true);
         setLegalAccepted(true);
         
         // Oturumu Kaydet
@@ -102,6 +107,7 @@ const App: React.FC = () => {
             username: 'admin',
             fullName: 'Sistem Yöneticisi',
             canViewDetails: true,
+            unlimitedAccess: true,
             timestamp: Date.now()
         }));
         return;
@@ -114,6 +120,7 @@ const App: React.FC = () => {
     setCurrentUser(username);
     setCurrentUserFullName(result.fullName || null);
     setCanViewDetails(result.canViewDetails); 
+    setHasUnlimitedAccess(result.unlimitedAccess || false);
     setLegalAccepted(false);
 
     // Oturumu Kaydet
@@ -121,6 +128,7 @@ const App: React.FC = () => {
         username,
         fullName: result.fullName,
         canViewDetails: result.canViewDetails,
+        unlimitedAccess: result.unlimitedAccess,
         timestamp: Date.now()
     }));
   }, []);
@@ -132,6 +140,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
     setCurrentUserFullName(null);
     setCanViewDetails(false);
+    setHasUnlimitedAccess(false);
     setLegalAccepted(false);
   }, []);
 
@@ -222,7 +231,10 @@ const App: React.FC = () => {
       if (!legalAccepted) {
           return <LegalScreen onAccept={handleAcceptLegal} onDecline={handleDeclineLegal} />;
       }
-      if (!isWorkingTime) {
+      
+      // ÇALIŞMA SAATİ KONTROLÜ
+      // Eğer kullanıcıda sınırsız erişim varsa veya admin ise süre kısıtlamasına takılmaz.
+      if (!isWorkingTime && !hasUnlimitedAccess && !isAdmin) {
           return <OfflineScreen />;
       }
       

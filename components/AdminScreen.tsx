@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
-import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon, CounterResetIcon } from './icons';
+import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon, CounterResetIcon, InfinityIcon } from './icons';
 import AdBanner from './AdBanner';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
@@ -164,6 +164,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [newDeviceId, setNewDeviceId] = useState('');
   const [newSkipDeviceLock, setNewSkipDeviceLock] = useState(false);
   const [newCanViewDetails, setNewCanViewDetails] = useState(false);
+  const [newUnlimitedAccess, setNewUnlimitedAccess] = useState(false); // Yeni State
   
   // Edit User Form State
   const [editingUser, setEditingUser] = useState<AdminUserData | null>(null);
@@ -174,7 +175,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
       title: '',    
       allowedDeviceId: '',
       skipDeviceLock: false,
-      canViewDetails: false
+      canViewDetails: false,
+      unlimitedAccess: false // Yeni State
   });
   
   const [showPasswords, setShowPasswords] = useState(false);
@@ -333,7 +335,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             title: newTitle.trim(),       
             allowedDeviceId: newDeviceId.trim(),
             skipDeviceLock: newSkipDeviceLock,
-            canViewDetails: newCanViewDetails
+            canViewDetails: newCanViewDetails,
+            unlimitedAccess: newUnlimitedAccess
         });
         setNewUsername('');
         setNewPassword('');
@@ -342,6 +345,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         setNewDeviceId('');
         setNewSkipDeviceLock(false);
         setNewCanViewDetails(false);
+        setNewUnlimitedAccess(false);
         setIsAddModalOpen(false);
         setSuccessMsg('Kullanıcı başarıyla eklendi.');
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -420,7 +424,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         title: String(user.title || ''),
         allowedDeviceId: String(user.allowedDeviceId || ''),
         skipDeviceLock: user.skipDeviceLock || false,
-        canViewDetails: user.canViewDetails || false
+        canViewDetails: user.canViewDetails || false,
+        unlimitedAccess: user.unlimitedAccess || false
     });
     setIsEditModalOpen(true);
     setError('');
@@ -447,7 +452,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             title: editForm.title.trim(),
             allowedDeviceId: String(editForm.allowedDeviceId).trim(),
             skipDeviceLock: editForm.skipDeviceLock,
-            canViewDetails: editForm.canViewDetails
+            canViewDetails: editForm.canViewDetails,
+            unlimitedAccess: editForm.unlimitedAccess
         });
         setIsEditModalOpen(false);
         setEditingUser(null);
@@ -647,7 +653,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                 <div className="flex items-center">Personel {getSortIndicator('fullName')}</div>
                                             </th>
                                             <th className="px-6 py-5">Şifre</th>
-                                            <th className="px-6 py-5 text-center">Cihaz</th>
+                                            <th className="px-6 py-5 text-center">Yetkiler</th>
                                             <th onClick={() => requestSort('queryCount')} className="px-6 py-5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                                 <div className="flex items-center">Aktivite {getSortIndicator('queryCount')}</div>
                                             </th>
@@ -674,7 +680,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                                 {(user.fullName || user.username).substring(0, 1).toUpperCase()}
                                                             </div>
                                                             <div className="ml-4">
-                                                                <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
+                                                                <div className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                                    {user.fullName || user.username}
+                                                                    {user.unlimitedAccess && <span className="text-purple-600 bg-purple-50 dark:bg-purple-900/30 rounded-full p-0.5" title="7/24 Erişim"><InfinityIcon /></span>}
+                                                                </div>
                                                                 <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{user.username}</div>
                                                                 <div className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">{user.title}</div>
                                                             </div>
@@ -689,13 +698,17 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
-                                                        {user.skipDeviceLock ? (
-                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300" title="Kısıtlama Yok"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg></span>
-                                                        ) : user.allowedDeviceId ? (
-                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" title="Eşleşmiş Cihaz"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></span>
-                                                        ) : (
-                                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300" title="Cihaz Bekleniyor"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
-                                                        )}
+                                                        <div className="flex justify-center gap-1">
+                                                            {user.skipDeviceLock ? (
+                                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300" title="Cihaz Kısıtlaması Yok"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg></span>
+                                                            ) : user.allowedDeviceId ? (
+                                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" title="Eşleşmiş Cihaz"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300" title="Cihaz Bekleniyor"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
+                                                            )}
+                                                            {user.canViewDetails && <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300" title="Tam İsim Görebilir">👁️</span>}
+                                                            {user.unlimitedAccess && <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300" title="Zaman Kısıtlaması Yok">∞</span>}
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className="text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{user.queryCount}</span>
@@ -732,7 +745,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                 {(user.fullName || user.username).substring(0, 1).toUpperCase()}
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-gray-900 dark:text-white">{user.fullName || user.username}</div>
+                                                <div className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                    {user.fullName || user.username}
+                                                    {user.unlimitedAccess && <span className="text-purple-600 bg-purple-50 dark:bg-purple-900/30 rounded-full p-0.5"><InfinityIcon /></span>}
+                                                </div>
                                                 <div className="text-xs text-gray-500 font-medium">{user.queryCount} İşlem • {getStatusLabel(user.lastLogin)}</div>
                                                 <div className="text-[10px] text-gray-400 mt-0.5">{formatDateDisplay(user.lastLogin)}</div>
                                             </div>
@@ -790,8 +806,15 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                             <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">{selectedDetailUserObj.title || 'SAHA PERSONELİ'}</div>
                                                             <div className="font-bold text-sm uppercase tracking-wide">{selectedDetailUserObj.fullName || selectedDetailUserObj.username}</div>
                                                         </div>
-                                                        <div className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide border ${selectedDetailUserObj.canViewDetails ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-yellow-900/40 text-yellow-400 border-yellow-800'}`}>
-                                                            {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
+                                                        <div className="flex flex-col gap-1 items-end">
+                                                            <div className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide border ${selectedDetailUserObj.canViewDetails ? 'bg-green-900/40 text-green-400 border-green-800' : 'bg-yellow-900/40 text-yellow-400 border-yellow-800'}`}>
+                                                                {selectedDetailUserObj.canViewDetails ? 'TAM YETKİ' : 'KISITLI'}
+                                                            </div>
+                                                            {selectedDetailUserObj.unlimitedAccess && (
+                                                                <div className="text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide border bg-purple-900/40 text-purple-400 border-purple-800 flex items-center gap-1">
+                                                                    <InfinityIcon /> 7/24
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -919,7 +942,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         )}
                      </div>
                      
-                     {/* Move AdBanner here to balance the layout */}
                      <AdBanner />
                 </div>
             </div>
@@ -1001,6 +1023,24 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                               <div className="ml-3 select-none">
                                   <span className="block text-sm font-bold text-gray-800 dark:text-white group-hover:text-blue-700 transition-colors">Tam İsim Görebilir</span>
                                   <span className="block text-xs text-gray-500 mt-0.5">Abone isimleri maskelenmez.</span>
+                              </div>
+                          </label>
+
+                          <label className="flex items-center cursor-pointer group">
+                               <div className="relative flex items-center">
+                                <input 
+                                    type="checkbox" 
+                                    checked={newUnlimitedAccess}
+                                    onChange={e => setNewUnlimitedAccess(e.target.checked)}
+                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-purple-300 shadow transition-all checked:border-purple-600 checked:bg-purple-600 hover:shadow-md" 
+                                />
+                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                </span>
+                              </div>
+                              <div className="ml-3 select-none">
+                                  <span className="block text-sm font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition-colors">Süre Kısıtlaması Yok</span>
+                                  <span className="block text-xs text-gray-500 mt-0.5">7/24 Erişim (Mesai saatleri kontrol edilmez).</span>
                               </div>
                           </label>
                       </div>
@@ -1089,6 +1129,23 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         </div>
                          <div className="ml-3 select-none">
                              <span className="block text-sm font-bold text-gray-800 dark:text-white">Tam İsim Görebilir</span>
+                         </div>
+                     </label>
+
+                     <label className="flex items-center cursor-pointer group">
+                         <div className="relative flex items-center">
+                            <input 
+                            type="checkbox" 
+                            checked={editForm.unlimitedAccess}
+                            onChange={e => setEditForm({...editForm, unlimitedAccess: e.target.checked})}
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-purple-300 shadow transition-all checked:border-purple-600 checked:bg-purple-600 hover:shadow-md" 
+                            />
+                            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                            </span>
+                        </div>
+                         <div className="ml-3 select-none">
+                             <span className="block text-sm font-bold text-gray-800 dark:text-white group-hover:text-purple-400 transition-colors">Süre Kısıtlaması Yok</span>
                          </div>
                      </label>
                  </div>
