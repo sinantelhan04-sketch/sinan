@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat } from '../types';
-import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon } from './icons';
+import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon, CounterResetIcon } from './icons';
 import AdBanner from './AdBanner';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
@@ -371,6 +371,27 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     }
   };
 
+  const handleResetStats = async (username: string) => {
+    if (window.confirm(`'${username}' kullanıcısının tüm sorgu geçmişini silmek ve sorgulama sayacını SIFIRLAMAK istediğinize emin misiniz?`)) {
+        try {
+            setIsLoading(true);
+            setError('');
+            await sheetService.resetUserStats(username);
+            setSuccessMsg('Sorgulama sayısı sıfırlandı.');
+            setTimeout(() => setSuccessMsg(''), 3000);
+            await fetchData();
+            // Eğer detay sekmesindeyse orayı da yenile
+            if (selectedDetailUserUsername === username && activeTab === 'details') {
+                fetchLogs();
+            }
+        } catch (err: any) {
+            setError(err.message || 'Sıfırlama işlemi başarısız.');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+  };
+
   const downloadLogsAsCSV = () => {
       if (userLogs.length === 0) return;
       
@@ -690,8 +711,9 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                     </td>
                                                     <td className="px-8 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                                            <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><EditIcon /></button>
-                                                            <button onClick={() => handleDeleteUser(user.username)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><TrashIcon /></button>
+                                                            <button onClick={() => handleResetStats(user.username)} className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors" title="Sayacı Sıfırla"><CounterResetIcon /></button>
+                                                            <button onClick={() => handleOpenEditModal(user)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Düzenle"><EditIcon /></button>
+                                                            <button onClick={() => handleDeleteUser(user.username)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors" title="Sil"><TrashIcon /></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -704,7 +726,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             {/* Mobile List */}
                             <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
                                     {filteredUsers.map((user) => (
-                                    <div key={user.username} className="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    <div key={user.username} className="p-5 flex flex-col gap-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className={`h-12 w-12 rounded-full ${getAvatarColor(user.username)} flex items-center justify-center text-base font-bold shadow-sm`}>
                                                 {(user.fullName || user.username).substring(0, 1).toUpperCase()}
@@ -715,7 +737,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                 <div className="text-[10px] text-gray-400 mt-0.5">{formatDateDisplay(user.lastLogin)}</div>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleOpenEditModal(user)} className="text-blue-600 text-xs font-bold px-4 py-2 bg-blue-50 rounded-lg">Düzenle</button>
+                                        <div className="flex justify-end gap-2">
+                                             <button onClick={() => handleResetStats(user.username)} className="text-orange-600 text-xs font-bold px-4 py-2 bg-orange-50 rounded-lg flex items-center"><span className="mr-1"><CounterResetIcon /></span> Sıfırla</button>
+                                             <button onClick={() => handleOpenEditModal(user)} className="text-blue-600 text-xs font-bold px-4 py-2 bg-blue-50 rounded-lg">Düzenle</button>
+                                        </div>
                                     </div>
                                     ))}
                             </div>
