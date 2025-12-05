@@ -373,9 +373,13 @@ export const addCredential = async (credential: Credential): Promise<Credential[
 
     if (error) {
         if (error.code === '23505') throw new Error('Bu sicil numarası zaten mevcut.');
-        if (error.message.includes('column') && error.message.includes('does not exist')) {
-            throw new Error('Veritabanı şeması güncel değil. Lütfen Supabase SQL editöründe gerekli sütunları (unlimited_access vb.) ekleyin.');
+        
+        // Hata yönetimi iyileştirmesi: Schema hatası
+        const msg = error.message || '';
+        if (msg.includes('Could not find the') || (msg.includes('column') && msg.includes('does not exist'))) {
+             throw new Error("Veritabanı Hatası: 'unlimited_access' (veya başka bir) sütun eksik. Lütfen Supabase SQL Editöründe şu komutu çalıştırın: ALTER TABLE users ADD COLUMN IF NOT EXISTS unlimited_access BOOLEAN DEFAULT FALSE;");
         }
+        
         throw new Error(error.message);
     }
 
@@ -416,8 +420,10 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
         .eq('username', originalUsername);
 
     if (error) {
-         if (error.message.includes('column') && error.message.includes('does not exist')) {
-            throw new Error('Veritabanı şeması güncel değil. "unlimited_access" vb. sütunları ekleyiniz.');
+         // Hata yönetimi iyileştirmesi: Schema hatası
+        const msg = error.message || '';
+        if (msg.includes('Could not find the') || (msg.includes('column') && msg.includes('does not exist'))) {
+             throw new Error("Veritabanı Hatası: 'unlimited_access' sütunu eksik. Lütfen Supabase SQL Editöründe şu komutu çalıştırın: ALTER TABLE users ADD COLUMN IF NOT EXISTS unlimited_access BOOLEAN DEFAULT FALSE;");
         }
         throw new Error(error.message);
     }

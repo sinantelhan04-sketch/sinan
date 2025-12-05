@@ -32,7 +32,7 @@ const DatabaseIcon = () => (
 );
 
 const ContactlessIcon = () => (
-    <svg className="h-6 w-6 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="h-6 w-6 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
     </svg>
 );
@@ -616,7 +616,14 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     </div>
 
                     {/* Notifications */}
-                    {error && <div className="mx-8 mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-xl border border-red-100 dark:border-red-800 flex items-center gap-3 shadow-sm font-medium animate-pulse">{error}</div>}
+                    {error && (
+                        <div className="mx-8 mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-xl border border-red-100 dark:border-red-800 flex items-start gap-3 shadow-sm font-medium animate-pulse">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div className="break-all">{error}</div>
+                        </div>
+                    )}
                     {successMsg && <div className="mx-8 mt-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-xl border border-green-100 dark:border-green-800 flex items-center gap-3 shadow-sm font-medium">{successMsg}</div>}
 
                     {/* TAB CONTENT: USERS */}
