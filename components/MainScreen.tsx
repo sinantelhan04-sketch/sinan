@@ -1,8 +1,9 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import type { Customer } from '../types';
 import * as sheetService from '../services/sheetService';
-import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIcon } from './icons';
+import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIcon, ReportIcon } from './icons';
 import AdBanner from './AdBanner';
 
 interface MainScreenProps {
@@ -37,6 +38,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [showRecents, setShowRecents] = useState(false);
     const [currentLogId, setCurrentLogId] = useState<number | null>(null);
+    const [reportSent, setReportSent] = useState(false);
     
     // Reklam yenileme tetikleyicisi
     const [adRefreshTrigger, setAdRefreshTrigger] = useState(0);
@@ -81,6 +83,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         setExternalMapUrl(null);
         setSearchPerformed(false);
         setCurrentLogId(null);
+        setReportSent(false);
     }, []);
 
     const performSearch = async (term: string) => {
@@ -97,6 +100,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         setExternalMapUrl(null);
         setShowRecents(false);
         setCurrentLogId(null);
+        setReportSent(false);
 
         try {
             const customer = await sheetService.findCustomerByInstallationNumber(term.trim());
@@ -148,7 +152,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     };
     
     // Aksiyon Loglama (Arama veya SMS)
-    const logAction = (type: 'call' | 'sms') => {
+    const logAction = (type: 'call' | 'sms' | 'report_error') => {
         if (currentLogId) {
             sheetService.updateSearchLogAction(currentLogId, type);
         }
@@ -200,6 +204,14 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         const smsUri = `sms:${cleanPhone}?body=${encodeURIComponent(messageBody)}`;
         
         window.location.href = smsUri;
+    };
+
+    const handleReportClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (confirm("Bu tesisata ait telefon numarasının hatalı olduğunu bildirmek istiyor musunuz?")) {
+            logAction('report_error');
+            setReportSent(true);
+        }
     };
 
     return (
@@ -367,6 +379,15 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                         >
                                             <div className="mr-2 group-hover:animate-pulse"><MessageIcon /></div>
                                             <span className="text-sm">Mesaj At</span>
+                                        </button>
+                                         <button 
+                                            onClick={handleReportClick}
+                                            className="flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-xl transition-all shadow-md shadow-orange-500/30 active:scale-95 group font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title="Numara Hatalı Bildir"
+                                            disabled={reportSent}
+                                        >
+                                            <div className="mr-2 group-hover:rotate-12 transition-transform"><ReportIcon /></div>
+                                            <span className="text-sm">{reportSent ? 'Bildirildi' : 'Tel Hatalı'}</span>
                                         </button>
                                     </div>
                                 </div>

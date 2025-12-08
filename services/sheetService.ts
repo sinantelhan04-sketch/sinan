@@ -210,13 +210,14 @@ export const logSearchQuery = async (username: string, installationNumber: strin
     }
 };
 
-export const updateSearchLogAction = async (logId: number, actionType: 'call' | 'sms'): Promise<void> => {
+export const updateSearchLogAction = async (logId: number, actionType: 'call' | 'sms' | 'report_error'): Promise<void> => {
     try {
         const client = ensureClient();
         const updates: any = {};
         
         if (actionType === 'call') updates.called = true;
         if (actionType === 'sms') updates.sms_sent = true;
+        if (actionType === 'report_error') updates.error_reported = true;
 
         const { error } = await client
             .from('search_logs')
@@ -226,12 +227,10 @@ export const updateSearchLogAction = async (logId: number, actionType: 'call' | 
         if (error) {
              // Suppress specific column missing error to avoid console noise if not migrated
              if (error.message?.includes('column') && error.message?.includes('does not exist')) {
-                 console.warn("Veritabanı şeması güncel değil: 'called' veya 'sms_sent' sütunları eksik. Lütfen Supabase SQL Editor'den bu sütunları ekleyin.");
+                 console.warn(`Veritabanı şeması güncel değil: '${actionType === 'report_error' ? 'error_reported' : 'called/sms_sent'}' sütunu eksik. Lütfen Supabase SQL Editöründen ilgili sütunu ekleyin.`);
              } else {
                  console.error("Aksiyon loglama hatası:", error);
              }
-        } else {
-            // console.log("Aksiyon loglandı:", actionType);
         }
     } catch (e) {
         console.error("Aksiyon update hatası:", e);
