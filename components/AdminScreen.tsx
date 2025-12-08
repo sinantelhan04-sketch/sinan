@@ -172,7 +172,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (err: any) {
             setError(err.message);
-            setTimeout(() => setError(''), 5000);
         }
     };
 
@@ -183,7 +182,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setSuccessMsg('Kullanıcı silindi.');
             loadData();
             setTimeout(() => setSuccessMsg(''), 3000);
-        } catch (err: any) { setError(err.message); setTimeout(() => setError(''), 3000); }
+        } catch (err: any) { setError(err.message); }
     };
 
     const handleResetStats = async (username: string) => {
@@ -193,7 +192,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setSuccessMsg(`${username} sorguları sıfırlandı.`);
             loadData();
             setTimeout(() => setSuccessMsg(''), 3000);
-        } catch (err: any) { setError(err.message); setTimeout(() => setError(''), 3000); }
+        } catch (err: any) { setError(err.message); }
     };
 
     const handleUserSelectForDetail = async (username: string) => {
@@ -262,7 +261,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     setSuccessMsg(`${result.success} kayıt yüklendi.`);
                     loadData(); 
                     setTimeout(() => setSuccessMsg(''), 5000);
-                } catch (e: any) { setError(e.message); setTimeout(() => setError(''), 5000); } 
+                } catch (e: any) { setError(e.message); } 
                 finally { setIsUploading(false); }
             }
         });
@@ -338,7 +337,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (e: any) {
             setError(e.message);
-            setTimeout(() => setError(''), 5000);
+            // Uzun bir hata mesajıysa (örn SQL kodu) timeout koyma ki kopyalayabilsin
+            if (!e.message.includes('create table')) {
+                setTimeout(() => setError(''), 5000);
+            }
         } finally {
             setIsSendingAnnouncement(false);
         }
@@ -353,10 +355,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900 w-full font-sans text-gray-800 dark:text-gray-100">
             {/* --- Toast Bildirimleri (SAĞ ÜST KÖŞE) --- */}
             {(successMsg || error) && (
-                <div className="fixed top-6 right-6 z-[100] flex flex-col gap-3 animate-fade-in pointer-events-none">
+                <div className="fixed top-6 right-6 z-[100] flex flex-col gap-3 animate-fade-in max-w-lg w-full px-4">
                     {successMsg && (
-                        <div className="bg-white dark:bg-gray-800 border-l-4 border-green-500 shadow-xl rounded-lg p-4 flex items-center pr-8 pointer-events-auto">
-                            <div className="bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full p-2 mr-3">
+                        <div className="bg-white dark:bg-gray-800 border-l-4 border-green-500 shadow-xl rounded-lg p-4 flex items-center">
+                            <div className="bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full p-2 mr-3 flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
@@ -368,15 +370,35 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         </div>
                     )}
                     {error && (
-                        <div className="bg-white dark:bg-gray-800 border-l-4 border-red-500 shadow-xl rounded-lg p-4 flex items-center pr-8 pointer-events-auto">
-                            <div className="bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full p-2 mr-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-red-600 text-sm">Hata</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">{error}</p>
+                        <div className="bg-white dark:bg-gray-800 border-l-4 border-red-500 shadow-xl rounded-lg p-4 relative">
+                            <button onClick={() => setError('')} className="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                            <div className="flex items-start">
+                                <div className="bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full p-2 mr-3 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="w-full overflow-hidden">
+                                    <h4 className="font-bold text-red-600 text-sm">Hata</h4>
+                                    {error.includes('create table') ? (
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">Veritabanında gerekli tablo eksik. Lütfen aşağıdaki kodu kopyalayıp Supabase SQL Editöründe çalıştırın:</p>
+                                            <div className="bg-gray-100 dark:bg-gray-900 rounded p-2 text-[10px] font-mono overflow-x-auto text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 relative group">
+                                                <pre>{error.split(':\n\n')[1] || error}</pre>
+                                                <button 
+                                                    onClick={() => navigator.clipboard.writeText(error.split(':\n\n')[1] || error)}
+                                                    className="absolute top-1 right-1 bg-blue-500 text-white px-2 py-1 rounded text-[9px] opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    Kopyala
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 break-words">{error}</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
