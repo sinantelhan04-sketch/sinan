@@ -225,9 +225,9 @@ export const updateSearchLogAction = async (logId: number, actionType: 'call' | 
             .eq('id', logId);
 
         if (error) {
-             // Suppress specific column missing error to avoid console noise if not migrated
-             if (error.message?.includes('column') && error.message?.includes('does not exist')) {
-                 console.warn(`Veritabanı şeması güncel değil: '${actionType === 'report_error' ? 'error_reported' : 'called/sms_sent'}' sütunu eksik. Lütfen Supabase SQL Editöründen ilgili sütunu ekleyin.`);
+             // 42703 is Postgres code for undefined_column
+             if (error.code === '42703' || (error.message && error.message.includes('does not exist'))) {
+                 console.warn(`Veritabanı şeması güncel değil: '${actionType === 'report_error' ? 'error_reported' : 'called/sms_sent'}' sütunu yok. (Hata bastırıldı)`);
              } else {
                  console.error("Aksiyon loglama hatası:", error);
              }
@@ -307,7 +307,14 @@ export const getTopReportedErrors = async (limit: number = 5): Promise<{installa
             .order('created_at', { ascending: false })
             .limit(1000);
 
-        if (error) throw new Error(error.message);
+        if (error) {
+             // 42703 is Postgres code for undefined_column
+             if (error.code === '42703' || (error.message && error.message.includes('does not exist'))) {
+                 // Sütun yoksa sessizce boş liste dön
+                 return [];
+             }
+             throw new Error(error.message);
+        }
 
         const counts: Record<string, number> = {};
         data?.forEach((row: any) => {
@@ -323,6 +330,10 @@ export const getTopReportedErrors = async (limit: number = 5): Promise<{installa
             .sort((a, b) => b.count - a.count)
             .slice(0, limit);
     } catch (e: any) {
+        // Ekstra güvenlik: Eğer hata mesajı yine de düşerse ve 'does not exist' içeriyorsa yut
+        if (e.message && e.message.includes('does not exist')) {
+            return [];
+        }
         console.error("Hata raporu analizi hatası:", e.message || e);
         return [];
     }

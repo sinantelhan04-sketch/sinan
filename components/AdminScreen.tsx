@@ -27,7 +27,7 @@ const JOB_TITLES = [
 // Icon for Customer Count
 const DatabaseIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
     </svg>
 );
 
@@ -967,6 +967,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                                     <div className="flex gap-2">
                                                                         {log.called && <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 dark:border-green-800 flex items-center gap-1"><PhoneIconSolid /> Aradı</span>}
                                                                         {log.smsSent && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200 dark:border-indigo-800 flex items-center gap-1"><MessageIcon /> SMS</span>}
+                                                                        {/* Yeni rapor logları için gösterim */}
                                                                         {!log.called && !log.smsSent && <span className="text-gray-300 text-xs">-</span>}
                                                                     </div>
                                                                 </td>
@@ -984,7 +985,44 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     
                     {/* TAB CONTENT: DATA UPDATE */}
                     {activeTab === 'data_update' && (
-                        <div className="p-8 md:p-12 animate-fade-in flex flex-col items-center">
+                        <div className="p-8 md:p-12 animate-fade-in flex flex-col items-center gap-8">
+                            
+                            {/* NEW: Database Maintenance Card */}
+                            <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 border border-amber-100 dark:border-amber-900/30">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-600 dark:text-amber-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h3 className="font-bold text-gray-900 dark:text-white text-lg">Veritabanı Güncellemesi Gerekli</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            "Hatalı Numara Bildirimi" özelliğinin çalışması için veritabanında yeni bir sütun oluşturulmalıdır.
+                                        </p>
+                                        
+                                        <div className="mt-4 bg-gray-900 rounded-lg p-4 relative group">
+                                            <code className="font-mono text-xs text-green-400 block break-all">
+                                                alter table search_logs add column if not exists error_reported boolean default false;
+                                            </code>
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText("alter table search_logs add column if not exists error_reported boolean default false;");
+                                                    setSuccessMsg("SQL Kopyalandı!");
+                                                    setTimeout(() => setSuccessMsg(""), 3000);
+                                                }}
+                                                className="absolute top-2 right-2 bg-white/10 hover:bg-white/20 text-white text-[10px] px-2 py-1 rounded transition-colors"
+                                            >
+                                                Kopyala
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-2">
+                                            Bu komutu <a href="https://supabase.com/dashboard/project/_/sql" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Supabase SQL Editör</a>'de çalıştırın.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
                                 <div className="text-center mb-8">
                                     <h2 className="text-2xl font-black text-gray-900 dark:text-white">Toplu Veri Yükleme</h2>
