@@ -425,31 +425,34 @@ export const getActiveAnnouncement = async (username: string): Promise<Announcem
     try {
         const client = ensureClient();
         
+        // Aktif olan tüm duyuruları en yeniden eskiye doğru çek
+        // .limit(1) KULLANMIYORUZ çünkü en son eklenen duyuru bu kullanıcıya ait olmayabilir.
         const { data, error } = await client
             .from('announcements')
             .select('*')
             .eq('active', true)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+            .order('created_at', { ascending: false });
 
         if (error) {
-            // Tablo yoksa veya veri yoksa null dön
             return null;
         }
 
-        if (data) {
-            const targetUsers = data.target_users || ['all'];
-            // Eğer 'all' ise veya kullanıcı listesindeyse göster
-            if (targetUsers.includes('all') || targetUsers.includes(username)) {
+        if (data && data.length > 0) {
+            // Kullanıcıya uygun olan İLK duyuruyu bul
+            const match = data.find((item: any) => {
+                const targetUsers = item.target_users || ['all'];
+                return targetUsers.includes('all') || targetUsers.includes(username);
+            });
+
+            if (match) {
                 return {
-                    id: data.id,
-                    title: data.title,
-                    content: data.content,
-                    imageUrl: data.image_url,
-                    targetUsers: targetUsers,
-                    active: data.active,
-                    createdAt: data.created_at
+                    id: match.id,
+                    title: match.title,
+                    content: match.content,
+                    imageUrl: match.image_url,
+                    targetUsers: match.target_users || ['all'],
+                    active: match.active,
+                    createdAt: match.created_at
                 };
             }
         }

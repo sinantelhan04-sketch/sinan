@@ -180,8 +180,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         if (!confirm(`${username} silinsin mi?`)) return;
         try {
             await sheetService.deleteCredential(username);
+            setSuccessMsg('Kullanıcı silindi.');
             loadData();
-        } catch (err: any) { setError(err.message); }
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err: any) { setError(err.message); setTimeout(() => setError(''), 3000); }
     };
 
     const handleResetStats = async (username: string) => {
@@ -191,7 +193,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setSuccessMsg(`${username} sorguları sıfırlandı.`);
             loadData();
             setTimeout(() => setSuccessMsg(''), 3000);
-        } catch (err: any) { setError(err.message); }
+        } catch (err: any) { setError(err.message); setTimeout(() => setError(''), 3000); }
     };
 
     const handleUserSelectForDetail = async (username: string) => {
@@ -259,7 +261,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     setUploadStatus({ total: results.data.length, success: result.success, error: result.error });
                     setSuccessMsg(`${result.success} kayıt yüklendi.`);
                     loadData(); 
-                } catch (e: any) { setError(e.message); } 
+                    setTimeout(() => setSuccessMsg(''), 5000);
+                } catch (e: any) { setError(e.message); setTimeout(() => setError(''), 5000); } 
                 finally { setIsUploading(false); }
             }
         });
@@ -300,20 +303,22 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             } else {
                 current.push(username);
             }
+            
+            if (current.length === 0) return { ...prev, targetUsers: ['all'] };
 
-            // Eğer hepsi silindiyse veya boşsa 'all' yapabiliriz ya da boş bırakırız (boş = kimse görmez)
-            // Biz kullanıcı deneyimi için boş kalınca 'all' yapmayalım, zorunlu seçtirelim.
             return { ...prev, targetUsers: current };
         });
     };
 
     const handleSendAnnouncement = async () => {
         if (!announcementForm.title || !announcementForm.content) {
-            alert('Başlık ve mesaj içeriği zorunludur.');
+            setError('Başlık ve mesaj içeriği zorunludur.');
+            setTimeout(() => setError(''), 3000);
             return;
         }
         if (announcementForm.targetUsers.length === 0) {
-            alert('En az bir hedef kullanıcı seçmelisiniz.');
+            setError('En az bir hedef kullanıcı seçmelisiniz.');
+            setTimeout(() => setError(''), 3000);
             return;
         }
 
@@ -346,6 +351,38 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900 w-full font-sans text-gray-800 dark:text-gray-100">
+            {/* --- Toast Bildirimleri (SAĞ ÜST KÖŞE) --- */}
+            {(successMsg || error) && (
+                <div className="fixed top-6 right-6 z-[100] flex flex-col gap-3 animate-fade-in pointer-events-none">
+                    {successMsg && (
+                        <div className="bg-white dark:bg-gray-800 border-l-4 border-green-500 shadow-xl rounded-lg p-4 flex items-center pr-8 pointer-events-auto">
+                            <div className="bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full p-2 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-green-600 text-sm">Başarılı</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">{successMsg}</p>
+                            </div>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="bg-white dark:bg-gray-800 border-l-4 border-red-500 shadow-xl rounded-lg p-4 flex items-center pr-8 pointer-events-auto">
+                            <div className="bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full p-2 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-red-600 text-sm">Hata</h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">{error}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* --- Üst Header --- */}
             <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-30">
                 <div className="flex items-center gap-3">
