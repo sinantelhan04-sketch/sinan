@@ -1,6 +1,7 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_KEY } from '../config';
-import type { Credential, Customer, UserActivityStat } from '../types';
+import type { Credential, Customer, UserActivityStat, Announcement } from '../types';
 
 // --- Supabase Client Init ---
 const supabase = (SUPABASE_URL && SUPABASE_KEY && !SUPABASE_URL.includes('your-project-id')) 
@@ -308,9 +309,7 @@ export const getTopReportedErrors = async (limit: number = 5): Promise<{installa
             .limit(1000);
 
         if (error) {
-             // 42703 is Postgres code for undefined_column
              if (error.code === '42703' || (error.message && error.message.includes('does not exist'))) {
-                 // Sütun yoksa sessizce boş liste dön
                  return [];
              }
              throw new Error(error.message);
@@ -324,13 +323,11 @@ export const getTopReportedErrors = async (limit: number = 5): Promise<{installa
             }
         });
 
-        // Objeyi diziye çevir, sırala ve limitle
         return Object.entries(counts)
             .map(([installationNumber, count]) => ({ installationNumber, count }))
             .sort((a, b) => b.count - a.count)
             .slice(0, limit);
     } catch (e: any) {
-        // Ekstra güvenlik: Eğer hata mesajı yine de düşerse ve 'does not exist' içeriyorsa yut
         if (e.message && e.message.includes('does not exist')) {
             return [];
         }
@@ -339,7 +336,6 @@ export const getTopReportedErrors = async (limit: number = 5): Promise<{installa
     }
 };
 
-// --- Admin: Get Global Logs for Feed ---
 export const getGlobalLogs = async (limit: number = 20): Promise<{
     username: string,
     installationNumber: string, 
@@ -373,7 +369,8 @@ export const getUserLogs = async (username: string): Promise<{
     installationNumber: string, 
     timestamp: string,
     called?: boolean,
-    smsSent?: boolean
+    smsSent?: boolean,
+    errorReported?: boolean
 }[]> => {
     const client = ensureClient();
     
@@ -390,9 +387,80 @@ export const getUserLogs = async (username: string): Promise<{
         installationNumber: log.installation_number,
         timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
         called: log.called || false,
-        smsSent: log.sms_sent || false
+        smsSent: log.sms_sent || false,
+        errorReported: log.error_reported || false
     }));
 };
+
+// --- ANNOUNCEMENT SYSTEM ---
+
+export const createAnnouncement = async (announcement: Announcement): Promise<void> => {
+    const client = ensureClient();
+    
+    // Önceki aktif duyuruları pasife çek
+    await client
+        .from('announcements')
+        .update({ active: false })
+        .eq('active', true);
+
+    const { error } = await client.from('announcements').insert([
+        {
+            title: announcement.title,
+            content: announcement.content,
+            image_url: announcement.imageUrl, // Base64 or URL
+            target_users: announcement.targetUsers,
+            active: true
+        }
+    ]);
+
+    if (error) {
+        if (error.message.includes('relation "announcements" does not exist')) {
+            throw new Error("Veritabanı Tablo Hatası: 'announcements' tablosu bulunamadı. Lütfen SQL Editörde tabloyu oluşturun.");
+        }
+        throw new Error(error.message);
+    }
+};
+
+export const getActiveAnnouncement = async (username: string): Promise<Announcement | null> => {
+    try {
+        const client = ensureClient();
+        
+        const { data, error } = await client
+            .from('announcements')
+            .select('*')
+            .eq('active', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error) {
+            // Tablo yoksa veya veri yoksa null dön
+            return null;
+        }
+
+        if (data) {
+            const targetUsers = data.target_users || ['all'];
+            // Eğer 'all' ise veya kullanıcı listesindeyse göster
+            if (targetUsers.includes('all') || targetUsers.includes(username)) {
+                return {
+                    id: data.id,
+                    title: data.title,
+                    content: data.content,
+                    imageUrl: data.image_url,
+                    targetUsers: targetUsers,
+                    active: data.active,
+                    createdAt: data.created_at
+                };
+            }
+        }
+        
+        return null;
+    } catch (e) {
+        console.warn("Duyuru kontrol hatası:", e);
+        return null;
+    }
+};
+
 
 // --- Admin Operations ---
 
@@ -415,10 +483,9 @@ export const addCredential = async (credential: Credential): Promise<Credential[
     if (error) {
         if (error.code === '23505') throw new Error('Bu sicil numarası zaten mevcut.');
         
-        // Hata yönetimi iyileştirmesi: Schema hatası
         const msg = error.message || '';
         if (msg.includes('Could not find the') || (msg.includes('column') && msg.includes('does not exist'))) {
-             throw new Error("Veritabanı Hatası: 'unlimited_access' (veya başka bir) sütun eksik. Lütfen Supabase SQL Editöründe şu komutu çalıştırın: ALTER TABLE users ADD COLUMN IF NOT EXISTS unlimited_access BOOLEAN DEFAULT FALSE;");
+             throw new Error("Veritabanı Hatası: 'unlimited_access' (veya başka bir) sütun eksik. Lütfen Supabase SQL Editöründe gerekli sütunları ekleyin.");
         }
         
         throw new Error(error.message);
@@ -461,10 +528,9 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
         .eq('username', originalUsername);
 
     if (error) {
-         // Hata yönetimi iyileştirmesi: Schema hatası
         const msg = error.message || '';
         if (msg.includes('Could not find the') || (msg.includes('column') && msg.includes('does not exist'))) {
-             throw new Error("Veritabanı Hatası: 'unlimited_access' sütunu eksik. Lütfen Supabase SQL Editöründe şu komutu çalıştırın: ALTER TABLE users ADD COLUMN IF NOT EXISTS unlimited_access BOOLEAN DEFAULT FALSE;");
+             throw new Error("Veritabanı Hatası: 'unlimited_access' sütunu eksik.");
         }
         throw new Error(error.message);
     }
@@ -487,7 +553,6 @@ export const resetUserStats = async (username: string): Promise<void> => {
 export const bulkUpsertCustomers = async (customers: Customer[]): Promise<{success: number, error: number, message?: string}> => {
     const client = ensureClient();
     
-    // Veriyi Supabase formatına dönüştür (DB kolon adları snake_case)
     const formattedData = customers.map(c => ({
         installation_number: c.installationNumber,
         name: c.name,
@@ -497,7 +562,6 @@ export const bulkUpsertCustomers = async (customers: Customer[]): Promise<{succe
         longitude: c.longitude
     }));
 
-    // Batch işlemi: Supabase payload limiti veya timeout yememek için 1000'erli paketler halinde gönder
     const BATCH_SIZE = 1000;
     let successCount = 0;
     let errorCount = 0;
@@ -505,7 +569,6 @@ export const bulkUpsertCustomers = async (customers: Customer[]): Promise<{succe
     for (let i = 0; i < formattedData.length; i += BATCH_SIZE) {
         const batch = formattedData.slice(i, i + BATCH_SIZE);
         
-        // onConflict: 'installation_number' -> Varsa güncelle, yoksa ekle.
         const { error } = await client
             .from('customers')
             .upsert(batch, { onConflict: 'installation_number' });

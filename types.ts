@@ -1,3 +1,4 @@
+
 export interface Customer {
   installationNumber: string;
   name: string;
@@ -23,4 +24,14 @@ export interface UserActivityStat {
   username: string;
   queryCount: number;
   lastLogin: string;
+}
+
+export interface Announcement {
+  id?: number;
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  targetUsers: string[]; // ['all'] veya ['user1', 'user2']
+  active: boolean;
+  createdAt?: string;
 }

@@ -9,8 +9,11 @@ import { AdminScreen } from './components/AdminScreen';
 import { isWithinWorkingHours } from './utils/time';
 import * as sheetService from './services/sheetService';
 import { SUPABASE_URL, SUPABASE_KEY } from './config';
+import type { Announcement } from './types';
+import AnnouncementModal from './components/AnnouncementModal';
 
 const SESSION_KEY = 'app_session_v1';
+const ANNOUNCEMENT_SEEN_KEY = 'announcement_seen_id';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -24,6 +27,10 @@ const App: React.FC = () => {
   const [appError, setAppError] = useState<string | null>(null);
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [isSessionRestoring, setIsSessionRestoring] = useState(true);
+
+  // Announcement State
+  const [activeAnnouncement, setActiveAnnouncement] = useState<Announcement | null>(null);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   // Oturum Kurtarma ve Kontrol
   useEffect(() => {
@@ -91,6 +98,26 @@ const App: React.FC = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Duyuru kontrolü
+  const checkAnnouncement = useCallback(async (username: string) => {
+      // Admin ise duyuru kontrolü yapma
+      if (username === 'admin') return;
+
+      try {
+          const announcement = await sheetService.getActiveAnnouncement(username);
+          if (announcement) {
+              const seenId = localStorage.getItem(ANNOUNCEMENT_SEEN_KEY);
+              // Eğer bu duyuru ID'si daha önce görülmediyse göster
+              if (seenId !== String(announcement.id)) {
+                  setActiveAnnouncement(announcement);
+                  setShowAnnouncement(true);
+              }
+          }
+      } catch (e) {
+          console.error("Duyuru kontrol hatası", e);
+      }
+  }, []);
+
   const handleLogin = useCallback(async (username: string, password: string, deviceId: string) => {
     // Admin login is a local check
     if (username === 'admin' && password === 'admin123') {
@@ -142,15 +169,28 @@ const App: React.FC = () => {
     setCanViewDetails(false);
     setHasUnlimitedAccess(false);
     setLegalAccepted(false);
+    setShowAnnouncement(false);
+    setActiveAnnouncement(null);
   }, []);
 
   const handleAcceptLegal = useCallback(() => {
     setLegalAccepted(true);
-  }, []);
+    // Yasal uyarıdan sonra duyuruyu kontrol et
+    if (currentUser) {
+        checkAnnouncement(currentUser);
+    }
+  }, [currentUser, checkAnnouncement]);
 
   const handleDeclineLegal = useCallback(() => {
     handleLogout();
   }, [handleLogout]);
+
+  const handleDismissAnnouncement = () => {
+      if (activeAnnouncement?.id) {
+          localStorage.setItem(ANNOUNCEMENT_SEEN_KEY, String(activeAnnouncement.id));
+      }
+      setShowAnnouncement(false);
+  };
 
   if (isSessionRestoring) {
       return (
@@ -231,9 +271,20 @@ const App: React.FC = () => {
       if (!legalAccepted) {
           return <LegalScreen onAccept={handleAcceptLegal} onDecline={handleDeclineLegal} />;
       }
+
+      // DUYURU MODALI
+      if (showAnnouncement && activeAnnouncement) {
+          return (
+              <AnnouncementModal 
+                  title={activeAnnouncement.title}
+                  content={activeAnnouncement.content}
+                  imageUrl={activeAnnouncement.imageUrl}
+                  onDismiss={handleDismissAnnouncement}
+              />
+          );
+      }
       
       // ÇALIŞMA SAATİ KONTROLÜ
-      // Eğer kullanıcıda sınırsız erişim varsa veya admin ise süre kısıtlamasına takılmaz.
       if (!isWorkingTime && !hasUnlimitedAccess && !isAdmin) {
           return <OfflineScreen />;
       }
