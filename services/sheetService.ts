@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_KEY } from '../config';
 import type { Credential, Customer, UserActivityStat } from '../types';
@@ -64,8 +63,8 @@ export const getTotalCustomerCount = async (): Promise<number> => {
         
         if (error) throw error;
         return count || 0;
-    } catch (e) {
-        console.error("Müşteri sayısı alınamadı:", e);
+    } catch (e: any) {
+        console.error("Müşteri sayısı alınamadı:", e.message || e);
         return 0;
     }
 };
@@ -292,8 +291,8 @@ export const getTopQueriedInstallations = async (limit: number = 5): Promise<{in
             .map(([installationNumber, count]) => ({ installationNumber, count }))
             .sort((a, b) => b.count - a.count)
             .slice(0, limit);
-    } catch (e) {
-        console.error("Trend analizi hatası:", e);
+    } catch (e: any) {
+        console.error("Trend analizi hatası:", e.message || e);
         return [];
     }
 };
@@ -439,4 +438,43 @@ export const resetUserStats = async (username: string): Promise<void> => {
         .eq('username', username);
 
     if (error) throw new Error(error.message);
+};
+
+// --- Bulk Data Operations ---
+
+export const bulkUpsertCustomers = async (customers: Customer[]): Promise<{success: number, error: number, message?: string}> => {
+    const client = ensureClient();
+    
+    // Veriyi Supabase formatına dönüştür (DB kolon adları snake_case)
+    const formattedData = customers.map(c => ({
+        installation_number: c.installationNumber,
+        name: c.name,
+        phone: c.phone,
+        address: c.address,
+        latitude: c.latitude,
+        longitude: c.longitude
+    }));
+
+    // Batch işlemi: Supabase payload limiti veya timeout yememek için 1000'erli paketler halinde gönder
+    const BATCH_SIZE = 1000;
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < formattedData.length; i += BATCH_SIZE) {
+        const batch = formattedData.slice(i, i + BATCH_SIZE);
+        
+        // onConflict: 'installation_number' -> Varsa güncelle, yoksa ekle.
+        const { error } = await client
+            .from('customers')
+            .upsert(batch, { onConflict: 'installation_number' });
+
+        if (error) {
+            console.error("Batch error:", error);
+            errorCount += batch.length;
+        } else {
+            successCount += batch.length;
+        }
+    }
+
+    return { success: successCount, error: errorCount };
 };

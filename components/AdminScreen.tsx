@@ -1,13 +1,13 @@
-
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import * as sheetService from '../services/sheetService';
-import type { Credential, UserActivityStat } from '../types';
+import type { Credential, UserActivityStat, Customer } from '../types';
 import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon, CounterResetIcon, InfinityIcon } from './icons';
 import AdBanner from './AdBanner';
+import Papa from 'papaparse';
 
 type AdminUserData = Credential & Omit<UserActivityStat, 'username'>;
 type SortableKeys = 'username' | 'queryCount' | 'lastLogin' | 'fullName';
-type Tab = 'users' | 'details';
+type Tab = 'users' | 'details' | 'data_update';
 
 interface AdminScreenProps {
   onLogout: () => void;
@@ -34,6 +34,12 @@ const DatabaseIcon = () => (
 const ContactlessIcon = () => (
     <svg className="h-6 w-6 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+    </svg>
+);
+
+const UploadIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
     </svg>
 );
 
@@ -182,6 +188,13 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [showPasswords, setShowPasswords] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys; direction: 'ascending' | 'descending' }>({ key: 'lastLogin', direction: 'descending' });
   const [searchTerm, setSearchTerm] = useState('');
+
+  // --- States for Data Upload ---
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{total: number, success: number, error: number} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -467,6 +480,73 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     }
   };
 
+  // --- File Upload Handlers ---
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+          setUploadFile(e.target.files[0]);
+          setUploadStatus(null);
+          setUploadProgress(0);
+      }
+  };
+
+  const handleBulkUpload = async () => {
+      if (!uploadFile) return;
+
+      setIsUploading(true);
+      setError('');
+      setUploadProgress(5); // Başlangıç animasyonu
+
+      Papa.parse(uploadFile, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async (results) => {
+              try {
+                  const rawData = results.data as any[];
+                  // Basit validasyon ve mapping
+                  const customers: Customer[] = rawData.map((row: any) => ({
+                      installationNumber: row['tesisat_no'] || row['installation_number'] || row['Tesisat No'],
+                      name: row['ad_soyad'] || row['name'] || row['Ad Soyad'],
+                      phone: row['telefon'] || row['phone'] || row['Telefon'],
+                      address: row['adres'] || row['address'] || row['Adres'],
+                      latitude: row['enlem'] || row['latitude'] || row['Enlem'],
+                      longitude: row['boylam'] || row['longitude'] || row['Boylam']
+                  })).filter(c => c.installationNumber); // Tesisat no olmayanları ele
+
+                  if (customers.length === 0) {
+                      throw new Error("Dosyada geçerli kayıt bulunamadı veya sütun isimleri hatalı.");
+                  }
+
+                  setUploadProgress(20); // Parse bitti
+
+                  const result = await sheetService.bulkUpsertCustomers(customers);
+                  
+                  setUploadStatus({
+                      total: customers.length,
+                      success: result.success,
+                      error: result.error
+                  });
+                  setUploadProgress(100);
+                  setSuccessMsg(`${result.success} kayıt başarıyla güncellendi/eklendi.`);
+                  setTimeout(() => setSuccessMsg(''), 5000);
+                  
+                  // Verileri yenile
+                  fetchData(false);
+
+              } catch (e: any) {
+                  setError(e.message || "Dosya işlenirken hata oluştu.");
+                  setUploadProgress(0);
+              } finally {
+                  setIsUploading(false);
+              }
+          },
+          error: (err) => {
+              setError("CSV Okuma Hatası: " + err.message);
+              setIsUploading(false);
+          }
+      });
+  };
+
+
   return (
     <div className="w-full min-h-screen font-sans">
         
@@ -592,10 +672,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 <div className="flex-grow w-full xl:w-auto bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-[600px]">
                     
                     {/* Tabs */}
-                    <div className="flex border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
                         <button
                             onClick={() => setActiveTab('users')}
-                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
+                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 whitespace-nowrap px-4 ${
                                 activeTab === 'users'
                                     ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
                                     : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
@@ -605,13 +685,23 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         </button>
                         <button
                             onClick={() => setActiveTab('details')}
-                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
+                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 whitespace-nowrap px-4 ${
                                 activeTab === 'details'
                                     ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
                                     : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
                             }`}
                         >
-                            Personel Detay & Loglar
+                            Personel Detay
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('data_update')}
+                            className={`flex-1 py-5 text-sm font-bold uppercase tracking-widest transition-all border-b-4 whitespace-nowrap px-4 ${
+                                activeTab === 'data_update'
+                                    ? 'border-green-600 text-green-600 dark:text-green-400 bg-green-50/50 dark:bg-green-900/10'
+                                    : 'border-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                            }`}
+                        >
+                            Veri Güncelleme
                         </button>
                     </div>
 
@@ -887,6 +977,110 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 </div>
                             )}
                             </div>
+                    )}
+                    
+                    {/* TAB CONTENT: DATA UPDATE */}
+                    {activeTab === 'data_update' && (
+                        <div className="p-8 md:p-12 animate-fade-in flex flex-col items-center">
+                            <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+                                <div className="text-center mb-8">
+                                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">Toplu Veri Yükleme</h2>
+                                    <p className="text-gray-500 dark:text-gray-400 mt-2">CSV dosyası yükleyerek abone listesini güncelleyin.</p>
+                                </div>
+                                
+                                <div className="space-y-6">
+                                    {/* Upload Area */}
+                                    <div 
+                                        className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                                            isUploading 
+                                                ? 'border-gray-300 bg-gray-50 opacity-50 cursor-wait' 
+                                                : 'border-blue-300 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-500 dark:border-gray-600 dark:bg-gray-700/30 dark:hover:border-blue-400'
+                                        }`}
+                                        onClick={() => !isUploading && fileInputRef.current?.click()}
+                                    >
+                                        <input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileChange} 
+                                            accept=".csv" 
+                                            className="hidden" 
+                                        />
+                                        <UploadIcon />
+                                        {uploadFile ? (
+                                            <div className="text-center">
+                                                <p className="font-bold text-blue-600 dark:text-blue-400 text-lg">{uploadFile.name}</p>
+                                                <p className="text-xs text-gray-400 mt-1">{(uploadFile.size / 1024).toFixed(2)} KB</p>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center">
+                                                <p className="font-bold text-gray-600 dark:text-gray-300">Dosya Seçmek İçin Tıklayın</p>
+                                                <p className="text-xs text-gray-400 mt-1">Desteklenen format: .CSV (Virgül ile ayrılmış)</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    {isUploading && (
+                                        <div className="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 overflow-hidden relative">
+                                            <div 
+                                                className="bg-blue-600 h-4 rounded-full transition-all duration-300 flex items-center justify-center text-[8px] text-white font-bold" 
+                                                style={{ width: `${uploadProgress}%` }}
+                                            >
+                                                {uploadProgress}%
+                                            </div>
+                                            <div className="absolute inset-0 bg-white/30 animate-pulse w-full h-full"></div>
+                                        </div>
+                                    )}
+
+                                    {/* Action Button */}
+                                    <button 
+                                        onClick={handleBulkUpload} 
+                                        disabled={!uploadFile || isUploading}
+                                        className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 flex items-center justify-center"
+                                    >
+                                        {isUploading ? (
+                                            <>
+                                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Veriler İşleniyor...
+                                            </>
+                                        ) : 'Yüklemeyi Başlat'}
+                                    </button>
+
+                                    {/* Status Report */}
+                                    {uploadStatus && (
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600 grid grid-cols-3 gap-4 text-center">
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-500 uppercase">Toplam</p>
+                                                <p className="text-xl font-black text-gray-800 dark:text-white">{uploadStatus.total}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-green-600 uppercase">Başarılı</p>
+                                                <p className="text-xl font-black text-green-600">{uploadStatus.success}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-red-600 uppercase">Hatalı</p>
+                                                <p className="text-xl font-black text-red-600">{uploadStatus.error}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Format Info */}
+                                    <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-sm">
+                                        <p className="font-bold text-gray-700 dark:text-gray-300 mb-2">Gerekli CSV Sütun Başlıkları:</p>
+                                        <div className="bg-gray-100 dark:bg-gray-900 p-3 rounded-lg font-mono text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
+                                            tesisat_no, ad_soyad, telefon, adres, enlem, boylam
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            * <strong>tesisat_no</strong> (Benzersiz Anahtar): Eğer bu numara sistemde varsa, diğer bilgiler güncellenir. Yoksa yeni kayıt oluşturulur.<br/>
+                                            * Telefon numaraları değişirse otomatik güncellenir.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
@@ -1198,6 +1392,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         .preserve-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
+        .cursor-wait { cursor: wait; }
       `}</style>
     </div>
   );
