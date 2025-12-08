@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import * as sheetService from '../services/sheetService';
 import type { Credential, UserActivityStat, Customer } from '../types';
-import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon, CounterResetIcon, InfinityIcon } from './icons';
+import { TrashIcon, EditIcon, SearchIcon, RefreshIcon, UserGroupIcon, ChartBarIcon, LightningIcon, PhoneIconSolid, MessageIcon, ClockIcon, DownloadIcon, CounterResetIcon, InfinityIcon, ReportIcon } from './icons';
 import AdBanner from './AdBanner';
 import Papa from 'papaparse';
 
@@ -142,6 +142,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
   const [users, setUsers] = useState<AdminUserData[]>([]);
   const [totalCustomers, setTotalCustomers] = useState<number>(0);
   const [topQueries, setTopQueries] = useState<{installationNumber: string, count: number}[]>([]);
+  const [reportedErrors, setReportedErrors] = useState<{installationNumber: string, count: number}[]>([]);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -200,15 +201,17 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     if (showLoading) setIsLoading(true);
     setError('');
     try {
-      const [creds, stats, customerCount, trends] = await Promise.all([
+      const [creds, stats, customerCount, trends, errors] = await Promise.all([
         sheetService.getCredentials(),
         sheetService.getUserActivityStats(),
         sheetService.getTotalCustomerCount(),
-        sheetService.getTopQueriedInstallations(10) // Top 10 queries
+        sheetService.getTopQueriedInstallations(10), // Top 10 queries
+        sheetService.getTopReportedErrors(5) // Top reported errors
       ]);
 
       setTotalCustomers(customerCount);
       setTopQueries(trends);
+      setReportedErrors(errors);
 
       const statsMap = new Map<string, Omit<UserActivityStat, 'username'>>();
       stats.forEach(stat => {
@@ -1142,6 +1145,41 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             </div>
                         )}
                      </div>
+
+                     {/* ERROR REPORTS CARD (NEW SECTION) */}
+                     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm mt-6">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white">Hatalı Numaralar</h3>
+                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-0.5">Bildirilen Tesisatlar</p>
+                            </div>
+                            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-2 rounded-lg">
+                                <ReportIcon />
+                            </div>
+                        </div>
+                        
+                        {reportedErrors.length === 0 ? (
+                            <div className="text-center py-6 text-gray-400 italic text-sm bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-600">
+                                Bildirim yok.
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                 {reportedErrors.map((item, index) => (
+                                    <div key={item.installationNumber} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-red-50/50 border-red-100 dark:bg-gray-700/30 dark:hover:bg-gray-700 dark:border-gray-600 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800">
+                                                 !
+                                            </div>
+                                            <span className="font-mono font-bold text-gray-800 dark:text-gray-200 text-sm tracking-tight">{item.installationNumber}</span>
+                                        </div>
+                                        <div className="text-[10px] font-bold uppercase text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">
+                                            {item.count} Bildirim
+                                        </div>
+                                    </div>
+                                 ))}
+                            </div>
+                        )}
+                    </div>
                      
                      <AdBanner />
                 </div>
