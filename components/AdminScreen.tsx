@@ -1,10 +1,12 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import * as sheetService from '../services/sheetService';
 import { 
     UserIcon, LockIcon, TrashIcon, EditIcon, ChartBarIcon, 
     UserGroupIcon, RefreshIcon, DownloadIcon, ReportIcon, 
-    LightningIcon, CounterResetIcon, SearchIcon, PhoneIconSolid, MessageIcon
+    LightningIcon, CounterResetIcon, SearchIcon, PhoneIconSolid, MessageIcon,
+    DeviceResetIcon
 } from './icons';
 import type { Credential, UserActivityStat } from '../types';
 import Papa from 'papaparse';
@@ -190,6 +192,16 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         try {
             await sheetService.resetUserStats(username);
             setSuccessMsg(`${username} sorguları sıfırlandı.`);
+            loadData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err: any) { setError(err.message); }
+    };
+
+    const handleResetDevice = async (username: string) => {
+        if (!confirm(`${username} kullanıcısının cihaz kilidini sıfırlamak istediğinize emin misiniz?`)) return;
+        try {
+            await sheetService.resetUserDevice(username);
+            setSuccessMsg('Cihaz kilidi sıfırlandı.');
             loadData();
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (err: any) { setError(err.message); }
@@ -625,6 +637,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                             <td className="px-6 py-4 text-right">
                                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                     <button onClick={() => handleViewDetails(user.username)} className="p-2 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100" title="Detay"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg></button>
+                                                                    <button onClick={() => handleResetDevice(user.username)} className="p-2 bg-indigo-50 text-indigo-500 rounded-lg hover:bg-indigo-100" title="Cihaz Kilidini Sıfırla"><DeviceResetIcon /></button>
                                                                     <button onClick={() => handleResetStats(user.username)} className="p-2 bg-purple-50 text-purple-500 rounded-lg hover:bg-purple-100" title="Sayacı Sıfırla"><CounterResetIcon /></button>
                                                                     <button onClick={() => { setEditingUser(user); setFormData({...user, password: user.password, fullName: user.fullName || '', title: user.title || PREDEFINED_TITLES[0], allowedDeviceId: user.allowedDeviceId || '', skipDeviceLock: user.skipDeviceLock || false, canViewDetails: user.canViewDetails || false, unlimitedAccess: user.unlimitedAccess || false}); setShowAddModal(true); }} className="p-2 bg-orange-50 text-orange-500 rounded-lg hover:bg-orange-100" title="Düzenle"><EditIcon /></button>
                                                                     <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100" title="Sil"><TrashIcon /></button>

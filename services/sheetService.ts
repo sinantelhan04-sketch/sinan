@@ -590,6 +590,16 @@ export const resetUserStats = async (username: string): Promise<void> => {
     if (error) throw new Error(error.message);
 };
 
+export const resetUserDevice = async (username: string): Promise<void> => {
+    const client = ensureClient();
+    const { error } = await client
+        .from('users')
+        .update({ allowed_device_id: null })
+        .eq('username', username);
+
+    if (error) throw new Error(error.message);
+};
+
 // --- Bulk Data Operations ---
 
 export const bulkUpsertCustomers = async (customers: Customer[]): Promise<{success: number, error: number, message?: string}> => {
