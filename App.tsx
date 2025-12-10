@@ -38,6 +38,18 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
+  // Başlangıç yükleme ekranını kaldır (ÖNEMLİ DÜZELTME)
+  useEffect(() => {
+    const loader = document.getElementById('initial-loader');
+    if (loader) {
+        // React mount olduktan sonra loader'ı yumuşakça kaldır
+        setTimeout(() => {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 500);
+        }, 100);
+    }
+  }, []);
+
   // PWA Install Prompt Listener
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -253,12 +265,12 @@ const App: React.FC = () => {
             <div className="flex flex-col items-center gap-6 w-full max-w-md">
                 <LoginScreen onLogin={handleLogin} />
                 
-                <div className={`w-full rounded-lg py-2 px-4 flex items-center justify-between text-xs font-medium transition-colors ${
+                <div className={`w-full rounded-lg py-2 px-4 flex flex-col items-center justify-between text-xs font-medium transition-colors ${
                     serverStatus === 'online' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
                     serverStatus === 'offline' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
                     'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                 }`}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full justify-center">
                         <span className={`relative flex h-2.5 w-2.5`}>
                           <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                               serverStatus === 'online' ? 'bg-green-400' : serverStatus === 'offline' ? 'bg-red-400' : 'bg-yellow-400'
@@ -275,16 +287,20 @@ const App: React.FC = () => {
                     </div>
                     
                     {serverStatus === 'offline' && (
-                        <button 
-                            onClick={async () => {
-                                setServerStatus('checking');
-                                const isOnline = await sheetService.checkServerConnection();
-                                setServerStatus(isOnline ? 'online' : 'offline');
-                            }}
-                            className="underline hover:no-underline"
-                        >
-                            Yenile
-                        </button>
+                        <div className="mt-2 text-[10px] text-red-600 dark:text-red-300 text-center px-4 border-t border-red-200 dark:border-red-800 pt-2 w-full">
+                            Not: Türkiye'den erişimde sorun yaşıyorsanız DNS veya VPN kontrolü yapınız.
+                            <br/>
+                            <button 
+                                onClick={async () => {
+                                    setServerStatus('checking');
+                                    const isOnline = await sheetService.checkServerConnection();
+                                    setServerStatus(isOnline ? 'online' : 'offline');
+                                }}
+                                className="underline hover:no-underline mt-1 font-bold"
+                            >
+                                Tekrar Dene
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

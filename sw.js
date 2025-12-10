@@ -1,23 +1,24 @@
 
-const CACHE_NAME = 'tesisat-app-v2';
-const DYNAMIC_CACHE_NAME = 'tesisat-dynamic-v2';
+const CACHE_NAME = 'tesisat-app-v5'; // Cache versiyonu v5'e yükseltildi
+const DYNAMIC_CACHE_NAME = 'tesisat-dynamic-v5';
 
-// Temel dosyaları önbelleğe al
+// Kurulum sırasında SADECE kendi dosyalarımızı cache'le.
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json',
-  'https://cdn.tailwindcss.com'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToCache).catch(err => {
+            console.warn('Önbellekleme uyarısı:', err);
+        });
       })
   );
-  self.skipWaiting();
+  self.skipWaiting(); // Yeni SW hemen aktif olsun
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,6 +27,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME) {
+            console.log('Eski cache temizleniyor:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -36,22 +38,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // API isteklerini ve Google reklamlarını cacheleme
   if (event.request.url.includes('supabase.co') || 
       event.request.url.includes('googlesyndication') ||
-      event.request.url.includes('google.com/maps')) {
+      event.request.url.includes('google.com/maps') ||
+      event.request.method !== 'GET') {
     return;
   }
 
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Cache'de varsa döndür
         if (response) {
           return response;
         }
 
-        // Yoksa network'ten çek ve cache'e at
         return fetch(event.request).then(
           (networkResponse) => {
             if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
@@ -67,7 +67,6 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           }
         ).catch(() => {
-          // Offline durumunda ve HTML isteği ise offline sayfasını (veya ana sayfayı) döndür
           if (event.request.headers.get('accept').includes('text/html')) {
              return caches.match('./index.html');
           }

@@ -241,7 +241,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-grow group">
                              <input
-                                type="text"
+                                type="tel" 
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 value={searchTerm}
                                 onChange={(e) => {
                                     setSearchTerm(e.target.value);
