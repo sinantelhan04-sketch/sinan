@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import LoginScreen from './components/LoginScreen';
@@ -11,6 +12,7 @@ import * as sheetService from './services/sheetService';
 import { SUPABASE_URL, SUPABASE_KEY } from './config';
 import type { Announcement } from './types';
 import AnnouncementModal from './components/AnnouncementModal';
+import { InstallIcon } from './components/icons';
 
 const SESSION_KEY = 'app_session_v1';
 const ANNOUNCEMENT_SEEN_KEY = 'announcement_seen_id';
@@ -31,6 +33,29 @@ const App: React.FC = () => {
   // Announcement State
   const [activeAnnouncement, setActiveAnnouncement] = useState<Announcement | null>(null);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
+
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  // PWA Install Prompt Listener
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    });
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   // Oturum Kurtarma ve Kontrol
   useEffect(() => {
@@ -298,8 +323,21 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 font-sans relative">
       {renderContent()}
+
+      {/* PWA Install Button */}
+      {showInstallBtn && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+          <button 
+            onClick={handleInstallClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-2 font-bold transition-all hover:scale-105"
+          >
+            <InstallIcon />
+            <span>Uygulamayı İndir</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
