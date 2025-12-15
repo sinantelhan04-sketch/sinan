@@ -142,7 +142,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         }
     };
 
-    const handleSearchClick = () => {
+    const handleSearchClick = (e?: React.MouseEvent) => {
+        if (e) e.preventDefault();
         performSearch(searchTerm);
     };
 
@@ -239,7 +240,19 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                 
                 <div className="relative mb-8 z-20">
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative flex-grow group">
+                        {/* Arama Formu - Mobilde "Git" tuşu için form yapısı */}
+                        <form 
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                performSearch(searchTerm);
+                                // Mobilde klavyeyi kapatmak için focus'u kaldır
+                                const activeElement = document.activeElement as HTMLElement;
+                                if (activeElement) {
+                                    activeElement.blur();
+                                }
+                            }}
+                            className="relative flex-grow group"
+                        >
                              <input
                                 type="tel" 
                                 inputMode="numeric"
@@ -258,7 +271,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
                                 <SearchIcon />
                             </div>
-                        </div>
+                        </form>
                         
                         <div className="flex gap-2 sm:contents">
                             <button

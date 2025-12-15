@@ -1,2 +1,1 @@
-// Bu dosya, Gemini entegrasyonu kaldırıldığı için artık kullanılmamaktadır.
-// Projeden güvenle silinebilir.
+// Bu dosya silinmiştir.

@@ -1,12 +1,12 @@
 
-const CACHE_NAME = 'tesisat-app-v5'; // Cache versiyonu v5'e yükseltildi
-const DYNAMIC_CACHE_NAME = 'tesisat-dynamic-v5';
+const CACHE_NAME = 'tesisat-app-v6'; // Cache versiyonu v6
+const DYNAMIC_CACHE_NAME = 'tesisat-dynamic-v6';
 
-// Kurulum sırasında SADECE kendi dosyalarımızı cache'le.
+// Temel dosyalar. Hata almamak için sadece kök dizinleri ekliyoruz.
+// 'index.html' yerine './' kullanımı bazı sunucularda daha güvenlidir.
 const urlsToCache = [
   './',
-  './index.html',
-  './manifest.json'
+  'manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -14,11 +14,11 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(urlsToCache).catch(err => {
-            console.warn('Önbellekleme uyarısı:', err);
+            console.warn('Önbellek kurulum uyarısı:', err);
         });
       })
   );
-  self.skipWaiting(); // Yeni SW hemen aktif olsun
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -27,7 +27,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME) {
-            console.log('Eski cache temizleniyor:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -38,6 +37,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Harici kaynakları ve API isteklerini cacheleme stratejisinden çıkar
   if (event.request.url.includes('supabase.co') || 
       event.request.url.includes('googlesyndication') ||
       event.request.url.includes('google.com/maps') ||
@@ -51,26 +51,19 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-
         return fetch(event.request).then(
           (networkResponse) => {
             if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
               return networkResponse;
             }
-
             const responseToCache = networkResponse.clone();
             caches.open(DYNAMIC_CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
               });
-
             return networkResponse;
           }
-        ).catch(() => {
-          if (event.request.headers.get('accept').includes('text/html')) {
-             return caches.match('./index.html');
-          }
-        });
+        );
       })
   );
 });

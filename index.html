@@ -43,6 +43,8 @@
     justify-content: center;
     z-index: 9999;
     transition: opacity 0.5s ease-out;
+    padding: 20px;
+    text-align: center;
   }
   .dark #initial-loader {
     background-color: #111827;
@@ -62,8 +64,54 @@
     margin-top: 20px;
     display: none; /* JS ile gösterilecek */
     text-align: center;
+    animation: fadeIn 0.5s ease-in;
   }
+  #error-display {
+    display: none;
+    margin-top: 20px;
+    color: #ef4444;
+    background: #fee2e2;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    max-width: 90%;
+    overflow: auto;
+    font-family: monospace;
+    border: 1px solid #fca5a5;
+  }
+  .dark #error-display {
+    background: #450a0a;
+    color: #fca5a5;
+    border-color: #7f1d1d;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
+<script>
+  // Global hata yakalayıcı
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    // Service Worker ve URL hatalarını tamamen yut
+    if (msg.toString().includes('ServiceWorker') || msg.toString().includes('URL') || msg.toString().includes('scriptURL')) {
+        console.warn('Ignored SW Error:', msg);
+        return true; 
+    }
+
+    const loader = document.getElementById('initial-loader');
+    const errorDiv = document.getElementById('error-display');
+    const resetBtn = document.getElementById('reset-btn-container');
+    
+    if (loader && errorDiv) {
+      document.querySelector('.loader-spinner').style.display = 'none';
+      document.querySelector('h2').innerText = 'Uygulama Başlatılamadı';
+      document.querySelector('p').innerText = 'Bir hata oluştu.';
+      
+      errorDiv.style.display = 'block';
+      errorDiv.innerText = msg;
+      
+      if (resetBtn) resetBtn.style.display = 'block';
+    }
+    return false;
+  };
+</script>
 </head>
   <body class="bg-gradient-to-br from-slate-100 to-slate-300 dark:from-slate-900 dark:to-slate-800 min-h-screen bg-fixed selection:bg-blue-200 dark:selection:bg-blue-900">
     
@@ -73,10 +121,12 @@
       <h2 class="text-lg font-bold">Uygulama Yükleniyor...</h2>
       <p class="text-sm text-gray-500 mt-2">Lütfen bekleyin</p>
       
+      <div id="error-display"></div>
+
       <div id="reset-btn-container">
-        <p class="text-red-500 text-xs mb-2">Yükleme uzun sürdü mü?</p>
-        <button onclick="hardResetApp()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-red-600 transition">
-          Uygulamayı Sıfırla ve Yenile
+        <p class="text-red-500 text-xs mb-2 font-bold">Yükleme çok mu uzun sürdü?</p>
+        <button onclick="hardResetApp()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95">
+          Uygulamayı Onar ve Yenile
         </button>
       </div>
     </div>
@@ -87,36 +137,59 @@
     <!-- Service Worker Registration & App Health Check -->
     <script>
       // 3 saniye sonra hala loader varsa reset butonunu göster
-      setTimeout(() => {
+      const resetTimeout = setTimeout(() => {
         const resetBtn = document.getElementById('reset-btn-container');
         if (resetBtn && document.getElementById('initial-loader')) {
            resetBtn.style.display = 'block';
         }
       }, 3000);
 
-      // Uygulamayı tamamen sıfırlayan fonksiyon
+      // Uygulamayı tamamen sıfırlayan ve önbelleği temizleyen fonksiyon
       window.hardResetApp = async () => {
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          for (let registration of registrations) {
-            await registration.unregister();
+        const btn = document.querySelector('#reset-btn-container button');
+        if(btn) btn.innerText = "Temizleniyor...";
+        
+        try {
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+              await registration.unregister();
+            }
           }
+          
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key)));
+          }
+
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          window.location.reload(true);
+        } catch (e) {
+          alert("Sıfırlama hatası: " + e.message);
+          window.location.reload();
         }
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.reload(true);
       };
 
-      // Service Worker Kaydı
+      // Service Worker Kaydı (Tam Koruma)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-              console.log('SW registered: ', registration);
-            })
-            .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
-            });
+          try {
+             // Preview ortamlarında Origin hatasını engellemek için kontrol
+             if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                navigator.serviceWorker.register('./sw.js')
+                  .then(registration => {
+                    console.log('SW Registered');
+                  })
+                  .catch(err => {
+                    // Sessizce yut, kullanıcıya gösterme
+                    console.warn('PWA özellikleri bu ortamda devre dışı bırakıldı:', err);
+                  });
+             }
+          } catch (e) {
+             console.warn('SW Init Skipped');
+          }
         });
       }
     </script>
