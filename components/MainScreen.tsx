@@ -264,7 +264,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                 }}
                                 onFocus={() => setShowRecents(true)}
                                 onBlur={() => setTimeout(() => setShowRecents(false), 200)}
-                                placeholder="Tesisat No (Örn: 100123456)"
+                                placeholder="Tesisat Numarası (Örn: 100123456)"
                                 disabled={loading}
                                 className="w-full appearance-none rounded-2xl border-2 border-gray-100 dark:border-gray-600 px-4 py-4 pl-12 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all font-mono text-lg font-bold shadow-inner"
                             />
