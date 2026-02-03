@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import * as sheetService from '../services/sheetService';
 import { 
@@ -252,7 +253,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             skipEmptyLines: true,
             delimiter: "", // Otomatik algıla
             complete: (results) => {
-                // Async işlemi burada başlatıp, Papa.parse'a Promise döndürmeyerek tip hatasını önlüyoruz
                 const processUpload = async () => {
                     try {
                         setUploadProgress(50);
@@ -281,7 +281,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         setIsUploading(false); 
                     }
                 };
-                
                 processUpload();
             }
         });
