@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import * as sheetService from '../services/sheetService';
 import { 
@@ -252,26 +251,31 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             header: true,
             skipEmptyLines: true,
             delimiter: "", // Otomatik algıla
-            complete: (results) => {
+            complete: (results: any) => { // 'any' tipi eklendi, TS hatasını önlemek için
+                // Async işlemi burada başlatıp, Papa.parse'a Promise döndürmeyerek tip hatasını önlüyoruz
                 const processUpload = async () => {
                     try {
                         setUploadProgress(50);
                         const customers: any[] = [];
-                        results.data.forEach((row: any) => {
-                            if (row.tesisat_no) {
-                                customers.push({
-                                    installationNumber: row.tesisat_no,
-                                    name: row.ad_soyad || '',
-                                    phone: row.telefon || '',
-                                    address: row.adres || '',
-                                    latitude: row.enlem || null,
-                                    longitude: row.boylam || null
-                                });
-                            }
-                        });
+                        
+                        if (results && results.data && Array.isArray(results.data)) {
+                            results.data.forEach((row: any) => {
+                                if (row.tesisat_no) {
+                                    customers.push({
+                                        installationNumber: row.tesisat_no,
+                                        name: row.ad_soyad || '',
+                                        phone: row.telefon || '',
+                                        address: row.adres || '',
+                                        latitude: row.enlem || null,
+                                        longitude: row.boylam || null
+                                    });
+                                }
+                            });
+                        }
+                        
                         const result = await sheetService.bulkUpsertCustomers(customers);
                         setUploadProgress(100);
-                        setUploadStatus({ total: results.data.length, success: result.success, error: result.error });
+                        setUploadStatus({ total: results.data ? results.data.length : 0, success: result.success, error: result.error });
                         setSuccessMsg(`${result.success} kayıt yüklendi.`);
                         loadData(); 
                         setTimeout(() => setSuccessMsg(''), 5000);
@@ -281,6 +285,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         setIsUploading(false); 
                     }
                 };
+                
                 processUpload();
             }
         });
