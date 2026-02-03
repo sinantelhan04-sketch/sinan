@@ -1,1 +1,8 @@
-// Bu dosya Netlify geçişi nedeniyle silinmiştir.
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

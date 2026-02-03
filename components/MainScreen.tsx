@@ -1,9 +1,8 @@
 
-
 import React, { useState, useCallback, useEffect } from 'react';
 import type { Customer } from '../types';
 import * as sheetService from '../services/sheetService';
-import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIcon, ReportIcon } from './icons';
+import { MapPinIcon, PhoneIcon, UserIcon, PhoneIconSolid, MessageIcon, SearchIcon, ReportIcon, ExpandIcon, CloseIcon } from './icons';
 import AdBanner from './AdBanner';
 
 interface MainScreenProps {
@@ -39,6 +38,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
     const [showRecents, setShowRecents] = useState(false);
     const [currentLogId, setCurrentLogId] = useState<number | null>(null);
     const [reportSent, setReportSent] = useState(false);
+    const [showFullScreenMap, setShowFullScreenMap] = useState(false);
     
     // Reklam yenileme tetikleyicisi
     const [adRefreshTrigger, setAdRefreshTrigger] = useState(0);
@@ -59,6 +59,23 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
             setRecentSearches([]);
         }
     }, [recentSearchesKey]);
+
+    // Otomatik Arama (Debounce)
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            // En az 7 hane girildiyse ve henüz arama yapılmadıysa otomatik ara
+            if (searchTerm.length >= 7 && !searchPerformed && !loading) {
+                performSearch(searchTerm);
+                // Mobilde klavyeyi kapat
+                const activeElement = document.activeElement as HTMLElement;
+                if (activeElement && activeElement.tagName === 'INPUT') {
+                    activeElement.blur();
+                }
+            }
+        }, 1200); // 1.2 saniye bekle
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm]);
 
     const saveToRecents = (term: string) => {
         let updated = [term, ...recentSearches.filter(s => s !== term)];
@@ -84,6 +101,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         setSearchPerformed(false);
         setCurrentLogId(null);
         setReportSent(false);
+        setShowFullScreenMap(false);
     }, []);
 
     const performSearch = async (term: string) => {
@@ -221,6 +239,16 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         const numericValue = e.target.value.replace(/[^0-9]/g, '');
         setSearchTerm(numericValue);
         setShowRecents(true);
+        
+        // Yeni bir giriş yapıldığında eski sonuçları ve durumu temizle
+        // Böylece kullanıcı yeni bir numara yazarken temiz bir sayfa görür
+        if (foundCustomer || error) {
+            setFoundCustomer(null);
+            setMapEmbedUrl(null);
+            setExternalMapUrl(null);
+            setError('');
+        }
+        setSearchPerformed(false);
     };
 
     return (
@@ -294,7 +322,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                     </div>
                                 ) : 'Sorgula'}
                             </button>
-                            {searchPerformed && !loading && (
+                            {/* Arama yapıldıysa veya metin varsa Temizle butonu */}
+                            {(searchPerformed || searchTerm) && !loading && (
                                 <button 
                                     onClick={handleClear}
                                     className="flex-1 sm:flex-none sm:w-auto px-4 py-3 font-bold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600"
@@ -446,17 +475,34 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                             </a>
                                         )}
                                     </div>
-                                    <div className="relative w-full h-64 sm:h-[400px] bg-gray-100 rounded-b-xl overflow-hidden">
+                                    <div 
+                                        className="relative w-full h-64 sm:h-[400px] bg-gray-100 rounded-b-xl overflow-hidden group cursor-pointer"
+                                        onClick={() => setShowFullScreenMap(true)}
+                                    >
                                         <iframe
                                             src={mapEmbedUrl}
                                             width="100%"
                                             height="100%"
-                                            style={{ border: 0 }}
+                                            style={{ border: 0, pointerEvents: 'none' }} // Etkileşimi iptal et, tıklama container'a gitsin
                                             allowFullScreen={false}
                                             loading="lazy"
                                             referrerPolicy="no-referrer-when-downgrade"
                                             title="Google Maps"
                                         ></iframe>
+                                        
+                                        {/* Overlay - Tıklanabilir olduğunu göster */}
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                             <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm text-gray-800 dark:text-white px-4 py-2 rounded-full shadow-lg transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 flex items-center gap-2 border border-white/20">
+                                                <ExpandIcon />
+                                                <span className="text-xs font-bold uppercase tracking-wider">Tam Ekran</span>
+                                             </div>
+                                        </div>
+                                         {/* Mobil için sürekli görünür küçük ikon */}
+                                         <div className="absolute bottom-3 right-3 sm:hidden">
+                                             <div className="bg-white/80 dark:bg-gray-900/80 p-2 rounded-full shadow-md text-gray-800 dark:text-white">
+                                                <ExpandIcon />
+                                             </div>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
@@ -474,6 +520,72 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                 {/* Alt Reklam - Key özelliği ile her aramada yenilenir */}
                 <AdBanner key={`bot-${adRefreshTrigger}`} className="mt-auto pt-6" />
             </div>
+
+            {/* FULL SCREEN MAP MODAL */}
+            {showFullScreenMap && mapEmbedUrl && (
+                <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex flex-col animate-fade-in p-4 sm:p-8">
+                    <div className="w-full h-full bg-white dark:bg-gray-800 rounded-3xl overflow-hidden flex flex-col relative shadow-2xl border border-gray-700">
+                        {/* Full Screen Header */}
+                        <div className="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                             <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <MapPinIcon />
+                                <span className="text-lg">Harita Detayı</span>
+                             </h3>
+                             <div className="flex items-center gap-3">
+                                {externalMapUrl && (
+                                     <a 
+                                        href={externalMapUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm font-bold bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors hidden sm:flex items-center shadow-lg shadow-blue-500/20"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                        Navigasyon
+                                    </a>
+                                )}
+                                <button 
+                                    onClick={() => setShowFullScreenMap(false)} 
+                                    className="bg-gray-200 dark:bg-gray-700 hover:bg-red-500 hover:text-white text-gray-500 dark:text-gray-300 p-2 rounded-full transition-colors"
+                                >
+                                    <CloseIcon />
+                                </button>
+                             </div>
+                        </div>
+                        {/* Full Screen Map Iframe */}
+                        <div className="flex-grow relative bg-gray-100">
+                            <iframe
+                                src={mapEmbedUrl}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen={true}
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="Google Maps Full"
+                            ></iframe>
+                        </div>
+                         {/* Mobile Navigation Button (Bottom) */}
+                         {externalMapUrl && (
+                            <div className="sm:hidden absolute bottom-6 left-0 w-full flex justify-center pointer-events-none">
+                                 <a 
+                                    href={externalMapUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="pointer-events-auto bg-blue-600 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2 animate-bounce"
+                                >
+                                    Navigasyon Başlat
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </a>
+                            </div>
+                         )}
+                    </div>
+                </div>
+            )}
+
              <style>{`
                 .animate-fade-in { animation: fadeIn 0.2s ease-out; }
                 .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }

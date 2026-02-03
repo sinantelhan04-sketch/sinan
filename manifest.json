@@ -1,3 +1,4 @@
+
 {
   "name": "Tesisat Sorgulama",
   "short_name": "Tesisat",
@@ -10,12 +11,14 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/9374/9374868.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/9374/9374868.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
