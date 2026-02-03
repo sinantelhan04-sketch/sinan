@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_KEY } from '../config';
 import type { Credential, Customer, UserActivityStat, Announcement } from '../types';
@@ -634,4 +635,41 @@ export const bulkUpsertCustomers = async (customers: Customer[]): Promise<{succe
     }
 
     return { success: successCount, error: errorCount };
+};
+
+// --- Export All Data ---
+export const getAllCustomers = async (): Promise<Customer[]> => {
+    const client = ensureClient();
+    let allData: any[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    // Supabase 1000 satır limiti olduğu için sayfalama yapıyoruz
+    while (hasMore) {
+        const { data, error } = await client
+            .from('customers')
+            .select('*')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) throw new Error('Veri çekme hatası: ' + error.message);
+
+        if (!data || data.length === 0) {
+            hasMore = false;
+        } else {
+            allData = [...allData, ...data];
+            // Eğer dönen veri sayfa boyutundan azsa, son sayfadayız demektir
+            if (data.length < pageSize) hasMore = false;
+            page++;
+        }
+    }
+
+    return allData.map((data: any) => ({
+        installationNumber: data.installation_number,
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        latitude: data.latitude,
+        longitude: data.longitude
+    }));
 };
