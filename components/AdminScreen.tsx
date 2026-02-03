@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import * as sheetService from '../services/sheetService';
 import { 
@@ -251,31 +250,39 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         Papa.parse(uploadFile, {
             header: true,
             skipEmptyLines: true,
-            delimiter: "", // Otomatik algıla (hem virgül hem noktalı virgül desteği için)
-            complete: async (results) => {
-                try {
-                    setUploadProgress(50);
-                    const customers: any[] = [];
-                    results.data.forEach((row: any) => {
-                        if (row.tesisat_no) {
-                            customers.push({
-                                installationNumber: row.tesisat_no,
-                                name: row.ad_soyad || '',
-                                phone: row.telefon || '',
-                                address: row.adres || '',
-                                latitude: row.enlem || null,
-                                longitude: row.boylam || null
-                            });
-                        }
-                    });
-                    const result = await sheetService.bulkUpsertCustomers(customers);
-                    setUploadProgress(100);
-                    setUploadStatus({ total: results.data.length, success: result.success, error: result.error });
-                    setSuccessMsg(`${result.success} kayıt yüklendi.`);
-                    loadData(); 
-                    setTimeout(() => setSuccessMsg(''), 5000);
-                } catch (e: any) { setError(e.message); } 
-                finally { setIsUploading(false); }
+            delimiter: "", // Otomatik algıla
+            complete: (results) => {
+                // Async işlemi burada başlatıp, Papa.parse'a Promise döndürmeyerek tip hatasını önlüyoruz
+                const processUpload = async () => {
+                    try {
+                        setUploadProgress(50);
+                        const customers: any[] = [];
+                        results.data.forEach((row: any) => {
+                            if (row.tesisat_no) {
+                                customers.push({
+                                    installationNumber: row.tesisat_no,
+                                    name: row.ad_soyad || '',
+                                    phone: row.telefon || '',
+                                    address: row.adres || '',
+                                    latitude: row.enlem || null,
+                                    longitude: row.boylam || null
+                                });
+                            }
+                        });
+                        const result = await sheetService.bulkUpsertCustomers(customers);
+                        setUploadProgress(100);
+                        setUploadStatus({ total: results.data.length, success: result.success, error: result.error });
+                        setSuccessMsg(`${result.success} kayıt yüklendi.`);
+                        loadData(); 
+                        setTimeout(() => setSuccessMsg(''), 5000);
+                    } catch (e: any) { 
+                        setError(e.message); 
+                    } finally { 
+                        setIsUploading(false); 
+                    }
+                };
+                
+                processUpload();
             }
         });
     };
