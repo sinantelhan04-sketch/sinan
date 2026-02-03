@@ -215,6 +215,14 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
         }
     };
 
+    // Sadece rakam girişine izin veren fonksiyon
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Girilen değerden rakam olmayan her şeyi sil
+        const numericValue = e.target.value.replace(/[^0-9]/g, '');
+        setSearchTerm(numericValue);
+        setShowRecents(true);
+    };
+
     return (
         <div className="w-full max-w-4xl mx-auto">
             <div className="bg-white/95 backdrop-blur-sm dark:bg-gray-800/90 rounded-3xl shadow-2xl p-4 sm:p-8 relative min-h-[500px] flex flex-col border border-white/20 dark:border-gray-700">
@@ -258,13 +266,10 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                 inputMode="numeric"
                                 pattern="[0-9]*"
                                 value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    setShowRecents(true);
-                                }}
+                                onChange={handleInputChange}
                                 onFocus={() => setShowRecents(true)}
                                 onBlur={() => setTimeout(() => setShowRecents(false), 200)}
-                                placeholder="Tesisat Numarası (Örn: 100123456)"
+                                placeholder="Tesisat Numarası"
                                 disabled={loading}
                                 className="w-full appearance-none rounded-2xl border-2 border-gray-100 dark:border-gray-600 px-4 py-4 pl-12 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all font-mono text-lg font-bold shadow-inner"
                             />

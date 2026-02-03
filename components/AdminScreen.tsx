@@ -251,6 +251,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         Papa.parse(uploadFile, {
             header: true,
             skipEmptyLines: true,
+            delimiter: "", // Otomatik algıla (hem virgül hem noktalı virgül desteği için)
             complete: async (results) => {
                 try {
                     setUploadProgress(50);
@@ -277,6 +278,25 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 finally { setIsUploading(false); }
             }
         });
+    };
+
+    const downloadSampleCsv = () => {
+        // Excel uyumluluğu için ayırıcı olarak noktalı virgül (;) kullanıyoruz.
+        // BOM (\uFEFF) Türkçe karakterler için zorunlu.
+        const headers = ["tesisat_no", "ad_soyad", "telefon", "adres", "enlem", "boylam"];
+        const row = ["10001234", "Örnek Abone", "5551234567", "Merkez Mah. Cumhuriyet Cad. No:1", "41.0082", "28.9784"];
+        
+        // Sütunları noktalı virgül ile birleştir
+        const csvContent = "\uFEFF" + headers.join(";") + "\n" + row.join(";");
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'ornek_sablon.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     // --- Announcement Handlers ---
@@ -736,6 +756,16 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     <p className="text-gray-500">
                                         Müşteri veritabanını güncellemek için güncel CSV dosyasını buraya sürükleyin veya seçin.
                                     </p>
+                                    
+                                    <button 
+                                        onClick={downloadSampleCsv}
+                                        className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-xl transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Örnek Şablonu İndir (.CSV)
+                                    </button>
                                     
                                     <div 
                                         onClick={() => !isUploading && fileInputRef.current?.click()}
