@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-brand-bg: #f8f9fc;
+  --color-brand-card: #ffffff;
+  --color-brand-accent: #0056b3;
+  --color-brand-accent-hover: #004494;
+  --color-brand-border: #e2e8f0;
+  --color-brand-text: #1a202c;
+  --color-brand-text-muted: #718096;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text font-sans antialiased;
+  }
+}
+
+@layer components {
+  .card-hardware {
+    @apply bg-brand-card border border-brand-border rounded-[24px] shadow-sm overflow-hidden;
+  }
+
+  .btn-hardware {
+    @apply bg-brand-accent hover:bg-brand-accent-hover text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .input-hardware {
+    @apply bg-white border border-brand-border text-brand-text rounded-xl px-4 py-3 focus:outline-none focus:border-brand-accent transition-colors placeholder:text-brand-text-muted/50;
+  }
+
+  .label-hardware {
+    @apply text-[11px] uppercase tracking-widest font-bold text-brand-text-muted mb-1 block;
+  }
+
+  .status-dot {
+    @apply relative flex h-2.5 w-2.5;
+  }
+
+  .status-dot-ping {
+    @apply animate-ping absolute inline-flex h-full w-full rounded-full opacity-75;
+  }
+
+  .status-dot-inner {
+    @apply relative inline-flex rounded-full h-2.5 w-2.5;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Initial Loader Overrides */
+#initial-loader {
+  background-color: #0a0a0a !important;
+  color: white !important;
+}
+
+.loader-spinner {
+  border-color: #27272a !important;
+  border-top-color: #f59e0b !important;
+}

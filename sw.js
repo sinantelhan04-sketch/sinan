@@ -1,6 +1,6 @@
 
-const CACHE_NAME = 'tesisat-app-v8'; // Cache versiyonu v8
-const DYNAMIC_CACHE_NAME = 'tesisat-dynamic-v8';
+const CACHE_NAME = 'tesisat-app-v11'; // Cache versiyonu v11
+const DYNAMIC_CACHE_NAME = 'tesisat-dynamic-v11';
 
 // Temel dosyalar. Hata almamak için sadece kök dizinleri ekliyoruz.
 // 'index.html' yerine './' kullanımı bazı sunucularda daha güvenlidir.

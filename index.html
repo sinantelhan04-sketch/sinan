@@ -7,15 +7,12 @@
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#0a0a0a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Tesisat" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9374/9374868.png" />
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1812481333949389" crossorigin="anonymous"></script>
   <script type="importmap">
 {
   "imports": {
@@ -36,7 +33,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #f3f4f6;
+    background-color: #0a0a0a; /* Hardware theme bg */
+    color: #ffffff;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -46,13 +44,9 @@
     padding: 20px;
     text-align: center;
   }
-  .dark #initial-loader {
-    background-color: #111827;
-    color: white;
-  }
   .loader-spinner {
-    border: 4px solid #e5e7eb;
-    border-top: 4px solid #3b82f6;
+    border: 4px solid rgba(245, 158, 11, 0.1);
+    border-top: 4px solid #f59e0b; /* Hardware theme accent */
     border-radius: 50%;
     width: 48px;
     height: 48px;
@@ -112,27 +106,28 @@
     return false;
   };
 </script>
+<link rel="stylesheet" href="/index.css?v=11">
 </head>
-  <body class="bg-gradient-to-br from-slate-100 to-slate-300 dark:from-slate-900 dark:to-slate-800 min-h-screen bg-fixed selection:bg-blue-200 dark:selection:bg-blue-900">
+  <body class="bg-brand-bg text-brand-text min-h-screen">
     
     <!-- Yükleme Ekranı -->
     <div id="initial-loader">
       <div class="loader-spinner"></div>
-      <h2 class="text-lg font-bold">Uygulama Yükleniyor...</h2>
-      <p class="text-sm text-gray-500 mt-2">Lütfen bekleyin</p>
+      <h2 class="text-lg font-bold text-white">Uygulama Yükleniyor...</h2>
+      <p class="text-sm text-brand-accent mt-2 font-bold uppercase tracking-widest">Lütfen bekleyin</p>
       
       <div id="error-display"></div>
 
       <div id="reset-btn-container">
         <p class="text-red-500 text-xs mb-2 font-bold">Yükleme çok mu uzun sürdü?</p>
-        <button onclick="hardResetApp()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95">
+        <button onclick="hardResetApp()" class="bg-brand-accent hover:bg-brand-accent-hover text-black px-6 py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95 uppercase tracking-widest">
           Uygulamayı Onar ve Yenile
         </button>
       </div>
     </div>
 
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/index.tsx?v=11"></script>
     
     <!-- Service Worker Registration & App Health Check -->
     <script>
@@ -193,5 +188,5 @@
         });
       }
     </script>
-  </body>
+</body>
 </html>

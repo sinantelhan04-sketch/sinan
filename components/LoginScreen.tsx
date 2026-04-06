@@ -101,45 +101,43 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             }
         `}</style>
 
-        {/* Dynamic Background Elements (Soft Blobs) */}
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-300 dark:bg-blue-900 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-300 dark:bg-indigo-900 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-cyan-300 dark:bg-cyan-900 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+        {/* Dynamic Background Elements (Subtle Grid) */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#0056b3 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }}></div>
 
-        {/* Main Glassmorphism Card */}
-        <div className="relative w-full bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl rounded-[32px] shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] border border-white/50 dark:border-gray-700/50 overflow-hidden z-10">
+        {/* Main Hardware Card */}
+        <div className="relative w-full card-hardware z-10 shadow-2xl">
             
             {/* Header / Logo Section */}
-            <div className="pt-10 pb-6 text-center">
+            <div className="pt-10 pb-6 text-center border-b border-brand-border">
                 <div className="flex flex-col items-center justify-center">
                     
                     {/* Logo Circle */}
-                    <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-cyan-500 rounded-[24px] flex items-center justify-center mb-5 shadow-lg shadow-blue-500/30 transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-white">
+                    <div className="w-16 h-16 bg-brand-accent rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-accent/20">
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
                             <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
                         </svg>
                     </div>
 
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">
-                        Tesisat Sorgulama
+                    <h1 className="text-xl font-black text-brand-text tracking-tight uppercase">
+                        TESİSAT SORGULAMA
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-widest mt-2">
-                        Yetkili Personel
+                    <p className="text-brand-accent text-[10px] font-bold uppercase tracking-[0.3em] mt-2">
+                        YETKİLİ PERSONEL PANELİ
                     </p>
                 </div>
             </div>
 
             {/* Form Area */}
-            <div className="px-8 pb-10">
+            <div className="px-8 py-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     
                     {/* Username Input */}
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 ml-1">
+                        <label className="label-hardware">
                             SİCİL NUMARASI
                         </label>
                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-text-muted group-focus-within:text-brand-accent transition-colors">
                                 <UserIcon />
                             </div>
                             <input
@@ -147,7 +145,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 disabled={isLoggingIn}
-                                className="block w-full pl-11 pr-4 py-3.5 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold outline-none"
+                                className="input-hardware w-full pl-11"
                                 placeholder="Sicil numaranız"
                                 autoComplete="username"
                             />
@@ -156,11 +154,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
                     {/* Password Input */}
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 ml-1">
+                        <label className="label-hardware">
                             ŞİFRE
                         </label>
                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-text-muted group-focus-within:text-brand-accent transition-colors">
                                 <LockIcon />
                             </div>
                             <input
@@ -168,14 +166,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={isLoggingIn}
-                                className="block w-full pl-11 pr-12 py-3.5 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-semibold outline-none"
+                                className="input-hardware w-full pl-11 pr-12"
                                 placeholder="••••••••"
                                 autoComplete="current-password"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none cursor-pointer transition-colors"
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-brand-text-muted hover:text-brand-accent focus:outline-none cursor-pointer transition-colors"
                             >
                                 {showPassword ? (
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -199,13 +197,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                     type="checkbox"
                                     checked={rememberMe}
                                     onChange={(e) => setRememberMe(e.target.checked)}
-                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 dark:border-gray-600 checked:bg-blue-600 checked:border-blue-600 transition-all"
+                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-brand-border checked:bg-brand-accent checked:border-brand-accent transition-all"
                                 />
-                                <svg className="absolute w-3.5 h-3.5 text-white hidden peer-checked:block pointer-events-none left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                <svg className="absolute w-3.5 h-3.5 text-black hidden peer-checked:block pointer-events-none left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                             </div>
-                            <span className="text-sm text-gray-600 dark:text-gray-300 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <span className="text-sm text-brand-text-muted font-medium group-hover:text-brand-accent transition-colors">
                                 Beni Hatırla
                             </span>
                         </label>
@@ -213,7 +211,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
                     {/* Error Message */}
                     {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 p-4 rounded-xl text-sm font-medium flex items-center animate-fade-in border border-red-100 dark:border-red-800">
+                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium flex items-center animate-fade-in border border-red-100">
                             <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
@@ -225,7 +223,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                     <button
                         type="submit"
                         disabled={isLoggingIn}
-                        className={`w-full flex justify-center py-4 px-4 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-blue-600/30 ${isLoggingIn ? 'cursor-wait' : ''}`}
+                        className="btn-hardware w-full py-4 text-sm tracking-widest"
                     >
                         {isLoggingIn ? (
                             <span className="flex items-center">
@@ -233,20 +231,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Giriş Yapılıyor...
+                                GİRİŞ YAPILIYOR...
                             </span>
                         ) : (
-                            'Giriş Yap'
+                            'SİSTEME GİRİŞ YAP'
                         )}
                     </button>
                 </form>
                 
                 {/* Footer / Device ID */}
-                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+                <div className="mt-8 pt-6 border-t border-brand-border">
                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Cihaz Kimliği</span>
+                        <span className="label-hardware">TERMİNAL KİMLİĞİ</span>
                         <div className="flex items-center space-x-2 group cursor-pointer" onClick={copyToClipboard} title="Kopyalamak için tıklayın">
-                            <code className="text-[11px] text-gray-500 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 group-hover:border-blue-400 group-hover:text-blue-500 transition-all">
+                            <code className="text-[11px] text-brand-text-muted font-mono bg-brand-bg px-3 py-1.5 rounded-lg border border-brand-border group-hover:border-brand-accent group-hover:text-brand-accent transition-all">
                                 {deviceId.slice(0, 16)}...
                             </code>
                             {copied ? (
@@ -254,7 +252,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
                             ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-brand-text-muted group-hover:text-brand-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
                             )}
@@ -266,8 +264,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         
         {/* Support Link */}
         <div className="absolute bottom-4 left-0 w-full text-center">
-             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                Sorun mu yaşıyorsunuz? <a href="#" className="text-blue-600 dark:text-blue-400 font-bold hover:underline">Bilgi İşlem</a>
+             <p className="text-xs text-brand-text-muted font-medium">
+                Sorun mu yaşıyorsunuz? <a href="#" className="text-brand-accent font-bold hover:underline">Teknik Destek</a>
             </p>
         </div>
     </div>

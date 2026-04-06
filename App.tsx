@@ -231,10 +231,11 @@ const App: React.FC = () => {
 
   if (isSessionRestoring) {
       return (
-          <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                  <p className="text-gray-500 text-sm font-medium">Oturum kontrol ediliyor...</p>
+          <div className="min-h-screen bg-brand-bg flex items-center justify-center p-4">
+              <div className="flex flex-col items-center bg-brand-card p-12 rounded-[32px] border border-brand-border shadow-2xl">
+                  <div className="w-16 h-16 border-4 border-brand-accent/20 border-t-brand-accent rounded-full animate-spin mb-6"></div>
+                  <p className="text-brand-text font-black uppercase tracking-widest text-xs">Sistem Yükleniyor</p>
+                  <p className="text-brand-text-muted text-[10px] mt-2">Oturum kontrol ediliyor...</p>
               </div>
           </div>
       );
@@ -243,34 +244,35 @@ const App: React.FC = () => {
   const renderContent = () => {
       if (appError) {
           return (
-              <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6 text-center">
-                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 dark:bg-red-900">
-                      <svg className="h-8 w-8 text-red-600 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-full max-w-md bg-brand-card rounded-[32px] shadow-2xl p-8 sm:p-10 space-y-8 text-center border border-brand-border relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50"></div>
+                  <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 animate-pulse">
+                      <svg className="h-10 w-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sistem Yapılandırma Hatası</h2>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Veritabanı bağlantı ayarları eksik.</p>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-black text-brand-text uppercase tracking-tight">Sistem <span className="text-red-500">Hatası</span></h2>
+                    <p className="text-sm text-brand-text-muted font-medium">Yapılandırma ayarları eksik veya hatalı.</p>
                   </div>
-                  <div className="text-left text-sm text-gray-600 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-800 font-mono text-xs overflow-x-auto">
+                  <div className="text-left text-[11px] text-red-400 bg-black/40 p-6 rounded-2xl border border-red-500/20 font-mono overflow-x-auto leading-relaxed">
                     {appError}
                   </div>
-                  <p className="text-xs text-gray-400">config.ts dosyasını kontrol edin.</p>
+                  <p className="text-[10px] text-brand-text-muted font-bold uppercase tracking-widest">config.ts dosyasını kontrol edin.</p>
               </div>
           );
       }
       if (!isAuthenticated) {
         return (
-            <div className="flex flex-col items-center gap-6 w-full max-w-md">
+            <div className="flex flex-col items-center gap-6 w-full max-w-md animate-fade-in">
                 <LoginScreen onLogin={handleLogin} />
                 
-                <div className={`w-full rounded-lg py-2 px-4 flex flex-col items-center justify-between text-xs font-medium transition-colors ${
-                    serverStatus === 'online' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
-                    serverStatus === 'offline' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                <div className={`w-full rounded-2xl py-3 px-6 flex flex-col items-center justify-between text-[10px] font-black uppercase tracking-widest transition-all border ${
+                    serverStatus === 'online' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                    serverStatus === 'offline' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                    'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                 }`}>
-                    <div className="flex items-center gap-2 w-full justify-center">
+                    <div className="flex items-center gap-3 w-full justify-center">
                         <span className={`relative flex h-2.5 w-2.5`}>
                           <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                               serverStatus === 'online' ? 'bg-green-400' : serverStatus === 'offline' ? 'bg-red-400' : 'bg-yellow-400'
@@ -280,14 +282,14 @@ const App: React.FC = () => {
                           }`}></span>
                         </span>
                         <span>
-                            {serverStatus === 'online' && "Supabase Veritabanı Aktif"}
-                            {serverStatus === 'offline' && "Veritabanına Erişilemiyor"}
-                            {serverStatus === 'checking' && "Bağlantı Kontrol Ediliyor..."}
+                            {serverStatus === 'online' && "Veritabanı Aktif"}
+                            {serverStatus === 'offline' && "Veritabanı Bağlantı Hatası"}
+                            {serverStatus === 'checking' && "Bağlantı Kontrol Ediliyor"}
                         </span>
                     </div>
                     
                     {serverStatus === 'offline' && (
-                        <div className="mt-2 text-[10px] text-red-600 dark:text-red-300 text-center px-4 border-t border-red-200 dark:border-red-800 pt-2 w-full">
+                        <div className="mt-3 text-[9px] text-red-400 text-center px-4 border-t border-red-500/10 pt-3 w-full font-medium normal-case leading-relaxed">
                             Not: Türkiye'den erişimde sorun yaşıyorsanız DNS veya VPN kontrolü yapınız.
                             <br/>
                             <button 
@@ -296,7 +298,7 @@ const App: React.FC = () => {
                                     const isOnline = await sheetService.checkServerConnection();
                                     setServerStatus(isOnline ? 'online' : 'offline');
                                 }}
-                                className="underline hover:no-underline mt-1 font-bold"
+                                className="underline hover:no-underline mt-2 font-black uppercase tracking-widest text-red-500"
                             >
                                 Tekrar Dene
                             </button>
@@ -339,7 +341,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 font-sans relative">
+    <div className="min-h-screen bg-brand-bg text-brand-text flex items-center justify-center p-4 font-sans relative">
       {renderContent()}
 
       {/* PWA Install Button */}
@@ -347,7 +349,7 @@ const App: React.FC = () => {
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
           <button 
             onClick={handleInstallClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-2 font-bold transition-all hover:scale-105"
+            className="bg-brand-accent hover:bg-brand-accent-hover text-black px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 font-black transition-all hover:scale-105 uppercase tracking-widest text-xs border border-white/20"
           >
             <InstallIcon />
             <span>Uygulamayı İndir</span>

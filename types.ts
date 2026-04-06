@@ -22,7 +22,8 @@ export interface Credential {
 
 export interface UserActivityStat {
   username: string;
-  queryCount: number;
+  queryCount: number; // Monthly count
+  totalQueryCount: number; // Total count
   lastLogin: string;
 }
 

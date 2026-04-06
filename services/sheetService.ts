@@ -247,20 +247,32 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
 
     if (userError) throw new Error(userError.message);
 
+    // Get current month start
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
     const { data: logs, error: logError } = await client
         .from('search_logs')
-        .select('username');
+        .select('username, created_at');
     
     if (logError) throw new Error(logError.message);
 
-    const logCounts: Record<string, number> = {};
+    const monthlyCounts: Record<string, number> = {};
+    const totalCounts: Record<string, number> = {};
+    
     logs?.forEach((log: any) => {
-        logCounts[log.username] = (logCounts[log.username] || 0) + 1;
+        const username = log.username;
+        totalCounts[username] = (totalCounts[username] || 0) + 1;
+        
+        if (log.created_at >= startOfMonth) {
+            monthlyCounts[username] = (monthlyCounts[username] || 0) + 1;
+        }
     });
 
     return users.map((user: any) => ({
         username: user.username,
-        queryCount: logCounts[user.username] || 0,
+        queryCount: monthlyCounts[user.username] || 0,
+        totalQueryCount: totalCounts[user.username] || 0,
         // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
         lastLogin: user.last_login
     }));
@@ -332,6 +344,37 @@ export const getTopReportedErrors = async (limit: number = 5): Promise<{installa
             return [];
         }
         console.error("Hata raporu analizi hatası:", e.message || e);
+        return [];
+    }
+};
+
+export const getAllReportedErrors = async (): Promise<{
+    username: string,
+    installationNumber: string,
+    timestamp: string
+}[]> => {
+    try {
+        const client = ensureClient();
+        const { data, error } = await client
+            .from('search_logs')
+            .select('username, installation_number, created_at')
+            .eq('error_reported', true)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            if (error.code === '42703' || (error.message && error.message.includes('does not exist'))) {
+                return [];
+            }
+            throw new Error(error.message);
+        }
+
+        return data.map((log: any) => ({
+            username: log.username,
+            installationNumber: log.installation_number,
+            timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-'
+        }));
+    } catch (e: any) {
+        console.error("Tüm hatalı bildirimler çekilemedi:", e.message || e);
         return [];
     }
 };
