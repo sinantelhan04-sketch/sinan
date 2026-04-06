@@ -17,6 +17,7 @@ export interface Credential {
   title?: string;             // Ünvan (Örn: Saha Operasyon Uzmanı)
   skipDeviceLock?: boolean;   // Cihaz kilidini atla
   canViewDetails?: boolean;   // İsim soyisim açık gör
+  canViewPhone?: boolean;     // Telefon numarası açık gör
   unlimitedAccess?: boolean;  // 7/24 Erişim (Zaman kısıtlaması yok)
 }
 

@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
   const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
+  const [canViewPhone, setCanViewPhone] = useState<boolean>(false);
   const [hasUnlimitedAccess, setHasUnlimitedAccess] = useState<boolean>(false); // 7/24 Erişim Yetkisi
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
@@ -97,6 +98,7 @@ const App: React.FC = () => {
                 setCurrentUser(session.username);
                 setCurrentUserFullName(session.fullName);
                 setCanViewDetails(session.canViewDetails);
+                setCanViewPhone(session.canViewPhone || false);
                 setHasUnlimitedAccess(session.unlimitedAccess || false);
                 if (session.username === 'admin') {
                     setIsAdmin(true);
@@ -127,6 +129,7 @@ const App: React.FC = () => {
             setCurrentUser(null);
             setCurrentUserFullName(null);
             setCanViewDetails(false);
+            setCanViewPhone(false);
             setHasUnlimitedAccess(false);
             setLegalAccepted(false);
         }
@@ -163,6 +166,7 @@ const App: React.FC = () => {
         setCurrentUser('admin');
         setCurrentUserFullName('Sistem Yöneticisi');
         setCanViewDetails(true); 
+        setCanViewPhone(true);
         setHasUnlimitedAccess(true);
         setLegalAccepted(true);
         
@@ -171,6 +175,7 @@ const App: React.FC = () => {
             username: 'admin',
             fullName: 'Sistem Yöneticisi',
             canViewDetails: true,
+            canViewPhone: true,
             unlimitedAccess: true,
             timestamp: Date.now()
         }));
@@ -184,6 +189,7 @@ const App: React.FC = () => {
     setCurrentUser(username);
     setCurrentUserFullName(result.fullName || null);
     setCanViewDetails(result.canViewDetails); 
+    setCanViewPhone(result.canViewPhone);
     setHasUnlimitedAccess(result.unlimitedAccess || false);
     setLegalAccepted(false);
 
@@ -192,6 +198,7 @@ const App: React.FC = () => {
         username,
         fullName: result.fullName,
         canViewDetails: result.canViewDetails,
+        canViewPhone: result.canViewPhone,
         unlimitedAccess: result.unlimitedAccess,
         timestamp: Date.now()
     }));
@@ -204,6 +211,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
     setCurrentUserFullName(null);
     setCanViewDetails(false);
+    setCanViewPhone(false);
     setHasUnlimitedAccess(false);
     setLegalAccepted(false);
     setShowAnnouncement(false);
@@ -337,6 +345,7 @@ const App: React.FC = () => {
                 username={currentUser!}
                 fullName={currentUserFullName}
                 canViewDetails={canViewDetails}
+                canViewPhone={canViewPhone}
              />;
   }
 

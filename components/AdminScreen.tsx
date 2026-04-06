@@ -84,7 +84,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const [editingUser, setEditingUser] = useState<Credential | null>(null);
     const [formData, setFormData] = useState<Credential>({
         username: '', password: '', fullName: '', title: PREDEFINED_TITLES[0],
-        allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, unlimitedAccess: false
+        allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, canViewPhone: false, unlimitedAccess: false
     });
 
     // Upload States
@@ -212,7 +212,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const resetForm = () => {
         setFormData({
             username: '', password: '', fullName: '', title: PREDEFINED_TITLES[0],
-            allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, unlimitedAccess: false
+            allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, canViewPhone: false, unlimitedAccess: false
         });
     };
 
@@ -714,7 +714,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                     <button onClick={() => handleResetDevice(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Cihaz Kilidini Sıfırla"><DeviceResetIcon /></button>
                                                                     <button onClick={() => handleResetStats(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Sayacı Sıfırla"><CounterResetIcon /></button>
-                                                                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: user.password, fullName: user.fullName || '', title: user.title || PREDEFINED_TITLES[0], allowedDeviceId: user.allowedDeviceId || '', skipDeviceLock: user.skipDeviceLock || false, canViewDetails: user.canViewDetails || false, unlimitedAccess: user.unlimitedAccess || false}); setShowAddModal(true); }} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Düzenle"><EditIcon /></button>
+                                                                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: user.password, fullName: user.fullName || '', title: user.title || PREDEFINED_TITLES[0], allowedDeviceId: user.allowedDeviceId || '', skipDeviceLock: user.skipDeviceLock || false, canViewDetails: user.canViewDetails || false, canViewPhone: user.canViewPhone || false, unlimitedAccess: user.unlimitedAccess || false}); setShowAddModal(true); }} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Düzenle"><EditIcon /></button>
                                                                     <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 border border-red-500/20" title="Sil"><TrashIcon /></button>
                                                                 </div>
                                                             </td>
@@ -1051,7 +1051,11 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 </label>
                                 <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
                                     <input type="checkbox" name="canViewDetails" checked={formData.canViewDetails} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
-                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Tam Yetki (İsim & Telefon Gör)</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone isimlerini ve telefon numaralarını maskelemeden görür.</div></div>
+                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Tam Yetki (İsim Gör)</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone isimlerini maskelemeden görür.</div></div>
+                                </label>
+                                <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
+                                    <input type="checkbox" name="canViewPhone" checked={formData.canViewPhone} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
+                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Telefon Numarası Görüntüle</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone telefon numaralarını görür.</div></div>
                                 </label>
                                 <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
                                     <input type="checkbox" name="unlimitedAccess" checked={formData.unlimitedAccess} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />

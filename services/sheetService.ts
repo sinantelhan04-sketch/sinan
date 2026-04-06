@@ -88,6 +88,7 @@ export const getCredentials = async (): Promise<Credential[]> => {
         allowedDeviceId: user.allowed_device_id,
         skipDeviceLock: user.skip_device_lock,
         canViewDetails: user.can_view_details,
+        canViewPhone: user.can_view_phone,
         unlimitedAccess: user.unlimited_access, // Yeni alan
         // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
         lastLogin: user.last_login 
@@ -130,7 +131,7 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
 };
 
 // Authentication artık isim ve izinleri de dönüyor
-export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, fullName?: string, unlimitedAccess?: boolean }> => {
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, canViewPhone: boolean, fullName?: string, unlimitedAccess?: boolean }> => {
     const client = ensureClient();
 
     const { data: user, error } = await client
@@ -184,6 +185,7 @@ export const authenticateUser = async (username: string, password: string, devic
     // Yetki ve isim bilgisini döndür
     return {
         canViewDetails: user.can_view_details || false,
+        canViewPhone: user.can_view_phone || false,
         fullName: user.full_name,
         unlimitedAccess: user.unlimited_access || false
     };
@@ -562,6 +564,7 @@ export const addCredential = async (credential: Credential): Promise<Credential[
             allowed_device_id: credential.allowedDeviceId || null,
             skip_device_lock: credential.skipDeviceLock || false,
             can_view_details: credential.canViewDetails || false,
+            can_view_phone: credential.canViewPhone || false,
             unlimited_access: credential.unlimitedAccess || false
         }
     ]);
@@ -571,7 +574,7 @@ export const addCredential = async (credential: Credential): Promise<Credential[
         
         const msg = error.message || '';
         if (msg.includes('Could not find the') || (msg.includes('column') && msg.includes('does not exist'))) {
-             throw new Error("Veritabanı Hatası: 'unlimited_access' (veya başka bir) sütun eksik. Lütfen Supabase SQL Editöründe gerekli sütunları ekleyin.");
+             throw new Error("Veritabanı Hatası: 'can_view_phone' (veya başka bir) sütun eksik. Lütfen Supabase SQL Editöründe gerekli sütunları ekleyin.");
         }
         
         throw new Error(error.message);
@@ -601,6 +604,7 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
         title: updatedCredential.title,
         skip_device_lock: updatedCredential.skipDeviceLock,
         can_view_details: updatedCredential.canViewDetails,
+        can_view_phone: updatedCredential.canViewPhone,
         unlimited_access: updatedCredential.unlimitedAccess
     };
     

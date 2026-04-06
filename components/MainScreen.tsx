@@ -25,6 +25,7 @@ interface MainScreenProps {
     username: string;
     fullName?: string | null;
     canViewDetails: boolean;
+    canViewPhone: boolean;
 }
 
 const MAX_RECENT_SEARCHES = 5;
@@ -46,7 +47,7 @@ const maskPhone = (phone: string): string => {
     return clean.substring(0, 4) + ' *** ** ' + clean.substring(clean.length - 2);
 };
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, canViewDetails }) => {
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, canViewDetails, canViewPhone }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -259,31 +260,34 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                     </h2>
                                     <div className="mt-2 flex flex-col gap-1">
                                         <p className="text-sm text-brand-text-muted font-medium">Abone No: {searchTerm}</p>
-                                        <div className="flex items-center gap-2 text-sm font-bold">
-                                            <span className="text-brand-text-muted">Telefon:</span>
-                                            <span className={canViewDetails ? "text-brand-accent" : "text-brand-text-muted/50"}>
-                                                {canViewDetails ? foundCustomer.phone : maskPhone(foundCustomer.phone)}
-                                            </span>
-                                            {!canViewDetails && (
-                                                <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-400 uppercase">Gizli</span>
-                                            )}
-                                        </div>
+                                        {canViewPhone && (
+                                            <div className="flex items-center gap-2 text-sm font-bold">
+                                                <span className="text-brand-text-muted">Telefon:</span>
+                                                <span className="text-brand-accent">
+                                                    {foundCustomer.phone}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="flex gap-3">
-                                    <button 
-                                        onClick={(e) => handleCallClick(e, foundCustomer.phone)}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
-                                    >
-                                        <PhoneIconSolid /> Ara
-                                    </button>
-                                    <button 
-                                        onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
-                                    >
-                                        <MessageIcon /> Mesaj
-                                    </button>
+                                    {canViewPhone && (
+                                        <>
+                                            <button 
+                                                onClick={(e) => handleCallClick(e, foundCustomer.phone)}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                            >
+                                                <PhoneIconSolid /> Ara
+                                            </button>
+                                            <button 
+                                                onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                            >
+                                                <MessageIcon /> Mesaj
+                                            </button>
+                                        </>
+                                    )}
                                     <button 
                                         onClick={handleReportClick}
                                         disabled={reportSent}
