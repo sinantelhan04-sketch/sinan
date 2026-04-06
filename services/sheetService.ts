@@ -131,7 +131,7 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
 };
 
 // Authentication artık isim ve izinleri de dönüyor
-export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, canViewPhone: boolean, fullName?: string, unlimitedAccess?: boolean }> => {
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, canViewPhone: boolean, fullName?: string, title?: string, unlimitedAccess?: boolean }> => {
     const client = ensureClient();
 
     const { data: user, error } = await client
@@ -187,6 +187,7 @@ export const authenticateUser = async (username: string, password: string, devic
         canViewDetails: user.can_view_details || false,
         canViewPhone: user.can_view_phone || false,
         fullName: user.full_name,
+        title: user.title,
         unlimitedAccess: user.unlimited_access || false
     };
 };

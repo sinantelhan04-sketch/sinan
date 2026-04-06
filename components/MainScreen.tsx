@@ -24,6 +24,7 @@ interface MainScreenProps {
     onLogout: () => void;
     username: string;
     fullName?: string | null;
+    title?: string | null;
     canViewDetails: boolean;
     canViewPhone: boolean;
 }
@@ -47,7 +48,7 @@ const maskPhone = (phone: string): string => {
     return clean.substring(0, 4) + ' *** ** ' + clean.substring(clean.length - 2);
 };
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, canViewDetails, canViewPhone }) => {
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, title, canViewDetails, canViewPhone }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -209,155 +210,307 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                 </div>
             </header>
 
-            <main className={`px-5 py-6 space-y-6 mx-auto transition-all duration-500 ${foundCustomer ? 'max-w-4xl' : 'max-w-lg'}`}>
-                {/* Search Bar */}
-                <div className="bg-white p-3 rounded-[20px] shadow-sm flex items-center gap-2">
-                    <div className="flex-grow flex items-center px-4 gap-3">
-                        <SearchIcon />
-                        <input 
-                            type="tel"
-                            inputMode="numeric"
-                            value={searchTerm}
-                            onChange={handleInputChange}
-                            placeholder="Sorgu numara"
-                            className="w-full bg-transparent border-none focus:ring-0 text-brand-text font-medium placeholder:text-brand-text-muted/60"
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        {foundCustomer && (
-                            <button 
-                                onClick={handleClear}
-                                className="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl font-bold active:scale-95 transition-all"
-                            >
-                                Temizle
-                            </button>
-                        )}
-                        <button 
-                            onClick={() => performSearch(searchTerm)}
-                            disabled={loading || !searchTerm}
-                            className="bg-brand-accent text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-brand-accent/20 active:scale-95 transition-all disabled:opacity-50"
-                        >
-                            {loading ? '...' : 'Sorgula'}
-                        </button>
-                    </div>
-                </div>
-
-                {error && (
-                    <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-medium border border-red-100 animate-shake">
-                        {error}
-                    </div>
-                )}
-
-                {foundCustomer && (
-                    <div className="space-y-6 animate-soft-slide-up">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Abone Bilgileri Card */}
-                            <div className="bg-white p-6 rounded-[24px] shadow-sm space-y-6 flex flex-col justify-between">
-                                <div>
-                                    <span className="label-hardware">ABONE BİLGİLERİ</span>
-                                    <h2 className="text-2xl font-black text-brand-text tracking-tight">
-                                        {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
-                                    </h2>
-                                    <div className="mt-2 flex flex-col gap-1">
-                                        <p className="text-sm text-brand-text-muted font-medium">Abone No: {searchTerm}</p>
-                                        {canViewPhone && (
-                                            <div className="flex items-center gap-2 text-sm font-bold">
-                                                <span className="text-brand-text-muted">Telefon:</span>
-                                                <span className="text-brand-accent">
-                                                    {foundCustomer.phone}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    {canViewPhone && (
-                                        <>
-                                            <button 
-                                                onClick={(e) => handleCallClick(e, foundCustomer.phone)}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
-                                            >
-                                                <PhoneIconSolid /> Ara
-                                            </button>
-                                            <button 
-                                                onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
-                                            >
-                                                <MessageIcon /> Mesaj
-                                            </button>
-                                        </>
-                                    )}
-                                    <button 
-                                        onClick={handleReportClick}
-                                        disabled={reportSent}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-[#c02626] text-white py-3 rounded-xl font-bold active:scale-95 transition-all disabled:opacity-50"
-                                    >
-                                        <ReportIcon /> {reportSent ? 'Bildirildi' : 'Hatalı'}
-                                    </button>
-                                </div>
+            <main className={`px-5 py-6 space-y-6 mx-auto transition-all duration-500 ${foundCustomer || activeTab !== 'sorgu' ? 'max-w-4xl' : 'max-w-lg'}`}>
+                {activeTab === 'sorgu' && (
+                    <>
+                        {/* Search Bar */}
+                        <div className="bg-white p-3 rounded-[20px] shadow-sm flex items-center gap-2">
+                            <div className="flex-grow flex items-center px-4 gap-3">
+                                <SearchIcon />
+                                <input 
+                                    type="tel"
+                                    inputMode="numeric"
+                                    value={searchTerm}
+                                    onChange={handleInputChange}
+                                    placeholder="Sorgu numara"
+                                    className="w-full bg-transparent border-none focus:ring-0 text-brand-text font-medium placeholder:text-brand-text-muted/60"
+                                />
                             </div>
-
-                            {/* Tesisat Adresi Card */}
-                            <div className="bg-white rounded-[24px] shadow-sm overflow-hidden flex border-l-[6px] border-brand-accent">
-                                <div className="p-6 flex gap-4 items-start">
-                                    <div className="bg-blue-50 p-3 rounded-2xl text-brand-accent">
-                                        <MapPinIcon />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <span className="label-hardware">TESİSAT ADRESİ</span>
-                                        <p className="text-lg font-bold text-brand-text leading-tight">
-                                            {foundCustomer.address}
-                                        </p>
-                                        <p className="text-sm text-brand-text-muted font-medium">Çankaya / ANKARA</p>
-                                    </div>
-                                </div>
+                            <div className="flex gap-2">
+                                {foundCustomer && (
+                                    <button 
+                                        onClick={handleClear}
+                                        className="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                    >
+                                        Temizle
+                                    </button>
+                                )}
+                                <button 
+                                    onClick={() => performSearch(searchTerm)}
+                                    disabled={loading || !searchTerm}
+                                    className="bg-brand-accent text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-brand-accent/20 active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    {loading ? '...' : 'Sorgula'}
+                                </button>
                             </div>
                         </div>
 
-                        {/* Map Card */}
-                        <div className="bg-[#1a1a1a] rounded-[24px] shadow-sm overflow-hidden relative aspect-video group">
-                            <div className="absolute inset-0 opacity-40">
-                                <img 
-                                    src="https://picsum.photos/seed/map/800/600" 
-                                    alt="Map Background" 
-                                    className="w-full h-full object-cover grayscale"
-                                    referrerPolicy="no-referrer"
-                                />
+                        {error && (
+                            <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-medium border border-red-100 animate-shake">
+                                {error}
                             </div>
-                            <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center border border-white/20">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-brand-accent p-2 rounded-xl text-white">
-                                        <GlobeIcon />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-brand-text">Lokasyon Verisi</p>
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="text-red-500 scale-75">
-                                                <ReportIcon />
+                        )}
+
+                        {foundCustomer && (
+                            <div className="space-y-6 animate-soft-slide-up">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Abone Bilgileri Card */}
+                                    <div className="bg-white p-6 rounded-[24px] shadow-sm space-y-6 flex flex-col justify-between">
+                                        <div>
+                                            <span className="label-hardware">ABONE BİLGİLERİ</span>
+                                            <h2 className="text-2xl font-black text-brand-text tracking-tight">
+                                                {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
+                                            </h2>
+                                            <div className="mt-2 flex flex-col gap-1">
+                                                <p className="text-sm text-brand-text-muted font-medium">Abone No: {searchTerm}</p>
+                                                {canViewPhone && (
+                                                    <div className="flex items-center gap-2 text-sm font-bold">
+                                                        <span className="text-brand-text-muted">Telefon:</span>
+                                                        <span className="text-brand-accent">
+                                                            {foundCustomer.phone}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <p className="text-[10px] text-brand-text-muted font-mono">
-                                                {foundCustomer.latitude}, {foundCustomer.longitude}
-                                            </p>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            {canViewPhone && (
+                                                <>
+                                                    <button 
+                                                        onClick={(e) => handleCallClick(e, foundCustomer.phone)}
+                                                        className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                                    >
+                                                        <PhoneIconSolid /> Ara
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
+                                                        className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                                    >
+                                                        <MessageIcon /> Mesaj
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button 
+                                                onClick={handleReportClick}
+                                                disabled={reportSent}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-[#c02626] text-white py-3 rounded-xl font-bold active:scale-95 transition-all disabled:opacity-50"
+                                            >
+                                                <ReportIcon /> {reportSent ? 'Bildirildi' : 'Hatalı'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Tesisat Adresi Card */}
+                                    <div className="bg-white rounded-[24px] shadow-sm overflow-hidden flex border-l-[6px] border-brand-accent">
+                                        <div className="p-6 flex gap-4 items-start">
+                                            <div className="bg-blue-50 p-3 rounded-2xl text-brand-accent">
+                                                <MapPinIcon />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <span className="label-hardware">TESİSAT ADRESİ</span>
+                                                <p className="text-lg font-bold text-brand-text leading-tight">
+                                                    {foundCustomer.address}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                {externalMapUrl && (
+
+                                {/* Map Card */}
+                                <div className="bg-[#1a1a1a] rounded-[24px] shadow-sm overflow-hidden relative aspect-video group">
+                                    <div className="absolute inset-0 opacity-40">
+                                        <img 
+                                            src="https://picsum.photos/seed/map/800/600" 
+                                            alt="Map Background" 
+                                            className="w-full h-full object-cover grayscale"
+                                            referrerPolicy="no-referrer"
+                                        />
+                                    </div>
+                                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center border border-white/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-brand-accent p-2 rounded-xl text-white">
+                                                <GlobeIcon />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-brand-text">Lokasyon Verisi</p>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="text-red-500 scale-75">
+                                                        <ReportIcon />
+                                                    </div>
+                                                    <p className="text-[10px] text-brand-text-muted font-mono">
+                                                        {foundCustomer.latitude}, {foundCustomer.longitude}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {externalMapUrl && (
+                                            <a 
+                                                href={externalMapUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-brand-accent text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-brand-accent/20"
+                                            >
+                                                <NavigationIcon /> Navigasyon
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'harita' && (
+                    <div className="space-y-6 animate-soft-slide-up">
+                        <div className="bg-white p-6 rounded-[24px] shadow-sm">
+                            <span className="label-hardware">HARİTA GÖRÜNÜMÜ</span>
+                            <h2 className="text-2xl font-black text-brand-text tracking-tight mb-4">
+                                {foundCustomer ? 'Abone Lokasyonu' : 'Tesisat Haritası'}
+                            </h2>
+                            
+                            <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden relative border border-brand-border">
+                                {mapEmbedUrl ? (
+                                    <iframe
+                                        src={mapEmbedUrl}
+                                        width="100%"
+                                        height="100%"
+                                        style={{ border: 0 }}
+                                        allowFullScreen
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        title="Google Maps"
+                                    ></iframe>
+                                ) : (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-brand-text-muted p-8 text-center">
+                                        <div className="bg-gray-200 p-4 rounded-full mb-4">
+                                            <GlobeIcon />
+                                        </div>
+                                        <p className="font-bold">Harita verisi bulunamadı.</p>
+                                        <p className="text-xs mt-1">Lütfen önce bir tesisat sorgulaması yapın.</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {externalMapUrl && (
+                                <div className="mt-4">
                                     <a 
                                         href={externalMapUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="bg-brand-accent text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-brand-accent/20"
+                                        className="w-full bg-brand-accent text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-brand-accent/20 active:scale-95 transition-all"
                                     >
-                                        <NavigationIcon /> Navigasyon
+                                        <NavigationIcon /> Google Haritalarda Aç
                                     </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'islemler' && (
+                    <div className="space-y-6 animate-soft-slide-up">
+                        <div className="bg-white p-6 rounded-[24px] shadow-sm">
+                            <span className="label-hardware">SON İŞLEMLER</span>
+                            <h2 className="text-2xl font-black text-brand-text tracking-tight mb-6">
+                                Sorgu Geçmişi
+                            </h2>
+                            
+                            <div className="space-y-3">
+                                {recentSearches.length > 0 ? (
+                                    recentSearches.map((term, idx) => (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => {
+                                                setSearchTerm(term);
+                                                setActiveTab('sorgu');
+                                                performSearch(term);
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all group"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-white p-2 rounded-xl shadow-sm text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
+                                                    <SearchIcon />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="font-bold text-brand-text">Tesisat No: {term}</p>
+                                                    <p className="text-[10px] text-brand-text-muted uppercase font-bold">Sorgulandı</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-brand-text-muted">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="py-12 text-center text-brand-text-muted">
+                                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <ReportIcon />
+                                        </div>
+                                        <p className="font-bold">Henüz sorgu yapılmamış.</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Promo Card removed */}
+                {activeTab === 'profil' && (
+                    <div className="space-y-6 animate-soft-slide-up">
+                        <div className="bg-white p-8 rounded-[32px] shadow-sm text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-24 bg-brand-accent/5"></div>
+                            
+                            <div className="relative">
+                                <div className="w-24 h-24 bg-brand-accent text-white rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl">
+                                    <UserIcon />
+                                </div>
+                                <h2 className="text-2xl font-black text-brand-text tracking-tight uppercase">
+                                    {fullName || 'Kullanıcı'}
+                                </h2>
+                                <p className="text-brand-accent font-bold text-xs uppercase tracking-widest mt-1">
+                                    {title || 'Saha Operasyon Uzmanı'}
+                                </p>
+                            </div>
+                            
+                            <div className="mt-8 grid grid-cols-2 gap-4">
+                                <div className="bg-brand-bg p-4 rounded-2xl border border-brand-border">
+                                    <p className="text-[10px] text-brand-text-muted font-bold uppercase tracking-widest mb-1">Sicil No</p>
+                                    <p className="font-black text-brand-text">{username}</p>
+                                </div>
+                                <div className="bg-brand-bg p-4 rounded-2xl border border-brand-border">
+                                    <p className="text-[10px] text-brand-text-muted font-bold uppercase tracking-widest mb-1">Durum</p>
+                                    <p className="font-black text-green-500">AKTİF</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-8 pt-8 border-t border-brand-border">
+                                <button 
+                                    onClick={onLogout}
+                                    className="w-full bg-red-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Güvenli Çıkış Yap
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-brand-accent/10 p-6 rounded-[24px] border border-brand-accent/20">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-brand-accent p-3 rounded-2xl text-white">
+                                    <SmartphoneIcon />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-brand-text">Uygulama Sürümü</p>
+                                    <p className="text-xs text-brand-text-muted">v1.2.0 (Stabil)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             {/* Bottom Navigation */}

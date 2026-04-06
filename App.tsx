@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
+  const [currentUserTitle, setCurrentUserTitle] = useState<string | null>(null);
   const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
   const [canViewPhone, setCanViewPhone] = useState<boolean>(false);
   const [hasUnlimitedAccess, setHasUnlimitedAccess] = useState<boolean>(false); // 7/24 Erişim Yetkisi
@@ -97,6 +98,7 @@ const App: React.FC = () => {
                 setIsAuthenticated(true);
                 setCurrentUser(session.username);
                 setCurrentUserFullName(session.fullName);
+                setCurrentUserTitle(session.title);
                 setCanViewDetails(session.canViewDetails);
                 setCanViewPhone(session.canViewPhone || false);
                 setHasUnlimitedAccess(session.unlimitedAccess || false);
@@ -128,6 +130,7 @@ const App: React.FC = () => {
             setIsAdmin(false);
             setCurrentUser(null);
             setCurrentUserFullName(null);
+            setCurrentUserTitle(null);
             setCanViewDetails(false);
             setCanViewPhone(false);
             setHasUnlimitedAccess(false);
@@ -165,6 +168,7 @@ const App: React.FC = () => {
         setIsAdmin(true);
         setCurrentUser('admin');
         setCurrentUserFullName('Sistem Yöneticisi');
+        setCurrentUserTitle('Yönetici');
         setCanViewDetails(true); 
         setCanViewPhone(true);
         setHasUnlimitedAccess(true);
@@ -174,6 +178,7 @@ const App: React.FC = () => {
         localStorage.setItem(SESSION_KEY, JSON.stringify({
             username: 'admin',
             fullName: 'Sistem Yöneticisi',
+            title: 'Yönetici',
             canViewDetails: true,
             canViewPhone: true,
             unlimitedAccess: true,
@@ -188,6 +193,7 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setCurrentUser(username);
     setCurrentUserFullName(result.fullName || null);
+    setCurrentUserTitle(result.title || null);
     setCanViewDetails(result.canViewDetails); 
     setCanViewPhone(result.canViewPhone);
     setHasUnlimitedAccess(result.unlimitedAccess || false);
@@ -197,6 +203,7 @@ const App: React.FC = () => {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
         username,
         fullName: result.fullName,
+        title: result.title,
         canViewDetails: result.canViewDetails,
         canViewPhone: result.canViewPhone,
         unlimitedAccess: result.unlimitedAccess,
@@ -210,6 +217,7 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setCurrentUser(null);
     setCurrentUserFullName(null);
+    setCurrentUserTitle(null);
     setCanViewDetails(false);
     setCanViewPhone(false);
     setHasUnlimitedAccess(false);
@@ -344,6 +352,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout} 
                 username={currentUser!}
                 fullName={currentUserFullName}
+                title={currentUserTitle}
                 canViewDetails={canViewDetails}
                 canViewPhone={canViewPhone}
              />;
