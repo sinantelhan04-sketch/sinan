@@ -189,7 +189,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             <header className="bg-white px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
                 <div className="flex items-center gap-2">
                     <WaterDropIcon />
-                    <span className="text-xl font-black text-brand-accent tracking-tight">TesisatSorgu</span>
+                    <span className="text-xl font-black text-brand-accent tracking-tight">Tesisat Sorgulama</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <button 

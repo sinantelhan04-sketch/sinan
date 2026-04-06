@@ -681,9 +681,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                             <thead>
                                                 <tr className="bg-brand-bg/50 border-b border-brand-border text-left">
                                                     <th className="px-6 py-5 label-hardware">Durum ▼</th>
-                                                    <th className="px-6 py-5 label-hardware">Sicil No</th>
                                                     <th className="px-6 py-5 label-hardware">Ad Soyad</th>
-                                                    <th className="px-6 py-5 label-hardware">Ünvan</th>
                                                     <th className="px-6 py-5"></th>
                                                 </tr>
                                             </thead>
@@ -707,9 +705,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-4 font-mono text-sm font-bold text-brand-text">{user.username}</td>
                                                             <td className="px-6 py-4 text-sm font-medium text-brand-text">{user.fullName || '-'}</td>
-                                                            <td className="px-6 py-4 text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">{user.title || '-'}</td>
                                                             <td className="px-6 py-4 text-right">
                                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                     <button onClick={() => handleResetDevice(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Cihaz Kilidini Sıfırla"><DeviceResetIcon /></button>
