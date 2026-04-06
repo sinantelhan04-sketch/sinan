@@ -1051,7 +1051,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 </label>
                                 <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
                                     <input type="checkbox" name="canViewDetails" checked={formData.canViewDetails} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
-                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Tam Yetki (İsim Gör)</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone isimlerini maskelemeden görür.</div></div>
+                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Tam Yetki (İsim & Telefon Gör)</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone isimlerini ve telefon numaralarını maskelemeden görür.</div></div>
                                 </label>
                                 <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
                                     <input type="checkbox" name="unlimitedAccess" checked={formData.unlimitedAccess} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />

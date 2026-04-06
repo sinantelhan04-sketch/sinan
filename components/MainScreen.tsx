@@ -38,6 +38,14 @@ const maskName = (fullName: string): string => {
     }).join(' ');
 };
 
+const maskPhone = (phone: string): string => {
+    if (!phone) return '';
+    const clean = phone.replace(/[^0-9]/g, '');
+    if (clean.length < 10) return '*** *** ** **';
+    // Format: 05xx *** ** 12
+    return clean.substring(0, 4) + ' *** ** ' + clean.substring(clean.length - 2);
+};
+
 const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, canViewDetails }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
@@ -249,7 +257,18 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, c
                                     <h2 className="text-2xl font-black text-brand-text tracking-tight">
                                         {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
                                     </h2>
-                                    <p className="text-sm text-brand-text-muted font-medium">Abone No: {searchTerm}</p>
+                                    <div className="mt-2 flex flex-col gap-1">
+                                        <p className="text-sm text-brand-text-muted font-medium">Abone No: {searchTerm}</p>
+                                        <div className="flex items-center gap-2 text-sm font-bold">
+                                            <span className="text-brand-text-muted">Telefon:</span>
+                                            <span className={canViewDetails ? "text-brand-accent" : "text-brand-text-muted/50"}>
+                                                {canViewDetails ? foundCustomer.phone : maskPhone(foundCustomer.phone)}
+                                            </span>
+                                            {!canViewDetails && (
+                                                <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-400 uppercase">Gizli</span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3">
