@@ -17,7 +17,8 @@ import {
     SmartphoneIcon,
     AppStoreIcon,
     PlayStoreIcon,
-    GlobeIcon
+    GlobeIcon,
+    FlameIcon
 } from './icons';
 
 interface MainScreenProps {
@@ -188,7 +189,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             {/* Header */}
             <header className="bg-white px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
                 <div className="flex items-center gap-2">
-                    <WaterDropIcon />
+                    <FlameIcon />
                     <span className="text-xl font-black text-brand-accent tracking-tight">Tesisat Sorgulama</span>
                 </div>
                 <div className="flex items-center gap-2">
