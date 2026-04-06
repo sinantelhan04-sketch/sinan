@@ -5,7 +5,7 @@ import {
     UserIcon, LockIcon, TrashIcon, EditIcon, ChartBarIcon, 
     UserGroupIcon, RefreshIcon, DownloadIcon, ReportIcon, 
     LightningIcon, CounterResetIcon, SearchIcon, PhoneIconSolid, MessageIcon,
-    DeviceResetIcon
+    DeviceResetIcon, FlameIcon
 } from './icons';
 import type { Credential, UserActivityStat } from '../types';
 import Papa from 'papaparse';
@@ -528,7 +528,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             <div className="bg-brand-card border-b border-brand-border px-6 py-4 flex justify-between items-center sticky top-0 z-30">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-brand-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-accent/20">
-                        <ChartBarIcon />
+                        <FlameIcon />
                     </div>
                     <div>
                         <h1 className="text-xl font-bold tracking-tight text-brand-text leading-none">Yönetim Paneli</h1>
