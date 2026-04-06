@@ -63,6 +63,11 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     const [reportSent, setReportSent] = useState(false);
     const [showFullScreenMap, setShowFullScreenMap] = useState(false);
     const [activeTab, setActiveTab] = useState('sorgu');
+    const [showCallLogModal, setShowCallLogModal] = useState(false);
+    const [callDuration, setCallDuration] = useState('');
+    const [callStatus, setCallStatus] = useState('Ulaşıldı');
+    const [userLogs, setUserLogs] = useState<any[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
     
     const recentSearchesKey = `recent_searches_${username}`;
 
@@ -74,6 +79,23 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             console.error("Geçmiş yüklenirken hata:", e);
         }
     }, [recentSearchesKey]);
+
+    useEffect(() => {
+        if (activeTab === 'islemler') {
+            const fetchLogs = async () => {
+                setLoadingLogs(true);
+                try {
+                    const logs = await sheetService.getUserLogs(username);
+                    setUserLogs(logs);
+                } catch (e) {
+                    console.error("Logs fetch error:", e);
+                } finally {
+                    setLoadingLogs(false);
+                }
+            };
+            fetchLogs();
+        }
+    }, [activeTab, username]);
 
     const saveToRecents = (term: string) => {
         let updated = [term, ...recentSearches.filter(s => s !== term)];
@@ -149,6 +171,22 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             cleanPhone = '+90' + cleanPhone;
         }
         window.location.href = `tel:${cleanPhone}`;
+        // Arama başlatıldıktan sonra modalı açıyoruz
+        setTimeout(() => setShowCallLogModal(true), 1000);
+    };
+
+    const handleCallLogSubmit = async () => {
+        if (currentLogId) {
+            await sheetService.updateCallLogDetails(currentLogId, parseInt(callDuration) || 0, callStatus);
+            // Tabloyu güncellemek için logları tekrar çekiyoruz
+            if (activeTab === 'islemler') {
+                const logs = await sheetService.getUserLogs(username);
+                setUserLogs(logs);
+            }
+        }
+        setShowCallLogModal(false);
+        setCallDuration('');
+        setCallStatus('Ulaşıldı');
     };
 
     const handleSmsClick = (e: React.MouseEvent, phone: string, name: string) => {
@@ -418,32 +456,61 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                             </h2>
                             
                             <div className="space-y-3">
-                                {recentSearches.length > 0 ? (
-                                    recentSearches.map((term, idx) => (
-                                        <button 
+                                {loadingLogs ? (
+                                    <div className="py-12 text-center">
+                                        <div className="animate-spin w-8 h-8 border-4 border-brand-accent border-t-transparent rounded-full mx-auto mb-4"></div>
+                                        <p className="text-sm font-bold text-brand-text-muted">Yükleniyor...</p>
+                                    </div>
+                                ) : userLogs.length > 0 ? (
+                                    userLogs.map((log, idx) => (
+                                        <div 
                                             key={idx}
-                                            onClick={() => {
-                                                setSearchTerm(term);
-                                                setActiveTab('sorgu');
-                                                performSearch(term);
-                                            }}
-                                            className="w-full flex items-center justify-between p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all group"
+                                            className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all group"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="bg-white p-2 rounded-xl shadow-sm text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
-                                                    <SearchIcon />
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="bg-white p-2 rounded-xl shadow-sm text-brand-accent">
+                                                        <SearchIcon />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="font-bold text-brand-text">Tesisat No: {log.installationNumber}</p>
+                                                        <p className="text-[10px] text-brand-text-muted uppercase font-bold">{log.timestamp}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="text-left">
-                                                    <p className="font-bold text-brand-text">Tesisat No: {term}</p>
-                                                    <p className="text-[10px] text-brand-text-muted uppercase font-bold">Sorgulandı</p>
+                                                <button 
+                                                    onClick={() => {
+                                                        setSearchTerm(log.installationNumber);
+                                                        setActiveTab('sorgu');
+                                                        performSearch(log.installationNumber);
+                                                    }}
+                                                    className="bg-brand-accent/10 text-brand-accent px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:bg-brand-accent hover:text-white transition-colors"
+                                                >
+                                                    Tekrar Sorgula
+                                                </button>
+                                            </div>
+                                            
+                                            {(log.called || log.smsSent) && (
+                                                <div className="flex flex-wrap gap-2 pt-3 border-t border-brand-border/50">
+                                                    {log.called && (
+                                                        <div className="flex items-center gap-1.5 bg-green-500/10 text-green-600 px-3 py-1 rounded-full text-[10px] font-bold">
+                                                            <PhoneIconSolid /> 
+                                                            ARANDI 
+                                                            {log.callDuration > 0 && ` (${log.callDuration} dk)`}
+                                                            {log.callStatus && ` - ${log.callStatus}`}
+                                                        </div>
+                                                    )}
+                                                    {log.smsSent && (
+                                                        <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                                                                <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                                                            </svg>
+                                                            SMS GÖNDERİLDİ
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                            <div className="text-brand-text-muted">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            </div>
-                                        </button>
+                                            )}
+                                        </div>
                                     ))
                                 ) : (
                                     <div className="py-12 text-center text-brand-text-muted">
@@ -507,6 +574,63 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                 <div>
                                     <p className="font-bold text-brand-text">Uygulama Sürümü</p>
                                     <p className="text-xs text-brand-text-muted">v1.2.0 (Stabil)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* Call Log Modal */}
+                {showCallLogModal && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
+                        <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-scale-up">
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <PhoneIconSolid />
+                                </div>
+                                <h3 className="text-xl font-black text-brand-text">Görüşme Kaydı</h3>
+                                <p className="text-sm text-brand-text-muted mt-1">Lütfen görüşme detaylarını giriniz.</p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Görüşme Süresi (Dakika)</label>
+                                    <input 
+                                        type="number"
+                                        value={callDuration}
+                                        onChange={(e) => setCallDuration(e.target.value)}
+                                        placeholder="Örn: 5"
+                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Görüşme Durumu</label>
+                                    <select 
+                                        value={callStatus}
+                                        onChange={(e) => setCallStatus(e.target.value)}
+                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all appearance-none"
+                                    >
+                                        <option value="Ulaşıldı">Ulaşıldı</option>
+                                        <option value="Ulaşılamadı">Ulaşılamadı</option>
+                                        <option value="Meşgul">Meşgul</option>
+                                        <option value="Yanlış Numara">Yanlış Numara</option>
+                                        <option value="Randevu Alındı">Randevu Alındı</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button 
+                                        onClick={() => setShowCallLogModal(false)}
+                                        className="flex-1 py-4 rounded-2xl font-bold text-brand-text-muted hover:bg-brand-bg transition-all"
+                                    >
+                                        İptal
+                                    </button>
+                                    <button 
+                                        onClick={handleCallLogSubmit}
+                                        className="flex-[2] bg-brand-accent text-white py-4 rounded-2xl font-bold shadow-lg shadow-brand-accent/20 active:scale-95 transition-all"
+                                    >
+                                        Kaydet
+                                    </button>
                                 </div>
                             </div>
                         </div>

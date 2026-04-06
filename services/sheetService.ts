@@ -241,6 +241,26 @@ export const updateSearchLogAction = async (logId: number, actionType: 'call' | 
     }
 };
 
+export const updateCallLogDetails = async (logId: number, duration: number, status: string): Promise<void> => {
+    try {
+        const client = ensureClient();
+        const { error } = await client
+            .from('search_logs')
+            .update({ 
+                call_duration: duration, 
+                call_status: status,
+                called: true 
+            })
+            .eq('id', logId);
+
+        if (error) {
+            console.error("Görüşme detayı güncelleme hatası:", error);
+        }
+    } catch (e) {
+        console.error("Görüşme detayı update hatası:", e);
+    }
+};
+
 export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     const client = ensureClient();
     
@@ -411,31 +431,31 @@ export const getGlobalLogs = async (limit: number = 20): Promise<{
     }));
 };
 
-export const getUserLogs = async (username: string): Promise<{
-    installationNumber: string, 
-    timestamp: string,
-    called?: boolean,
-    smsSent?: boolean,
-    errorReported?: boolean
-}[]> => {
-    const client = ensureClient();
-    
-    const { data, error } = await client
-        .from('search_logs')
-        .select('*')
-        .eq('username', username)
-        .order('created_at', { ascending: false })
-        .limit(100);
+export const getUserLogs = async (username: string): Promise<any[]> => {
+    try {
+        const client = ensureClient();
+        const { data, error } = await client
+            .from('search_logs')
+            .select('*')
+            .eq('username', username)
+            .order('created_at', { ascending: false })
+            .limit(100);
 
-    if (error) throw new Error(error.message);
-
-    return data.map((log: any) => ({
-        installationNumber: log.installation_number,
-        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
-        called: log.called || false,
-        smsSent: log.sms_sent || false,
-        errorReported: log.error_reported || false
-    }));
+        if (error) throw new Error(error.message);
+        return data.map((log: any) => ({
+            id: log.id,
+            installationNumber: log.installation_number,
+            timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
+            called: log.called || false,
+            smsSent: log.sms_sent || false,
+            errorReported: log.error_reported || false,
+            callDuration: log.call_duration || 0,
+            callStatus: log.call_status || ''
+        }));
+    } catch (e) {
+        console.error("User logs fetch error:", e);
+        return [];
+    }
 };
 
 // --- ANNOUNCEMENT SYSTEM ---
