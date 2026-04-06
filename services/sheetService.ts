@@ -402,13 +402,7 @@ export const getAllReportedErrors = async (): Promise<{
     }
 };
 
-export const getGlobalLogs = async (limit: number = 20): Promise<{
-    username: string,
-    installationNumber: string, 
-    timestamp: string,
-    called?: boolean,
-    smsSent?: boolean
-}[]> => {
+export const getGlobalLogs = async (limit: number = 20): Promise<any[]> => {
     const client = ensureClient();
     
     const { data, error } = await client
@@ -427,7 +421,9 @@ export const getGlobalLogs = async (limit: number = 20): Promise<{
         installationNumber: log.installation_number,
         timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
         called: log.called || false,
-        smsSent: log.sms_sent || false
+        smsSent: log.sms_sent || false,
+        callDuration: log.call_duration || 0,
+        callStatus: log.call_status || ''
     }));
 };
 
