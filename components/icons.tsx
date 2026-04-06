@@ -157,8 +157,8 @@ export const WaterDropIcon = () => (
     </svg>
 );
 
-export const FlameIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-brand-accent" viewBox="0 0 24 24" fill="currentColor">
+export const FlameIcon = ({ className = "h-8 w-8 text-brand-accent" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C12 2 7 7.5 7 12.5C7 15.5 9.2 18 12 18C14.8 18 17 15.5 17 12.5C17 7.5 12 2 12 2ZM12 15C10.6 15 9.5 13.9 9.5 12.5C9.5 11 11 9 12 8C13 9 14.5 11 14.5 12.5C14.5 13.9 13.4 15 12 15Z" />
     </svg>
 );

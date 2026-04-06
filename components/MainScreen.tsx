@@ -532,7 +532,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                             
                             <div className="relative">
                                 <div className="w-24 h-24 bg-brand-accent text-white rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl">
-                                    <UserIcon />
+                                    <FlameIcon className="w-12 h-12 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-black text-brand-text tracking-tight uppercase">
                                     {fullName || 'Kullanıcı'}
