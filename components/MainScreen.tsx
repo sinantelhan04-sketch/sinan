@@ -79,6 +79,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
     const [updateSuccess, setUpdateSuccess] = useState(false);
+    const [expandedNeighborhoods, setExpandedNeighborhoods] = useState<string[]>([]);
 
     // Profile Edit States
     const [showProfileEditModal, setShowProfileEditModal] = useState(false);
@@ -695,36 +696,65 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                             ) : (
                                 <div className="space-y-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                                     {sortedNeighborhoods.length > 0 ? (
-                                        sortedNeighborhoods.map((neighborhood) => (
-                                            <div key={neighborhood} className="space-y-3">
-                                                <div className="flex items-center gap-2 px-1">
-                                                    <div className="h-px flex-grow bg-brand-border"></div>
-                                                    <span className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">
-                                                        {neighborhood} ({groupedInstallations[neighborhood].length})
-                                                    </span>
-                                                    <div className="h-px flex-grow bg-brand-border"></div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    {groupedInstallations[neighborhood].map((item, idx) => (
-                                                        <button 
-                                                            key={idx}
-                                                            onClick={() => setSelectedReportedInstallation(item)}
-                                                            className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all flex items-center justify-between group"
-                                                        >
-                                                            <div className="text-left">
-                                                                <p className="font-bold text-brand-text text-sm">Tesisat No: {item.installationNumber}</p>
-                                                                <p className="text-[10px] text-brand-text-muted font-bold uppercase">
-                                                                    {canViewDetails ? item.name : maskName(item.name)}
-                                                                </p>
+                                        sortedNeighborhoods.map((neighborhood) => {
+                                            const isExpanded = expandedNeighborhoods.includes(neighborhood);
+                                            return (
+                                                <div key={neighborhood} className="space-y-3">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setExpandedNeighborhoods(prev => 
+                                                                prev.includes(neighborhood) 
+                                                                    ? prev.filter(n => n !== neighborhood) 
+                                                                    : [...prev, neighborhood]
+                                                            );
+                                                        }}
+                                                        className="w-full flex items-center gap-2 px-1 group"
+                                                    >
+                                                        <div className={`h-px flex-grow ${isExpanded ? 'bg-brand-accent' : 'bg-brand-border'}`}></div>
+                                                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all ${isExpanded ? 'bg-brand-accent text-black border-brand-accent' : 'bg-brand-bg text-brand-text-muted border-brand-border'}`}>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">
+                                                                {neighborhood} ({groupedInstallations[neighborhood].length})
+                                                            </span>
+                                                            <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                </svg>
                                                             </div>
-                                                            <div className="text-brand-accent group-hover:translate-x-1 transition-transform">
-                                                                <ExpandIcon />
-                                                            </div>
-                                                        </button>
-                                                    ))}
+                                                        </div>
+                                                        <div className={`h-px flex-grow ${isExpanded ? 'bg-brand-accent' : 'bg-brand-border'}`}></div>
+                                                    </button>
+                                                    
+                                                    {isExpanded && (
+                                                        <div className="space-y-2 animate-soft-slide-up">
+                                                            {groupedInstallations[neighborhood].map((item, idx) => (
+                                                                <button 
+                                                                    key={idx}
+                                                                    onClick={() => setSelectedReportedInstallation(item)}
+                                                                    className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all flex flex-col gap-2 group"
+                                                                >
+                                                                    <div className="w-full flex items-center justify-between">
+                                                                        <div className="text-left">
+                                                                            <p className="font-bold text-brand-text text-sm">Tesisat No: {item.installationNumber}</p>
+                                                                            <p className="text-[10px] text-brand-text-muted font-bold uppercase">
+                                                                                {canViewDetails ? item.name : maskName(item.name)}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="text-brand-accent group-hover:translate-x-1 transition-transform">
+                                                                            <ExpandIcon />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="w-full pt-2 border-t border-brand-border/50 text-left">
+                                                                        <p className="text-[10px] text-brand-text-muted font-medium leading-tight">
+                                                                            <span className="font-bold text-brand-accent/70 uppercase">ADRES:</span> {item.address}
+                                                                        </p>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     ) : (
                                         <div className="py-8 text-center text-brand-text-muted">
                                             <p className="text-sm font-bold italic">Şu an düzeltme bekleyen tesisat bulunmuyor.</p>
