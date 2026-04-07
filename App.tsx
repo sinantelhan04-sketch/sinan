@@ -26,6 +26,7 @@ const App: React.FC = () => {
   const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
   const [canViewPhone, setCanViewPhone] = useState<boolean>(false);
   const [hasUnlimitedAccess, setHasUnlimitedAccess] = useState<boolean>(false); // 7/24 Erişim Yetkisi
+  const [skipDeviceLock, setSkipDeviceLock] = useState<boolean>(false);
   const [legalAccepted, setLegalAccepted] = useState<boolean>(false);
   const [isWorkingTime, setIsWorkingTime] = useState(isWithinWorkingHours());
   const [appError, setAppError] = useState<string | null>(null);
@@ -102,6 +103,7 @@ const App: React.FC = () => {
                 setCanViewDetails(session.canViewDetails);
                 setCanViewPhone(session.canViewPhone || false);
                 setHasUnlimitedAccess(session.unlimitedAccess || false);
+                setSkipDeviceLock(session.skipDeviceLock || false);
                 if (session.username === 'admin') {
                     setIsAdmin(true);
                     setLegalAccepted(true);
@@ -134,6 +136,7 @@ const App: React.FC = () => {
             setCanViewDetails(false);
             setCanViewPhone(false);
             setHasUnlimitedAccess(false);
+            setSkipDeviceLock(false);
             setLegalAccepted(false);
         }
     };
@@ -355,6 +358,8 @@ const App: React.FC = () => {
                 title={currentUserTitle}
                 canViewDetails={canViewDetails}
                 canViewPhone={canViewPhone}
+                unlimitedAccess={hasUnlimitedAccess}
+                skipDeviceLock={skipDeviceLock}
              />;
   }
 

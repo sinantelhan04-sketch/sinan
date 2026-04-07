@@ -18,7 +18,8 @@ import {
     AppStoreIcon,
     PlayStoreIcon,
     GlobeIcon,
-    FlameIcon
+    FlameIcon,
+    EditIcon
 } from './icons';
 
 interface MainScreenProps {
@@ -28,6 +29,8 @@ interface MainScreenProps {
     title?: string | null;
     canViewDetails: boolean;
     canViewPhone: boolean;
+    unlimitedAccess: boolean;
+    skipDeviceLock: boolean;
 }
 
 const MAX_RECENT_SEARCHES = 5;
@@ -49,7 +52,7 @@ const maskPhone = (phone: string): string => {
     return clean.substring(0, 4) + ' *** ** ' + clean.substring(clean.length - 2);
 };
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, title, canViewDetails, canViewPhone }) => {
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, title, canViewDetails, canViewPhone, unlimitedAccess, skipDeviceLock }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -68,6 +71,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     const [callStatus, setCallStatus] = useState('Ulaşıldı');
     const [userLogs, setUserLogs] = useState<any[]>([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
+
+    // Profile Edit States
+    const [showProfileEditModal, setShowProfileEditModal] = useState(false);
+    const [editPassword, setEditPassword] = useState('');
+    const [editTitle, setEditTitle] = useState(title || '');
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
     
     const recentSearchesKey = `recent_searches_${username}`;
 
@@ -220,6 +230,30 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             setError('');
         }
         setSearchPerformed(false);
+    };
+
+    const handleProfileUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUpdatingProfile(true);
+        try {
+            await sheetService.updateUserProfile(username, {
+                password: editPassword || undefined,
+                title: editTitle
+            });
+            setProfileUpdateSuccess(true);
+            setTimeout(() => {
+                setShowProfileEditModal(false);
+                setProfileUpdateSuccess(false);
+                // Refresh page to show new title if changed
+                if (editTitle !== title) {
+                    window.location.reload();
+                }
+            }, 1500);
+        } catch (err: any) {
+            alert("Profil güncellenirken hata oluştu: " + err.message);
+        } finally {
+            setIsUpdatingProfile(false);
+        }
     };
 
     return (
@@ -548,11 +582,40 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                     <p className="font-black text-green-500">AKTİF</p>
                                 </div>
                             </div>
+
+                            <div className="mt-6 space-y-3 text-left">
+                                <p className="text-[10px] text-brand-text-muted font-bold uppercase tracking-widest mb-2 px-1">Yetkileriniz</p>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <div className={`flex items-center gap-3 p-3 rounded-2xl border ${canViewDetails ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${canViewDetails ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                        <span className="text-xs font-bold">Tam Yetki (İsim Gör)</span>
+                                    </div>
+                                    <div className={`flex items-center gap-3 p-3 rounded-2xl border ${canViewPhone ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${canViewPhone ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                        <span className="text-xs font-bold">Telefon Numarası Görüntüle</span>
+                                    </div>
+                                    <div className={`flex items-center gap-3 p-3 rounded-2xl border ${unlimitedAccess ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${unlimitedAccess ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                        <span className="text-xs font-bold">7/24 Sınırsız Erişim</span>
+                                    </div>
+                                    <div className={`flex items-center gap-3 p-3 rounded-2xl border ${skipDeviceLock ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${skipDeviceLock ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                        <span className="text-xs font-bold">Cihaz Kilidi Muafiyeti</span>
+                                    </div>
+                                </div>
+                            </div>
                             
-                            <div className="mt-8 pt-8 border-t border-brand-border">
+                            <div className="mt-8 pt-8 border-t border-brand-border grid grid-cols-1 gap-3">
+                                <button 
+                                    onClick={() => setShowProfileEditModal(true)}
+                                    className="w-full bg-brand-accent text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-brand-accent/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <EditIcon className="w-4 h-4" />
+                                    Profili Düzenle
+                                </button>
                                 <button 
                                     onClick={onLogout}
-                                    className="w-full bg-red-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl font-black uppercase tracking-widest text-xs active:scale-95 transition-all flex items-center justify-center gap-3"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -575,6 +638,61 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                         </div>
                     </div>
                 )}
+                {/* Profile Edit Modal */}
+                {showProfileEditModal && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
+                        <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-scale-up">
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <UserIcon className="w-8 h-8 text-brand-accent" />
+                                </div>
+                                <h3 className="text-xl font-black text-brand-text">Profili Düzenle</h3>
+                                <p className="text-sm text-brand-text-muted mt-1">Bilgilerinizi güncelleyin.</p>
+                            </div>
+
+                            <form onSubmit={handleProfileUpdate} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Ünvan</label>
+                                    <input 
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        placeholder="Örn: Saha Operasyon Uzmanı"
+                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
+                                    <input 
+                                        type="password"
+                                        value={editPassword}
+                                        onChange={(e) => setEditPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowProfileEditModal(false)}
+                                        className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold active:scale-95 transition-all"
+                                    >
+                                        İptal
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        disabled={isUpdatingProfile || profileUpdateSuccess}
+                                        className={`flex-1 ${profileUpdateSuccess ? 'bg-green-500' : 'bg-brand-accent'} text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all disabled:opacity-50`}
+                                    >
+                                        {isUpdatingProfile ? '...' : profileUpdateSuccess ? 'Başarılı!' : 'Güncelle'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
                 {/* Call Log Modal */}
                 {showCallLogModal && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">

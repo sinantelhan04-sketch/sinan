@@ -645,6 +645,20 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
     return getCredentials();
 };
 
+export const updateUserProfile = async (username: string, updates: { password?: string, title?: string }): Promise<void> => {
+    const client = ensureClient();
+    const dbUpdates: any = {};
+    if (updates.password) dbUpdates.password = updates.password;
+    if (updates.title) dbUpdates.title = updates.title;
+
+    const { error } = await client
+        .from('users')
+        .update(dbUpdates)
+        .eq('username', username);
+
+    if (error) throw new Error(error.message);
+};
+
 export const resetUserStats = async (username: string): Promise<void> => {
     const client = ensureClient();
     const { error } = await client
