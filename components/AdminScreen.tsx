@@ -85,7 +85,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const [editingUser, setEditingUser] = useState<Credential | null>(null);
     const [formData, setFormData] = useState<Credential>({
         username: '', password: '', fullName: '', title: PREDEFINED_TITLES[0],
-        allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, canViewPhone: false, unlimitedAccess: false
+        allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, canViewPhone: false, unlimitedAccess: false,
+        photoUrl: ''
     });
 
     // Upload States
@@ -106,6 +107,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const [showAnnouncementPreview, setShowAnnouncementPreview] = useState(false);
     const [isSendingAnnouncement, setIsSendingAnnouncement] = useState(false);
     const announcementImageRef = useRef<HTMLInputElement>(null);
+    const userPhotoRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         loadData();
@@ -214,8 +216,47 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const resetForm = () => {
         setFormData({
             username: '', password: '', fullName: '', title: PREDEFINED_TITLES[0],
-            allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, canViewPhone: false, unlimitedAccess: false
+            allowedDeviceId: '', skipDeviceLock: false, canViewDetails: false, canViewPhone: false, unlimitedAccess: false,
+            photoUrl: ''
         });
+    };
+
+    const handleEditUser = async (user: Credential) => {
+        setEditingUser(user);
+        setFormData({
+            ...user,
+            password: user.password,
+            fullName: user.fullName || '',
+            title: user.title || PREDEFINED_TITLES[0],
+            allowedDeviceId: user.allowedDeviceId || '',
+            skipDeviceLock: user.skipDeviceLock || false,
+            canViewDetails: user.canViewDetails || false,
+            canViewPhone: user.canViewPhone || false,
+            unlimitedAccess: user.unlimitedAccess || false,
+            photoUrl: '' // Başta boş, sonra yüklenecek
+        });
+        setShowAddModal(true);
+        
+        // Fotoğrafı arka planda çek
+        try {
+            const photo = await sheetService.getUserPhoto(user.username);
+            if (photo) {
+                setFormData(prev => ({ ...prev, photoUrl: photo }));
+            }
+        } catch (e) {
+            console.error("Fotoğraf yüklenemedi:", e);
+        }
+    };
+
+    const handleUserPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -718,7 +759,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                     <button onClick={() => handleResetDevice(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Cihaz Kilidini Sıfırla"><DeviceResetIcon /></button>
                                                                     <button onClick={() => handleResetStats(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Sayacı Sıfırla"><CounterResetIcon /></button>
-                                                                    <button onClick={() => { setEditingUser(user); setFormData({...user, password: user.password, fullName: user.fullName || '', title: user.title || PREDEFINED_TITLES[0], allowedDeviceId: user.allowedDeviceId || '', skipDeviceLock: user.skipDeviceLock || false, canViewDetails: user.canViewDetails || false, canViewPhone: user.canViewPhone || false, unlimitedAccess: user.unlimitedAccess || false}); setShowAddModal(true); }} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Düzenle"><EditIcon /></button>
+                                                                    <button onClick={() => handleEditUser(user)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Düzenle"><EditIcon /></button>
                                                                     <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 border border-red-500/20" title="Sil"><TrashIcon /></button>
                                                                 </div>
                                                             </td>
@@ -1080,6 +1121,46 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             <button onClick={() => setShowAddModal(false)} className="text-brand-text-muted hover:text-brand-accent text-2xl leading-none">×</button>
                         </div>
                         <form onSubmit={handleSubmitUser} className="p-8 space-y-4">
+                            {/* Profil Fotoğrafı Bölümü */}
+                            <div className="flex justify-center mb-6">
+                                <div className="relative group">
+                                    <div 
+                                        onClick={() => userPhotoRef.current?.click()}
+                                        className="w-24 h-24 rounded-full border-4 border-brand-accent/20 overflow-hidden bg-brand-bg flex items-center justify-center cursor-pointer hover:border-brand-accent transition-all relative"
+                                    >
+                                        {formData.photoUrl ? (
+                                            <img src={formData.photoUrl} alt="Profil" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="text-brand-text-muted">
+                                                <UserIcon />
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        ref={userPhotoRef} 
+                                        onChange={handleUserPhotoChange} 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                    />
+                                    {formData.photoUrl && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, photoUrl: '' }))}
+                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="label-hardware mb-1 block">Sicil No</label>

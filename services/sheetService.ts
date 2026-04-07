@@ -583,7 +583,8 @@ export const addCredential = async (credential: Credential): Promise<Credential[
             skip_device_lock: credential.skipDeviceLock || false,
             can_view_details: credential.canViewDetails || false,
             can_view_phone: credential.canViewPhone || false,
-            unlimited_access: credential.unlimitedAccess || false
+            unlimited_access: credential.unlimitedAccess || false,
+            photo_url: credential.photoUrl || null
         }
     ]);
 
@@ -623,7 +624,8 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
         skip_device_lock: updatedCredential.skipDeviceLock,
         can_view_details: updatedCredential.canViewDetails,
         can_view_phone: updatedCredential.canViewPhone,
-        unlimited_access: updatedCredential.unlimitedAccess
+        unlimited_access: updatedCredential.unlimitedAccess,
+        photo_url: updatedCredential.photoUrl || null
     };
     
     if (updatedCredential.allowedDeviceId !== undefined) {
