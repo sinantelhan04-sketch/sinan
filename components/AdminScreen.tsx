@@ -79,6 +79,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [logUserFilter, setLogUserFilter] = useState('');
     const [isDownloading, setIsDownloading] = useState(false);
     const [isDownloadingErrors, setIsDownloadingErrors] = useState(false);
     
@@ -131,11 +132,12 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setCredentials(creds);
             setStats(userStats);
             setGlobalLogs(logs);
-            setTotalQueries(logs.length);
             
-            // Calculate monthly total
+            // Calculate monthly and total queries from stats
             const mTotal = userStats.reduce((acc, s) => acc + s.queryCount, 0);
+            const gTotal = userStats.reduce((acc, s) => acc + s.totalQueryCount, 0);
             setMonthlyTotalQueries(mTotal);
+            setTotalQueries(gTotal);
             
             setTopQueries(top);
             setReportedErrors(reports);
@@ -860,6 +862,24 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         {/* --- TAB CONTENT: LOGS --- */}
                         {activeTab === 'logs' && (
                             <div className="animate-fade-in space-y-6">
+                                {/* Log Filter */}
+                                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                                    <div className="relative flex-grow max-w-md">
+                                        <select 
+                                            value={logUserFilter}
+                                            onChange={(e) => setLogUserFilter(e.target.value)}
+                                            className="input-hardware w-full"
+                                        >
+                                            <option value="">Tüm Personeller</option>
+                                            {credentials.map(c => (
+                                                <option key={c.username} value={c.username}>
+                                                    {c.fullName || c.username}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div className="card-hardware overflow-hidden">
                                     <div className="overflow-x-auto">
                                         <table className="w-full">
@@ -872,46 +892,48 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-brand-border/50">
-                                                {globalLogs.map((log, idx) => (
-                                                    <tr key={idx} className="hover:bg-brand-accent/5 transition-colors">
-                                                        <td className="px-6 py-4">
-                                                            <div className="font-bold text-brand-text">{log.username}</div>
-                                                            <div className="text-[10px] text-brand-text-muted uppercase font-bold">
-                                                                {credentials.find(c => c.username === log.username)?.fullName || '-'}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 font-mono text-sm text-brand-text">{log.installationNumber}</td>
-                                                        <td className="px-6 py-4 text-xs text-brand-text-muted">{log.timestamp}</td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {log.called && (
-                                                                    <div className="flex items-center gap-1.5 bg-brand-accent/10 text-brand-accent px-3 py-1 rounded-full text-[10px] font-bold border border-brand-accent/20">
-                                                                        <PhoneIconSolid />
-                                                                        ARAMA YAPILDI
-                                                                        {log.callDuration > 0 && ` (${log.callDuration} dk)`}
-                                                                        {log.callStatus && ` - ${log.callStatus}`}
-                                                                    </div>
-                                                                )}
-                                                                {log.smsSent && (
-                                                                    <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-500/20">
-                                                                        <MessageIcon />
-                                                                        SMS GÖNDERİLDİ
-                                                                    </div>
-                                                                )}
-                                                                {!log.called && !log.smsSent && (
-                                                                    <div className="flex items-center gap-1.5 bg-gray-500/10 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold border border-gray-500/20">
-                                                                        <SearchIcon />
-                                                                        SORGULAMA
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {globalLogs
+                                                    .filter(log => !logUserFilter || log.username === logUserFilter)
+                                                    .map((log, idx) => (
+                                                        <tr key={idx} className="hover:bg-brand-accent/5 transition-colors">
+                                                            <td className="px-6 py-4">
+                                                                <div className="font-bold text-brand-text">{log.username}</div>
+                                                                <div className="text-[10px] text-brand-text-muted uppercase font-bold">
+                                                                    {credentials.find(c => c.username === log.username)?.fullName || '-'}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 font-mono text-sm text-brand-text">{log.installationNumber}</td>
+                                                            <td className="px-6 py-4 text-xs text-brand-text-muted">{log.timestamp}</td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {log.called && (
+                                                                        <div className="flex items-center gap-1.5 bg-brand-accent/10 text-brand-accent px-3 py-1 rounded-full text-[10px] font-bold border border-brand-accent/20">
+                                                                            <PhoneIconSolid />
+                                                                            ARAMA YAPILDI
+                                                                            {log.callDuration > 0 && ` (${log.callDuration} dk)`}
+                                                                            {log.callStatus && ` - ${log.callStatus}`}
+                                                                        </div>
+                                                                    )}
+                                                                    {log.smsSent && (
+                                                                        <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-500/20">
+                                                                            <MessageIcon />
+                                                                            SMS GÖNDERİLDİ
+                                                                        </div>
+                                                                    )}
+                                                                    {!log.called && !log.smsSent && (
+                                                                        <div className="flex items-center gap-1.5 bg-gray-500/10 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold border border-gray-500/20">
+                                                                            <SearchIcon />
+                                                                            SORGULAMA
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
                                             </tbody>
                                         </table>
                                     </div>
-                                    {globalLogs.length === 0 && <div className="p-8 text-center text-brand-text-muted">İşlem kaydı bulunamadı.</div>}
+                                    {globalLogs.filter(log => !logUserFilter || log.username === logUserFilter).length === 0 && <div className="p-8 text-center text-brand-text-muted">İşlem kaydı bulunamadı.</div>}
                                 </div>
                             </div>
                         )}

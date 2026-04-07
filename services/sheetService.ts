@@ -275,29 +275,41 @@ export const getUserActivityStats = async (): Promise<UserActivityStat[]> => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    const { data: logs, error: logError } = await client
+    // Fetch logs from this month
+    const { data: monthlyLogs, error: monthlyError } = await client
         .from('search_logs')
-        .select('username, created_at');
+        .select('username')
+        .gte('created_at', startOfMonth);
     
-    if (logError) throw new Error(logError.message);
+    if (monthlyError) throw new Error(monthlyError.message);
+
+    // Fetch total counts (we might need to paginate or just use a count query if supported, 
+    // but for now let's get the last 5000 logs for a better representation if not using count)
+    const { data: allLogs, error: allError } = await client
+        .from('search_logs')
+        .select('username')
+        .order('created_at', { ascending: false })
+        .limit(5000);
+    
+    if (allError) throw new Error(allError.message);
 
     const monthlyCounts: Record<string, number> = {};
     const totalCounts: Record<string, number> = {};
     
-    logs?.forEach((log: any) => {
+    monthlyLogs?.forEach((log: any) => {
+        const username = log.username;
+        monthlyCounts[username] = (monthlyCounts[username] || 0) + 1;
+    });
+
+    allLogs?.forEach((log: any) => {
         const username = log.username;
         totalCounts[username] = (totalCounts[username] || 0) + 1;
-        
-        if (log.created_at >= startOfMonth) {
-            monthlyCounts[username] = (monthlyCounts[username] || 0) + 1;
-        }
     });
 
     return users.map((user: any) => ({
         username: user.username,
         queryCount: monthlyCounts[user.username] || 0,
         totalQueryCount: totalCounts[user.username] || 0,
-        // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
         lastLogin: user.last_login
     }));
 };
@@ -791,7 +803,7 @@ export const getAllCustomers = async (): Promise<Customer[]> => {
 export const getReportedInstallations = async (): Promise<Customer[]> => {
     const client = ensureClient();
     try {
-        // Hata bildirilmiş benzersiz tesisat numaralarını çek
+        // 1. Hata bildirilmiş benzersiz tesisat numaralarını çek
         const { data: logs, error: logsError } = await client
             .from('search_logs')
             .select('installation_number')
@@ -799,14 +811,33 @@ export const getReportedInstallations = async (): Promise<Customer[]> => {
 
         if (logsError) throw logsError;
 
-        const uniqueNumbers = [...new Set(logs.map((l: any) => l.installation_number))];
-        if (uniqueNumbers.length === 0) return [];
+        const allReportedNumbers = [...new Set(logs.map((l: any) => l.installation_number))];
+        if (allReportedNumbers.length === 0) return [];
 
-        // Bu tesisatların detaylarını getir
+        // 2. Onay bekleyen veya onaylanmış talepleri çek
+        const { data: requests, error: reqError } = await client
+            .from('phone_update_requests')
+            .select('installation_number, status')
+            .in('installation_number', allReportedNumbers);
+
+        if (reqError && reqError.code !== '42P01') throw reqError;
+
+        // Onay bekleyen veya onaylanmış olanları filtrele
+        // Sadece hiç talebi olmayanlar VEYA en son talebi 'rejected' olanlar kalsın
+        const excludedNumbers = new Set(
+            (requests || [])
+                .filter(r => r.status === 'pending' || r.status === 'approved')
+                .map(r => r.installation_number)
+        );
+
+        const finalNumbers = allReportedNumbers.filter(num => !excludedNumbers.has(num));
+        if (finalNumbers.length === 0) return [];
+
+        // 3. Bu tesisatların detaylarını getir
         const { data: customers, error: custError } = await client
             .from('customers')
             .select('*')
-            .in('installation_number', uniqueNumbers);
+            .in('installation_number', finalNumbers);
 
         if (custError) throw custError;
 

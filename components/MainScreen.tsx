@@ -373,6 +373,30 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
         }
     };
 
+    const extractNeighborhood = (address: string) => {
+        if (!address) return 'Bilinmeyen Mahalle';
+        // "MAH." veya "MAHALLESİ" ifadesini arayalım
+        const match = address.match(/([A-ZÇĞİÖŞÜa-zçğıöşü0-9\s]+)\s+(MAH\.|MAHALLESİ)/i);
+        if (match) {
+            return match[0].toUpperCase().trim();
+        }
+        // Eğer MAH. bulunamazsa ilk iki kelimeyi almayı deneyelim (Genelde mahalle başta olur)
+        const parts = address.split(' ');
+        if (parts.length >= 2) {
+            return parts.slice(0, 2).join(' ').toUpperCase();
+        }
+        return 'DİĞER';
+    };
+
+    const groupedInstallations = reportedInstallations.reduce((acc, item) => {
+        const neighborhood = extractNeighborhood(item.address || '');
+        if (!acc[neighborhood]) acc[neighborhood] = [];
+        acc[neighborhood].push(item);
+        return acc;
+    }, {} as Record<string, Customer[]>);
+
+    const sortedNeighborhoods = Object.keys(groupedInstallations).sort();
+
     return (
         <div className="min-h-screen bg-brand-bg pb-24">
             {/* Header */}
@@ -669,24 +693,37 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                     </button>
                                 </div>
                             ) : (
-                                <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                                    {reportedInstallations.length > 0 ? (
-                                        reportedInstallations.map((item, idx) => (
-                                            <button 
-                                                key={idx}
-                                                onClick={() => setSelectedReportedInstallation(item)}
-                                                className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all flex items-center justify-between group"
-                                            >
-                                                <div className="text-left">
-                                                    <p className="font-bold text-brand-text">Tesisat No: {item.installationNumber}</p>
-                                                    <p className="text-[10px] text-brand-text-muted font-bold uppercase">
-                                                        {canViewDetails ? item.name : maskName(item.name)}
-                                                    </p>
+                                <div className="space-y-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                                    {sortedNeighborhoods.length > 0 ? (
+                                        sortedNeighborhoods.map((neighborhood) => (
+                                            <div key={neighborhood} className="space-y-3">
+                                                <div className="flex items-center gap-2 px-1">
+                                                    <div className="h-px flex-grow bg-brand-border"></div>
+                                                    <span className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">
+                                                        {neighborhood} ({groupedInstallations[neighborhood].length})
+                                                    </span>
+                                                    <div className="h-px flex-grow bg-brand-border"></div>
                                                 </div>
-                                                <div className="text-brand-accent group-hover:translate-x-1 transition-transform">
-                                                    <ExpandIcon />
+                                                <div className="space-y-2">
+                                                    {groupedInstallations[neighborhood].map((item, idx) => (
+                                                        <button 
+                                                            key={idx}
+                                                            onClick={() => setSelectedReportedInstallation(item)}
+                                                            className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all flex items-center justify-between group"
+                                                        >
+                                                            <div className="text-left">
+                                                                <p className="font-bold text-brand-text text-sm">Tesisat No: {item.installationNumber}</p>
+                                                                <p className="text-[10px] text-brand-text-muted font-bold uppercase">
+                                                                    {canViewDetails ? item.name : maskName(item.name)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-brand-accent group-hover:translate-x-1 transition-transform">
+                                                                <ExpandIcon />
+                                                            </div>
+                                                        </button>
+                                                    ))}
                                                 </div>
-                                            </button>
+                                            </div>
                                         ))
                                     ) : (
                                         <div className="py-8 text-center text-brand-text-muted">
