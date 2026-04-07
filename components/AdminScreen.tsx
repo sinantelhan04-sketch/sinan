@@ -729,7 +729,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="bg-brand-bg/50 border-b border-brand-border text-left">
-                                                    <th className="px-6 py-5 label-hardware">Durum ▼</th>
                                                     <th className="px-6 py-5 label-hardware">Ad Soyad</th>
                                                     <th className="px-6 py-5"></th>
                                                 </tr>
@@ -741,19 +740,6 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                                     
                                                     return (
                                                         <tr key={user.username} className="hover:bg-brand-accent/5 transition-colors group">
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-brand-accent' : 'bg-brand-border'}`}></span>
-                                                                    <div className="flex flex-col">
-                                                                        <span className={`text-xs font-bold ${isOnline ? 'text-brand-accent' : 'text-brand-text-muted'}`}>
-                                                                            {isOnline ? 'Bugün Aktif' : 'Çevrimdışı'}
-                                                                        </span>
-                                                                        <span className="text-[10px] text-brand-text-muted">
-                                                                            {userStat?.lastLogin ? new Date(userStat.lastLogin).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + '\n' + new Date(userStat.lastLogin).toLocaleDateString('tr-TR') : '-'}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
                                                             <td className="px-6 py-4 text-sm font-medium text-brand-text">{user.fullName || '-'}</td>
                                                             <td className="px-6 py-4 text-right">
                                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
