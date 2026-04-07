@@ -173,6 +173,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             await sheetService.submitPhoneUpdateRequest({
                 username,
                 installationNumber: selectedReportedInstallation.installationNumber,
+                customerName: selectedReportedInstallation.name,
                 oldPhone: selectedReportedInstallation.phone,
                 newPhone: newPhoneNumber.trim(),
                 userLat: latitude,

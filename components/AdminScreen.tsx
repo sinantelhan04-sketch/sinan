@@ -1349,58 +1349,51 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <p className="label-hardware">BİLDİRİM YAPAN</p>
-                                    <p className="font-bold text-brand-text">{selectedUpdate.username}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="label-hardware">TESİSAT NO</p>
-                                    <p className="font-bold text-brand-text">{selectedUpdate.installationNumber}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="label-hardware">ESKİ TELEFON</p>
-                                    <p className="font-bold text-brand-text-muted">{selectedUpdate.oldPhone || '-'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="label-hardware text-brand-accent">YENİ TELEFON</p>
-                                    <p className="font-black text-brand-accent">{selectedUpdate.newPhone}</p>
-                                </div>
-                            </div>
+                                     <p className="label-hardware">BİLDİRİM YAPAN</p>
+                                     <p className="font-bold text-brand-text">{selectedUpdate.username}</p>
+                                 </div>
+                                 <div className="space-y-1">
+                                     <p className="label-hardware">ABONE ADI SOYADI</p>
+                                     <p className="font-bold text-brand-text">{selectedUpdate.customerName || '-'}</p>
+                                 </div>
+                                 <div className="space-y-1">
+                                     <p className="label-hardware">TESİSAT NO</p>
+                                     <p className="font-bold text-brand-text">{selectedUpdate.installationNumber}</p>
+                                 </div>
+                                 <div className="space-y-1">
+                                     <p className="label-hardware">ESKİ TELEFON</p>
+                                     <p className="font-bold text-brand-text-muted">{selectedUpdate.oldPhone || '-'}</p>
+                                 </div>
+                                 <div className="space-y-1">
+                                     <p className="label-hardware text-brand-accent">YENİ TELEFON</p>
+                                     <p className="font-black text-brand-accent">{selectedUpdate.newPhone}</p>
+                                 </div>
+                             </div>
 
-                            <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border space-y-4">
-                                <h4 className="text-xs font-black text-brand-text uppercase tracking-widest">Konum ve Adres Karşılaştırması</h4>
-                                
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI ADRESİ (CİHAZ)</p>
-                                        <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
-                                            {selectedUpdate.userAddress || `${selectedUpdate.userLat.toFixed(6)}, ${selectedUpdate.userLng.toFixed(6)}`}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT ADRESİ (SİSTEM)</p>
-                                        <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
-                                            {selectedUpdate.customerAddress || 'Adres bilgisi bulunamadı.'}
-                                        </p>
-                                    </div>
-                                </div>
+                             <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border space-y-4">
+                                 <h4 className="text-xs font-black text-brand-text uppercase tracking-widest">Konum ve Adres Karşılaştırması</h4>
+                                 
+                                 <div className="grid grid-cols-1 gap-4">
+                                     <div className="space-y-1">
+                                         <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI ADRESİ (CİHAZ)</p>
+                                         <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
+                                             {selectedUpdate.userAddress || 'Adres bilgisi alınamadı.'}
+                                         </p>
+                                     </div>
+                                     <div className="space-y-1">
+                                         <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT ADRESİ (SİSTEM)</p>
+                                         <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
+                                             {selectedUpdate.customerAddress || 'Adres bilgisi bulunamadı.'}
+                                         </p>
+                                     </div>
+                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 pt-2">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI KOORDİNAT</p>
-                                        <p className="text-[10px] font-mono">{selectedUpdate.userLat.toFixed(6)}, {selectedUpdate.userLng.toFixed(6)}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT KOORDİNAT</p>
-                                        <p className="text-[10px] font-mono">{selectedUpdate.customerLat.toFixed(6)}, {selectedUpdate.customerLng.toFixed(6)}</p>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-brand-border flex items-center justify-between">
-                                    <span className="text-sm font-bold text-brand-text">Koordinatlar Arası Mesafe:</span>
-                                    <span className={`text-lg font-black ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
-                                        {calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)} km
-                                    </span>
-                                </div>
+                                 <div className="pt-4 border-t border-brand-border flex items-center justify-between">
+                                     <span className="text-sm font-bold text-brand-text">Adresler Arası Mesafe:</span>
+                                     <span className={`text-lg font-black ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
+                                         {calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)} km
+                                     </span>
+                                 </div>
                                 {parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 && (
                                     <p className="text-[10px] text-red-500 font-bold italic">
                                         * Kullanıcı tesisatın 500 metreden daha uzağında görünüyor.

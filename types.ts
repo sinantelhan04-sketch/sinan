@@ -43,6 +43,7 @@ export interface PhoneUpdateRequest {
   id?: number;
   username: string;
   installationNumber: string;
+  customerName?: string;
   oldPhone: string;
   newPhone: string;
   userLat: number;
