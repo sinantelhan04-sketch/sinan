@@ -1,12 +1,17 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as sheetService from '../services/sheetService';
 import { 
-    UserIcon, LockIcon, TrashIcon, EditIcon, ChartBarIcon, 
-    UserGroupIcon, RefreshIcon, DownloadIcon, ReportIcon, 
-    LightningIcon, CounterResetIcon, SearchIcon, PhoneIconSolid, MessageIcon,
-    DeviceResetIcon, FlameIcon
-} from './icons';
+    Users, Shield, Trash2, Edit3, BarChart3, 
+    UserCheck, RefreshCw, Download, AlertTriangle, 
+    Zap, RotateCcw, Search, Phone, MessageSquare,
+    Smartphone, Flame, LayoutDashboard, Database, Megaphone, CheckCircle2, XCircle, ChevronRight, LogOut, Menu, X
+} from 'lucide-react';
+import { 
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+    AreaChart, Area, BarChart, Bar, Cell, PieChart, Pie
+} from 'recharts';
+import { motion, AnimatePresence } from 'motion/react';
 import type { Credential, UserActivityStat, PhoneUpdateRequest } from '../types';
 import Papa from 'papaparse';
 import AnnouncementModal from './AnnouncementModal';
@@ -60,7 +65,8 @@ const MedalIcon = ({ rank }: { rank: number }) => {
 
 export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     // Tab State
-    const [activeTab, setActiveTab] = useState<'users' | 'update' | 'announcement' | 'logs' | 'approvals'>('users');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'update' | 'announcement' | 'logs' | 'approvals'>('dashboard');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     
     // Data States
     const [credentials, setCredentials] = useState<Credential[]>([]);
@@ -73,6 +79,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const [totalCustomerCount, setTotalCustomerCount] = useState<number>(0);
     const [pendingUpdates, setPendingUpdates] = useState<PhoneUpdateRequest[]>([]);
     const [selectedUpdate, setSelectedUpdate] = useState<PhoneUpdateRequest | null>(null);
+    const [dailyActivity, setDailyActivity] = useState<any[]>([]);
     
     // UI States
     const [loading, setLoading] = useState(true);
@@ -143,6 +150,19 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setReportedErrors(reports);
             setTotalCustomerCount(count);
             setPendingUpdates(pending);
+
+            // Process daily activity for charts
+            const activityByDay: Record<string, number> = {};
+            logs.forEach((log: any) => {
+                const date = new Date(log.timestamp).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+                activityByDay[date] = (activityByDay[date] || 0) + 1;
+            });
+            const chartData = Object.entries(activityByDay)
+                .map(([name, value]) => ({ name, value }))
+                .reverse()
+                .slice(-14); // Last 14 days
+            setDailyActivity(chartData);
+
             setError('');
         } catch (err: any) {
             console.error(err);
@@ -602,200 +622,156 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     );
 
     return (
-        <div className="min-h-screen bg-brand-bg w-full font-sans text-brand-text">
-            {/* --- Toast Bildirimleri (SAĞ ÜST KÖŞE) --- */}
-            {(successMsg || error) && (
-                <div className="fixed top-6 right-6 z-[100] flex flex-col gap-3 animate-fade-in max-w-lg w-full px-4">
-                    {successMsg && (
-                        <div className="bg-white border-l-4 border-green-500 shadow-2xl rounded-2xl p-4 flex items-center">
-                            <div className="bg-green-500/10 text-green-500 rounded-full p-2 mr-3 flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-green-600 text-sm">Başarılı</h4>
-                                <p className="text-sm text-brand-text-muted">{successMsg}</p>
-                            </div>
+        <div className="min-h-screen bg-[#F8FAFC] flex text-[#1E293B] font-sans selection:bg-brand-accent/30">
+            {/* --- Sidebar --- */}
+            <aside 
+                className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0F172A] text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+            >
+                <div className="flex flex-col h-full">
+                    {/* Sidebar Header */}
+                    <div className="p-6 flex items-center gap-3 border-b border-white/10">
+                        <div className="w-10 h-10 bg-brand-accent rounded-xl flex items-center justify-center text-black shadow-lg shadow-brand-accent/20">
+                            <Flame size={24} />
                         </div>
-                    )}
-                    {error && (
-                        <div className="bg-white border-l-4 border-red-500 shadow-2xl rounded-2xl p-4 relative">
-                            <button onClick={() => setError('')} className="absolute top-2 right-2 text-brand-text-muted hover:text-red-500">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                            <div className="flex items-start">
-                                <div className="bg-red-500/10 text-red-500 rounded-full p-2 mr-3 flex-shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div className="w-full overflow-hidden">
-                                    <h4 className="font-bold text-red-600 text-sm">Hata</h4>
-                                    {error.includes('create table') ? (
-                                        <div className="mt-2">
-                                            <p className="text-xs text-brand-text-muted mb-2">Veritabanında gerekli tablo eksik. Lütfen aşağıdaki kodu kopyalayıp Supabase SQL Editöründe çalıştırın:</p>
-                                            <div className="bg-brand-bg rounded-xl p-3 text-[10px] font-mono overflow-x-auto text-brand-text border border-brand-border relative group">
-                                                <pre>{error.split(':\n\n')[1] || error}</pre>
-                                                <button 
-                                                    onClick={() => navigator.clipboard.writeText(error.split(':\n\n')[1] || error)}
-                                                    className="absolute top-2 right-2 bg-brand-accent text-white px-3 py-1 rounded-lg text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold"
-                                                >
-                                                    Kopyala
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-brand-text-muted break-words">{error}</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* --- Üst Header --- */}
-            <div className="bg-brand-card border-b border-brand-border px-6 py-4 flex justify-between items-center sticky top-0 z-30">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-accent/20">
-                        <FlameIcon />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-tight text-brand-text leading-none">Yönetim Paneli</h1>
-                        <span className="text-[10px] font-bold text-brand-accent tracking-widest uppercase">Sistem Kontrol & İzleme</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <button onClick={loadData} className="p-2 text-brand-text-muted hover:text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-all">
-                        <RefreshIcon />
-                    </button>
-                    <button 
-                        onClick={onLogout}
-                        className="px-5 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-sm font-bold transition-colors flex items-center"
-                    >
-                        Güvenli Çıkış
-                        <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                    </button>
-                </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto p-6 space-y-8">
-                
-                {/* --- KPI Kartları (Dashboard) --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Kart 1: Toplam Tesisat */}
-                    <div className="card-hardware p-6 relative overflow-hidden group hover:border-brand-accent/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4 text-brand-accent opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110">
-                            <DatabaseIcon />
-                        </div>
-                        <h3 className="label-hardware mb-2">Toplam Tesisat</h3>
-                        <div className="flex items-end gap-2">
-                            <span className="text-4xl font-black text-brand-text">{totalCustomerCount.toLocaleString('tr-TR')}</span>
-                        </div>
-                        <div className="mt-4 flex items-center">
-                            <span className="px-2 py-1 bg-cyan-500/10 text-cyan-500 text-[10px] font-bold rounded-md border border-cyan-500/20">Veritabanı Aktif</span>
-                        </div>
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
-                    </div>
-
-                    {/* Kart 2: Personel Durumu */}
-                    <div className="card-hardware p-6 relative overflow-hidden group hover:border-brand-accent/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4 text-brand-accent opacity-5 group-hover:opacity-10 transition-opacity">
-                            <UserGroupIcon />
-                        </div>
-                        <h3 className="label-hardware mb-2">Personel Durumu</h3>
-                        <div className="flex items-end gap-2">
-                            <span className="text-4xl font-black text-brand-text">{credentials.length}</span>
-                            <span className="text-sm font-medium text-brand-text-muted mb-1">Kayıtlı</span>
-                        </div>
-                        <div className="mt-4 flex items-center gap-2">
-                            <span className="flex items-center px-2 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-md border border-green-500/20">
-                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
-                                {onlineCount} Çevrimiçi
-                            </span>
-                        </div>
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500"></div>
-                    </div>
-
-                    {/* Kart 3: Aktivite */}
-                    <div className="card-hardware p-6 relative overflow-hidden group hover:border-brand-accent/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4 text-brand-accent opacity-5 group-hover:opacity-10 transition-opacity">
-                            <SearchIcon />
-                        </div>
-                        <h3 className="label-hardware mb-2">Aktivite</h3>
-                        <div className="flex items-end gap-2">
-                            <span className="text-4xl font-black text-brand-text">{monthlyTotalQueries}</span>
-                            <span className="text-sm font-medium text-brand-text-muted mb-1">Bu Ay</span>
-                        </div>
-                        <div className="mt-4 text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">
-                            Toplam: {totalQueries}
-                        </div>
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-brand-accent to-orange-600"></div>
-                    </div>
-
-                    {/* Kart 4: Ayın Personeli */}
-                    <div className="bg-gradient-to-br from-brand-accent to-blue-700 p-6 rounded-[24px] shadow-lg shadow-brand-accent/10 text-white relative overflow-hidden">
-                        <div className="absolute top-4 right-4 text-white/40">
-                             <LightningIcon />
-                        </div>
-                        <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
-                        
-                        <h3 className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-4">Ayın Personeli</h3>
                         <div>
-                            <div className="text-xl font-bold">{topPerformerDetails?.fullName || topPerformer.username}</div>
-                            <div className="flex items-end gap-2 mt-1">
-                                <span className="text-4xl font-black">{topPerformer.queryCount}</span>
-                                <span className="text-sm font-medium text-white/60 mb-1">İşlem</span>
+                            <h1 className="text-lg font-bold tracking-tight leading-none">Ağrı Gaz</h1>
+                            <span className="text-[10px] font-bold text-brand-accent tracking-widest uppercase opacity-80">Yönetim Paneli</span>
+                        </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+                        <SidebarItem 
+                            icon={<LayoutDashboard size={20} />} 
+                            label="Dashboard" 
+                            active={activeTab === 'dashboard'} 
+                            onClick={() => setActiveTab('dashboard')} 
+                        />
+                        <SidebarItem 
+                            icon={<Users size={20} />} 
+                            label="Kullanıcılar" 
+                            active={activeTab === 'users'} 
+                            onClick={() => setActiveTab('users')} 
+                        />
+                        <SidebarItem 
+                            icon={<BarChart3 size={20} />} 
+                            label="İşlem Geçmişi" 
+                            active={activeTab === 'logs'} 
+                            onClick={() => setActiveTab('logs')} 
+                        />
+                        <SidebarItem 
+                            icon={<CheckCircle2 size={20} />} 
+                            label="Onay Bekleyenler" 
+                            active={activeTab === 'approvals'} 
+                            badge={pendingUpdates.length > 0 ? pendingUpdates.length : undefined}
+                            onClick={() => setActiveTab('approvals')} 
+                        />
+                        <SidebarItem 
+                            icon={<Database size={20} />} 
+                            label="Veri Yönetimi" 
+                            active={activeTab === 'update'} 
+                            onClick={() => setActiveTab('update')} 
+                        />
+                        <SidebarItem 
+                            icon={<Megaphone size={20} />} 
+                            label="Duyurular" 
+                            active={activeTab === 'announcement'} 
+                            onClick={() => setActiveTab('announcement')} 
+                        />
+                    </nav>
+
+                    {/* Sidebar Footer */}
+                    <div className="p-4 border-t border-white/10">
+                        <button 
+                            onClick={onLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors font-bold text-sm"
+                        >
+                            <LogOut size={20} />
+                            Güvenli Çıkış
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            {/* --- Main Content --- */}
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Top Header */}
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 hover:bg-slate-100 rounded-lg lg:hidden"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+                            {activeTab === 'dashboard' && 'Genel Bakış'}
+                            {activeTab === 'users' && 'Kullanıcı Yönetimi'}
+                            {activeTab === 'logs' && 'Sistem Kayıtları'}
+                            {activeTab === 'approvals' && 'Onay İşlemleri'}
+                            {activeTab === 'update' && 'Veritabanı İşlemleri'}
+                            {activeTab === 'announcement' && 'Duyuru Yönetimi'}
+                        </h2>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={loadData}
+                            className={`p-2 text-slate-400 hover:text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-all ${loading ? 'animate-spin' : ''}`}
+                        >
+                            <RefreshCw size={18} />
+                        </button>
+                        <div className="h-8 w-px bg-slate-200 mx-2"></div>
+                        <div className="flex items-center gap-3">
+                            <div className="text-right hidden sm:block">
+                                <div className="text-xs font-bold text-slate-900">Admin</div>
+                                <div className="text-[10px] text-slate-500 font-medium">Sistem Yöneticisi</div>
+                            </div>
+                            <div className="w-9 h-9 bg-slate-100 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
+                                A
                             </div>
                         </div>
                     </div>
-                </div>
+                </header>
 
-                {/* --- Ana İçerik Alanı (Split View) --- */}
-                <div className="grid grid-cols-12 gap-8">
-                    
-                    {/* Sol taraf: Tablo ve Sekmeler (9/12) */}
-                    <div className="col-span-12 lg:col-span-9 space-y-6">
-                        
-                        {/* Tab Headers */}
-                        <div className="bg-brand-card rounded-2xl p-1.5 flex border border-brand-border w-full sm:w-fit overflow-x-auto">
-                            <button 
-                                onClick={() => setActiveTab('users')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'users' ? 'bg-brand-accent text-black shadow-sm' : 'text-brand-text-muted hover:text-brand-text'}`}
-                            >
-                                KULLANICI LİSTESİ
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('update')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'update' ? 'bg-brand-accent text-black shadow-sm' : 'text-brand-text-muted hover:text-brand-text'}`}
-                            >
-                                VERİ GÜNCELLEME
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('announcement')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'announcement' ? 'bg-brand-accent text-black shadow-sm' : 'text-brand-text-muted hover:text-brand-text'}`}
-                            >
-                                <MegaphoneIcon /> DUYURU YÖNETİMİ
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('logs')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'logs' ? 'bg-brand-accent text-black shadow-sm' : 'text-brand-text-muted hover:text-brand-text'}`}
-                            >
-                                İŞLEM GEÇMİŞİ
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('approvals')}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'approvals' ? 'bg-brand-accent text-black shadow-sm' : 'text-brand-text-muted hover:text-brand-text'}`}
-                            >
-                                <ReportIcon /> ONAYLARIM
-                                {pendingUpdates.length > 0 && (
-                                    <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse ml-1">
-                                        {pendingUpdates.length}
-                                    </span>
-                                )}
-                            </button>
-                        </div>
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="max-w-7xl mx-auto"
+                        >
+                            {activeTab === 'dashboard' && (
+                                <DashboardView 
+                                    stats={stats}
+                                    totalQueries={totalQueries}
+                                    monthlyTotalQueries={monthlyTotalQueries}
+                                    totalCustomerCount={totalCustomerCount}
+                                    dailyActivity={dailyActivity}
+                                    topPerformer={topPerformer}
+                                    topPerformerDetails={topPerformerDetails}
+                                    topQueries={topQueries}
+                                    reportedErrors={reportedErrors}
+                                />
+                            )}
+                            {activeTab === 'users' && renderUsersTab()}
+                            {activeTab === 'logs' && renderLogsTab()}
+                            {activeTab === 'approvals' && renderApprovalsTab()}
+                            {activeTab === 'update' && renderUpdateTab()}
+                            {activeTab === 'announcement' && renderAnnouncementTab()}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            </main>
+
+            {/* --- Modals --- */}
+            {/* ... (Existing modals will be moved to separate render functions or kept here) */}
 
                         {/* --- TAB CONTENT: USERS --- */}
                         {activeTab === 'users' && (
