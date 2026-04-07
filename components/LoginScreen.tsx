@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserIcon, LockIcon, FlameIcon } from './icons';
+import * as sheetService from '../services/sheetService';
 
 interface LoginScreenProps {
   onLogin: (username: string, password: string, deviceId: string) => Promise<void>;
@@ -14,6 +15,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [isFetchingPhoto, setIsFetchingPhoto] = useState(false);
 
   // Cihaz Kimliği Yönetimi
   const [deviceId] = useState(() => {
@@ -37,8 +40,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     if (rememberedUsername) {
       setUsername(rememberedUsername);
       setRememberMe(true);
+      fetchUserPhoto(rememberedUsername);
     }
   }, []);
+
+  const fetchUserPhoto = async (uname: string) => {
+    if (uname.length < 3) {
+        setUserPhoto(null);
+        return;
+    }
+    setIsFetchingPhoto(true);
+    const photo = await sheetService.getUserPhoto(uname);
+    setUserPhoto(photo);
+    setIsFetchingPhoto(false);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        if (username) {
+            fetchUserPhoto(username);
+        } else {
+            setUserPhoto(null);
+        }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,8 +138,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 <div className="flex flex-col items-center justify-center">
                     
                     {/* Logo Circle */}
-                    <div className="w-16 h-16 bg-brand-accent rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-accent/20">
-                         <FlameIcon className="w-8 h-8 text-white" />
+                    <div className="w-16 h-16 bg-brand-accent rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-accent/20 overflow-hidden transition-all duration-500">
+                         {userPhoto ? (
+                             <img src={userPhoto} alt="User" className="w-full h-full object-cover animate-fade-in" referrerPolicy="no-referrer" />
+                         ) : (
+                             <FlameIcon className={`w-8 h-8 text-white ${isFetchingPhoto ? 'animate-pulse opacity-50' : ''}`} />
+                         )}
                     </div>
 
                     <h1 className="text-xl font-black text-brand-text tracking-tight uppercase">

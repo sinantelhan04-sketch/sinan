@@ -278,8 +278,14 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
         <div className="min-h-screen bg-brand-bg pb-24">
             {/* Header */}
             <header className="bg-white px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
-                <div className="flex items-center gap-2">
-                    <FlameIcon />
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-brand-accent rounded-full flex items-center justify-center shadow-sm overflow-hidden border-2 border-brand-accent/10">
+                        {photoUrl ? (
+                            <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                            <FlameIcon className="w-6 h-6 text-white" />
+                        )}
+                    </div>
                     <span className="text-xl font-black text-brand-accent tracking-tight">Tesisat Sorgulama</span>
                 </div>
                 <div className="flex items-center gap-2">

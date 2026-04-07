@@ -655,12 +655,28 @@ export const updateUserProfile = async (username: string, updates: { password?: 
     if (updates.title) dbUpdates.title = updates.title;
     if (updates.photoUrl !== undefined) dbUpdates.photo_url = updates.photoUrl;
 
-    const { error } = await client
-        .from('users')
-        .update(dbUpdates)
-        .eq('username', username);
+    try {
+        const { error } = await client
+            .from('users')
+            .update(dbUpdates)
+            .eq('username', username);
 
-    if (error) throw new Error(error.message);
+        if (error) {
+            // Sütun eksik hatası kontrolü
+            if (error.message.includes('column "photo_url" of relation "users" does not exist')) {
+                console.warn('Veritabanında photo_url sütunu eksik. Lütfen SQL Editor üzerinden ekleyin: ALTER TABLE users ADD COLUMN photo_url TEXT;');
+                // Fotoğraf hariç diğerlerini tekrar dene
+                if (updates.password || updates.title) {
+                    const { photo_url, ...safeUpdates } = dbUpdates;
+                    await client.from('users').update(safeUpdates).eq('username', username);
+                }
+            } else {
+                throw new Error(error.message);
+            }
+        }
+    } catch (err: any) {
+        throw new Error('Profil güncellenirken hata oluştu: ' + err.message);
+    }
 };
 
 export const resetUserStats = async (username: string): Promise<void> => {
@@ -671,6 +687,22 @@ export const resetUserStats = async (username: string): Promise<void> => {
         .eq('username', username);
 
     if (error) throw new Error(error.message);
+};
+
+export const getUserPhoto = async (username: string): Promise<string | null> => {
+    try {
+        const client = ensureClient();
+        const { data, error } = await client
+            .from('users')
+            .select('photo_url')
+            .eq('username', username)
+            .single();
+            
+        if (error || !data) return null;
+        return data.photo_url;
+    } catch (err) {
+        return null;
+    }
 };
 
 export const resetUserDevice = async (username: string): Promise<void> => {
