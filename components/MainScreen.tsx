@@ -314,22 +314,18 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                         </div>
 
                                         <div className="flex gap-3">
-                                            {canViewPhone && (
-                                                <>
-                                                    <button 
-                                                        onClick={(e) => handleCallClick(e, foundCustomer.phone)}
-                                                        className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
-                                                    >
-                                                        <PhoneIconSolid /> Ara
-                                                    </button>
-                                                    <button 
-                                                        onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
-                                                        className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
-                                                    >
-                                                        <MessageIcon /> Mesaj
-                                                    </button>
-                                                </>
-                                            )}
+                                            <button 
+                                                onClick={(e) => handleCallClick(e, foundCustomer.phone)}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                            >
+                                                <PhoneIconSolid /> Ara
+                                            </button>
+                                            <button 
+                                                onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                            >
+                                                <MessageIcon /> Mesaj
+                                            </button>
                                             <button 
                                                 onClick={handleReportClick}
                                                 disabled={reportSent}
