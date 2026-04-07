@@ -72,10 +72,10 @@ export const getTotalCustomerCount = async (): Promise<number> => {
 
 export const getCredentials = async (): Promise<Credential[]> => {
     const client = ensureClient();
-    // select('*') kullanarak eksik sütun hatasını önlüyoruz (PostgreSQL error mitigation)
+    // Fotoğraf sütununu hariç tutarak veri miktarını azaltıyoruz (Performans için)
     const { data, error } = await client
         .from('users')
-        .select('*')
+        .select('username, password, full_name, title, allowed_device_id, skip_device_lock, can_view_details, can_view_phone, unlimited_access, last_login')
         .order('username');
 
     if (error) throw new Error(error.message);
@@ -89,9 +89,7 @@ export const getCredentials = async (): Promise<Credential[]> => {
         skipDeviceLock: user.skip_device_lock,
         canViewDetails: user.can_view_details,
         canViewPhone: user.can_view_phone,
-        unlimitedAccess: user.unlimited_access, // Yeni alan
-        photoUrl: user.photo_url,
-        // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
+        unlimitedAccess: user.unlimited_access,
         lastLogin: user.last_login 
     }));
 };

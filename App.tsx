@@ -101,11 +101,19 @@ const App: React.FC = () => {
                 setCurrentUser(session.username);
                 setCurrentUserFullName(session.fullName);
                 setCurrentUserTitle(session.title);
-                setCurrentUserPhotoUrl(session.photoUrl || null);
+                // Fotoğrafı oturumdan değil, gerekirse tekrar çekebiliriz veya boş bırakabiliriz
+                // Performans için localStorage'da saklamıyoruz
+                setCurrentUserPhotoUrl(null); 
                 setCanViewDetails(session.canViewDetails);
                 setCanViewPhone(session.canViewPhone || false);
                 setHasUnlimitedAccess(session.unlimitedAccess || false);
                 setSkipDeviceLock(session.skipDeviceLock || false);
+                
+                // Fotoğrafı arka planda sessizce çek (Oturumu yavaşlatmadan)
+                sheetService.getUserPhoto(session.username).then(photo => {
+                    if (photo) setCurrentUserPhotoUrl(photo);
+                }).catch(() => {});
+
                 if (session.username === 'admin') {
                     setIsAdmin(true);
                     setLegalAccepted(true);
@@ -209,12 +217,11 @@ const App: React.FC = () => {
     setSkipDeviceLock(result.skipDeviceLock || false);
     setLegalAccepted(false);
 
-    // Oturumu Kaydet
+    // Oturumu Kaydet (Fotoğraf hariç - Performans için)
     localStorage.setItem(SESSION_KEY, JSON.stringify({
         username,
         fullName: result.fullName,
         title: result.title,
-        photoUrl: result.photoUrl,
         canViewDetails: result.canViewDetails,
         canViewPhone: result.canViewPhone,
         unlimitedAccess: result.unlimitedAccess,
