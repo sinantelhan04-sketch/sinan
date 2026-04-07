@@ -1367,16 +1367,31 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             </div>
 
                             <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border space-y-4">
-                                <h4 className="text-xs font-black text-brand-text uppercase tracking-widest">Konum Karşılaştırması</h4>
+                                <h4 className="text-xs font-black text-brand-text uppercase tracking-widest">Konum ve Adres Karşılaştırması</h4>
                                 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI KONUMU</p>
-                                        <p className="text-xs font-mono">{selectedUpdate.userLat.toFixed(6)}, {selectedUpdate.userLng.toFixed(6)}</p>
+                                        <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI ADRESİ (CİHAZ)</p>
+                                        <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
+                                            {selectedUpdate.userAddress || `${selectedUpdate.userLat.toFixed(6)}, ${selectedUpdate.userLng.toFixed(6)}`}
+                                        </p>
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT KONUMU</p>
-                                        <p className="text-xs font-mono">{selectedUpdate.customerLat.toFixed(6)}, {selectedUpdate.customerLng.toFixed(6)}</p>
+                                        <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT ADRESİ (SİSTEM)</p>
+                                        <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
+                                            {selectedUpdate.customerAddress || 'Adres bilgisi bulunamadı.'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI KOORDİNAT</p>
+                                        <p className="text-[10px] font-mono">{selectedUpdate.userLat.toFixed(6)}, {selectedUpdate.userLng.toFixed(6)}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT KOORDİNAT</p>
+                                        <p className="text-[10px] font-mono">{selectedUpdate.customerLat.toFixed(6)}, {selectedUpdate.customerLng.toFixed(6)}</p>
                                     </div>
                                 </div>
 

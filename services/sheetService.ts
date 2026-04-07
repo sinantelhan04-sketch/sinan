@@ -835,8 +835,10 @@ export const submitPhoneUpdateRequest = async (request: PhoneUpdateRequest): Pro
                 new_phone: request.newPhone,
                 user_lat: request.userLat,
                 user_lng: request.userLng,
+                user_address: request.userAddress,
                 customer_lat: request.customerLat,
                 customer_lng: request.customerLng,
+                customer_address: request.customerAddress,
                 status: 'pending'
             }
         ]);
@@ -854,8 +856,10 @@ create table if not exists public.phone_update_requests (
   new_phone text not null,
   user_lat double precision,
   user_lng double precision,
+  user_address text,
   customer_lat double precision,
   customer_lng double precision,
+  customer_address text,
   status text default 'pending',
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
@@ -891,8 +895,10 @@ export const getPendingPhoneUpdates = async (): Promise<PhoneUpdateRequest[]> =>
             newPhone: d.new_phone,
             userLat: d.user_lat,
             userLng: d.user_lng,
+            userAddress: d.user_address,
             customerLat: d.customer_lat,
             customerLng: d.customer_lng,
+            customerAddress: d.customer_address,
             status: d.status,
             createdAt: d.created_at
         }));

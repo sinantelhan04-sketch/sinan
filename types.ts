@@ -47,8 +47,10 @@ export interface PhoneUpdateRequest {
   newPhone: string;
   userLat: number;
   userLng: number;
+  userAddress?: string;
   customerLat: number;
   customerLng: number;
+  customerAddress?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt?: string;
 }

@@ -131,6 +131,21 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
         }
     }, [activeTab, username]);
 
+    const getAddressFromCoords = async (lat: number, lon: number): Promise<string> => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+                headers: {
+                    'Accept-Language': 'tr-TR'
+                }
+            });
+            const data = await response.json();
+            return data.display_name || `${lat}, ${lon}`;
+        } catch (e) {
+            console.error("Reverse geocoding error:", e);
+            return `${lat}, ${lon}`;
+        }
+    };
+
     const handleSubmitUpdate = async () => {
         if (!selectedReportedInstallation || !newPhoneNumber.trim()) {
             setError('Lütfen geçerli bir telefon numarası girin.');
@@ -151,6 +166,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             });
 
             const { latitude, longitude } = position.coords;
+            
+            // Adres al
+            const userAddress = await getAddressFromCoords(latitude, longitude);
 
             await sheetService.submitPhoneUpdateRequest({
                 username,
@@ -159,8 +177,10 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 newPhone: newPhoneNumber.trim(),
                 userLat: latitude,
                 userLng: longitude,
+                userAddress,
                 customerLat: parseFloat(String(selectedReportedInstallation.latitude || '0').replace(',', '.')),
                 customerLng: parseFloat(String(selectedReportedInstallation.longitude || '0').replace(',', '.')),
+                customerAddress: selectedReportedInstallation.address || '',
                 status: 'pending'
             });
 
