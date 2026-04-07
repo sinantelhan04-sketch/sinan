@@ -42,6 +42,7 @@ export interface Announcement {
 export interface PhoneUpdateRequest {
   id?: number;
   username: string;
+  userFullName?: string;
   installationNumber: string;
   customerName?: string;
   oldPhone: string;

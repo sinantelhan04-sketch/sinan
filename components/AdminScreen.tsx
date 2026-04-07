@@ -231,6 +231,40 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         return d.toFixed(2); // km
     };
 
+    const [geocodedCustomerCoords, setGeocodedCustomerCoords] = useState<{lat: number, lng: number} | null>(null);
+    const [isGeocoding, setIsGeocoding] = useState(false);
+
+    useEffect(() => {
+        if (selectedUpdate && selectedUpdate.customerAddress && (selectedUpdate.customerLat === 0 || selectedUpdate.customerLng === 0)) {
+            const geocodeAddress = async () => {
+                setIsGeocoding(true);
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(selectedUpdate.customerAddress!)}&limit=1`);
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        setGeocodedCustomerCoords({
+                            lat: parseFloat(data[0].lat),
+                            lng: parseFloat(data[0].lon)
+                        });
+                    }
+                } catch (e) {
+                    console.error("Geocoding error:", e);
+                } finally {
+                    setIsGeocoding(false);
+                }
+            };
+            geocodeAddress();
+        } else {
+            setGeocodedCustomerCoords(null);
+        }
+    }, [selectedUpdate]);
+
+    const getEffectiveCustomerCoords = () => {
+        if (!selectedUpdate) return { lat: 0, lng: 0 };
+        if (geocodedCustomerCoords) return geocodedCustomerCoords;
+        return { lat: selectedUpdate.customerLat, lng: selectedUpdate.customerLng };
+    };
+
     const handleApproveUpdate = async (req: PhoneUpdateRequest) => {
         if (!req.id) return;
         if (!window.confirm('Bu telefon numarası güncellemesini onaylıyor musunuz?')) return;
@@ -1350,7 +1384,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                      <p className="label-hardware">BİLDİRİM YAPAN</p>
-                                     <p className="font-bold text-brand-text">{selectedUpdate.username}</p>
+                                     <p className="font-bold text-brand-text">{selectedUpdate.userFullName || selectedUpdate.username}</p>
                                  </div>
                                  <div className="space-y-1">
                                      <p className="label-hardware">ABONE ADI SOYADI</p>
@@ -1390,15 +1424,20 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
                                  <div className="pt-4 border-t border-brand-border flex items-center justify-between">
                                      <span className="text-sm font-bold text-brand-text">Adresler Arası Mesafe:</span>
-                                     <span className={`text-lg font-black ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
-                                         {calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)} km
+                                     <span className={`text-lg font-black ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
+                                         {isGeocoding ? '...' : calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)} km
                                      </span>
                                  </div>
-                                {parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 && (
-                                    <p className="text-[10px] text-red-500 font-bold italic">
-                                        * Kullanıcı tesisatın 500 metreden daha uzağında görünüyor.
-                                    </p>
-                                )}
+                                 {getEffectiveCustomerCoords().lat === 0 && !isGeocoding && (
+                                     <p className="text-[10px] text-orange-500 font-bold italic">
+                                         * Tesisat koordinatları sistemde eksik ve adres çözülemedi, mesafe hesaplanamadı.
+                                     </p>
+                                 )}
+                                 {parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)) > 0.5 && getEffectiveCustomerCoords().lat !== 0 && !isGeocoding && (
+                                     <p className="text-[10px] text-red-500 font-bold italic">
+                                         * Kullanıcı tesisatın 500 metreden daha uzağında görünüyor.
+                                     </p>
+                                 )}
                             </div>
                         </div>
 
