@@ -7,7 +7,7 @@ import {
     LightningIcon, CounterResetIcon, SearchIcon, PhoneIconSolid, MessageIcon,
     DeviceResetIcon, FlameIcon
 } from './icons';
-import type { Credential, UserActivityStat } from '../types';
+import type { Credential, UserActivityStat, PhoneUpdateRequest } from '../types';
 import Papa from 'papaparse';
 import AnnouncementModal from './AnnouncementModal';
 
@@ -60,7 +60,7 @@ const MedalIcon = ({ rank }: { rank: number }) => {
 
 export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     // Tab State
-    const [activeTab, setActiveTab] = useState<'users' | 'update' | 'announcement' | 'logs'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'update' | 'announcement' | 'logs' | 'approvals'>('users');
     
     // Data States
     const [credentials, setCredentials] = useState<Credential[]>([]);
@@ -71,6 +71,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const [topQueries, setTopQueries] = useState<any[]>([]);
     const [reportedErrors, setReportedErrors] = useState<any[]>([]);
     const [totalCustomerCount, setTotalCustomerCount] = useState<number>(0);
+    const [pendingUpdates, setPendingUpdates] = useState<PhoneUpdateRequest[]>([]);
+    const [selectedUpdate, setSelectedUpdate] = useState<PhoneUpdateRequest | null>(null);
     
     // UI States
     const [loading, setLoading] = useState(true);
@@ -116,13 +118,14 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [creds, userStats, logs, top, reports, count] = await Promise.all([
+            const [creds, userStats, logs, top, reports, count, pending] = await Promise.all([
                 sheetService.getCredentials(),
                 sheetService.getUserActivityStats(),
                 sheetService.getGlobalLogs(1000), // Get enough for counts
                 sheetService.getTopQueriedInstallations(5),
                 sheetService.getTopReportedErrors(5),
-                sheetService.getTotalCustomerCount()
+                sheetService.getTotalCustomerCount(),
+                sheetService.getPendingPhoneUpdates()
             ]);
             
             setCredentials(creds);
@@ -137,6 +140,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             setTopQueries(top);
             setReportedErrors(reports);
             setTotalCustomerCount(count);
+            setPendingUpdates(pending);
             setError('');
         } catch (err: any) {
             console.error(err);
@@ -211,6 +215,54 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             loadData();
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (err: any) { setError(err.message); }
+    };
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return '-';
+        const R = 6371; // km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const d = R * c;
+        return d.toFixed(2); // km
+    };
+
+    const handleApproveUpdate = async (req: PhoneUpdateRequest) => {
+        if (!req.id) return;
+        if (!window.confirm('Bu telefon numarası güncellemesini onaylıyor musunuz?')) return;
+        setLoading(true);
+        try {
+            await sheetService.approvePhoneUpdate(req.id, req.installationNumber, req.newPhone);
+            setSuccessMsg('Telefon numarası başarıyla güncellendi.');
+            setSelectedUpdate(null);
+            loadData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err: any) {
+            setError(err.message || 'Onaylama sırasında hata oluştu.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRejectUpdate = async (req: PhoneUpdateRequest) => {
+        if (!req.id) return;
+        if (!window.confirm('Bu güncelleme talebini reddetmek istediğinize emin misiniz?')) return;
+        setLoading(true);
+        try {
+            await sheetService.rejectPhoneUpdate(req.id);
+            setSuccessMsg('Güncelleme talebi reddedildi.');
+            setSelectedUpdate(null);
+            loadData();
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err: any) {
+            setError(err.message || 'Reddetme sırasında hata oluştu.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const resetForm = () => {
@@ -696,6 +748,17 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             >
                                 İŞLEM GEÇMİŞİ
                             </button>
+                            <button 
+                                onClick={() => setActiveTab('approvals')}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'approvals' ? 'bg-brand-accent text-black shadow-sm' : 'text-brand-text-muted hover:text-brand-text'}`}
+                            >
+                                <ReportIcon /> ONAYLARIM
+                                {pendingUpdates.length > 0 && (
+                                    <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse ml-1">
+                                        {pendingUpdates.length}
+                                    </span>
+                                )}
+                            </button>
                         </div>
 
                         {/* --- TAB CONTENT: USERS --- */}
@@ -815,6 +878,61 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                         </table>
                                     </div>
                                     {globalLogs.length === 0 && <div className="p-8 text-center text-brand-text-muted">İşlem kaydı bulunamadı.</div>}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'approvals' && (
+                            <div className="animate-fade-in space-y-6">
+                                <div className="bg-white rounded-[24px] shadow-sm border border-brand-border overflow-hidden">
+                                    <div className="p-6 border-b border-brand-border bg-brand-bg/30 flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-black text-brand-text">Bekleyen Onaylar</h3>
+                                            <p className="text-xs text-brand-text-muted mt-1">Telefon numarası güncelleme talepleri</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="bg-brand-bg/50 border-b border-brand-border text-left">
+                                                    <th className="px-6 py-5 label-hardware">Kullanıcı</th>
+                                                    <th className="px-6 py-5 label-hardware">Tesisat No</th>
+                                                    <th className="px-6 py-5 label-hardware">Yeni Telefon</th>
+                                                    <th className="px-6 py-5 label-hardware">Tarih</th>
+                                                    <th className="px-6 py-5"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-brand-border">
+                                                {pendingUpdates.length > 0 ? (
+                                                    pendingUpdates.map((req) => (
+                                                        <tr key={req.id} className="hover:bg-brand-accent/5 transition-colors group">
+                                                            <td className="px-6 py-4 text-sm font-bold text-brand-text">{req.username}</td>
+                                                            <td className="px-6 py-4 text-sm text-brand-text-muted">{req.installationNumber}</td>
+                                                            <td className="px-6 py-4 text-sm font-mono text-brand-accent">{req.newPhone}</td>
+                                                            <td className="px-6 py-4 text-[10px] text-brand-text-muted">
+                                                                {req.createdAt ? new Date(req.createdAt).toLocaleString('tr-TR') : '-'}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button 
+                                                                    onClick={() => setSelectedUpdate(req)}
+                                                                    className="bg-brand-accent text-black px-4 py-2 rounded-xl text-xs font-bold hover:shadow-lg transition-all"
+                                                                >
+                                                                    Detaylar
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan={5} className="px-6 py-12 text-center text-brand-text-muted italic">
+                                                            Bekleyen onay bulunmuyor.
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -1211,7 +1329,90 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 />
             )}
 
-             <style>{`
+             {/* Detay Modalı */}
+            {selectedUpdate && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-brand-text/60 backdrop-blur-sm" onClick={() => setSelectedUpdate(null)}></div>
+                    <div className="relative bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-soft-slide-up">
+                        <div className="p-6 border-b border-brand-border flex justify-between items-center bg-brand-bg/30">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-brand-accent p-2 rounded-xl text-black">
+                                    <ReportIcon />
+                                </div>
+                                <h3 className="text-xl font-black text-brand-text">Talep Detayları</h3>
+                            </div>
+                            <button onClick={() => setSelectedUpdate(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-brand-text-muted">
+                                <SearchIcon className="w-6 h-6 rotate-45" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-1">
+                                    <p className="label-hardware">BİLDİRİM YAPAN</p>
+                                    <p className="font-bold text-brand-text">{selectedUpdate.username}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="label-hardware">TESİSAT NO</p>
+                                    <p className="font-bold text-brand-text">{selectedUpdate.installationNumber}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="label-hardware">ESKİ TELEFON</p>
+                                    <p className="font-bold text-brand-text-muted">{selectedUpdate.oldPhone || '-'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="label-hardware text-brand-accent">YENİ TELEFON</p>
+                                    <p className="font-black text-brand-accent">{selectedUpdate.newPhone}</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border space-y-4">
+                                <h4 className="text-xs font-black text-brand-text uppercase tracking-widest">Konum Karşılaştırması</h4>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI KONUMU</p>
+                                        <p className="text-xs font-mono">{selectedUpdate.userLat.toFixed(6)}, {selectedUpdate.userLng.toFixed(6)}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT KONUMU</p>
+                                        <p className="text-xs font-mono">{selectedUpdate.customerLat.toFixed(6)}, {selectedUpdate.customerLng.toFixed(6)}</p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-brand-border flex items-center justify-between">
+                                    <span className="text-sm font-bold text-brand-text">Koordinatlar Arası Mesafe:</span>
+                                    <span className={`text-lg font-black ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
+                                        {calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)} km
+                                    </span>
+                                </div>
+                                {parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, selectedUpdate.customerLat, selectedUpdate.customerLng)) > 0.5 && (
+                                    <p className="text-[10px] text-red-500 font-bold italic">
+                                        * Kullanıcı tesisatın 500 metreden daha uzağında görünüyor.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-gray-50 border-t border-brand-border flex gap-3">
+                            <button 
+                                onClick={() => handleRejectUpdate(selectedUpdate)}
+                                className="flex-1 py-4 rounded-2xl font-black text-red-500 border-2 border-red-500 hover:bg-red-50 transition-all active:scale-95"
+                            >
+                                REDDET
+                            </button>
+                            <button 
+                                onClick={() => handleApproveUpdate(selectedUpdate)}
+                                className="flex-1 py-4 rounded-2xl font-black text-black bg-brand-accent shadow-lg shadow-brand-accent/20 hover:bg-brand-accent/90 transition-all active:scale-95"
+                            >
+                                ONAYLA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
                 .animate-fade-in { animation: fadeIn 0.3s ease-out; }
                 .animate-soft-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }

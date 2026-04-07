@@ -38,3 +38,17 @@ export interface Announcement {
   active: boolean;
   createdAt?: string;
 }
+
+export interface PhoneUpdateRequest {
+  id?: number;
+  username: string;
+  installationNumber: string;
+  oldPhone: string;
+  newPhone: string;
+  userLat: number;
+  userLng: number;
+  customerLat: number;
+  customerLng: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt?: string;
+}

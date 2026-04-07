@@ -73,6 +73,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     const [userLogs, setUserLogs] = useState<any[]>([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
 
+    // Phone Update States
+    const [reportedInstallations, setReportedInstallations] = useState<Customer[]>([]);
+    const [selectedReportedInstallation, setSelectedReportedInstallation] = useState<Customer | null>(null);
+    const [newPhoneNumber, setNewPhoneNumber] = useState('');
+    const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
+    const [updateSuccess, setUpdateSuccess] = useState(false);
+
     // Profile Edit States
     const [showProfileEditModal, setShowProfileEditModal] = useState(false);
     const [editPassword, setEditPassword] = useState('');
@@ -92,6 +99,18 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
         }
     }, [recentSearchesKey]);
 
+    const loadReportedInstallations = useCallback(async () => {
+        setLoadingLogs(true);
+        try {
+            const data = await sheetService.getReportedInstallations();
+            setReportedInstallations(data);
+        } catch (e) {
+            console.error("Hatalı tesisatlar yüklenemedi:", e);
+        } finally {
+            setLoadingLogs(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (activeTab === 'islemler') {
             const fetchLogs = async () => {
@@ -99,8 +118,11 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 try {
                     const logs = await sheetService.getUserLogs(username);
                     setUserLogs(logs);
+                    
+                    const reported = await sheetService.getReportedInstallations();
+                    setReportedInstallations(reported);
                 } catch (e) {
-                    console.error("Logs fetch error:", e);
+                    console.error("Data fetch error:", e);
                 } finally {
                     setLoadingLogs(false);
                 }
@@ -108,6 +130,61 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             fetchLogs();
         }
     }, [activeTab, username]);
+
+    const handleSubmitUpdate = async () => {
+        if (!selectedReportedInstallation || !newPhoneNumber.trim()) {
+            setError('Lütfen geçerli bir telefon numarası girin.');
+            return;
+        }
+
+        setIsSubmittingUpdate(true);
+        setError('');
+
+        try {
+            // Konum al
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            });
+
+            const { latitude, longitude } = position.coords;
+
+            await sheetService.submitPhoneUpdateRequest({
+                username,
+                installationNumber: selectedReportedInstallation.installationNumber,
+                oldPhone: selectedReportedInstallation.phone,
+                newPhone: newPhoneNumber.trim(),
+                userLat: latitude,
+                userLng: longitude,
+                customerLat: parseFloat(String(selectedReportedInstallation.latitude || '0').replace(',', '.')),
+                customerLng: parseFloat(String(selectedReportedInstallation.longitude || '0').replace(',', '.')),
+                status: 'pending'
+            });
+
+            setUpdateSuccess(true);
+            setNewPhoneNumber('');
+            setSelectedReportedInstallation(null);
+            
+            // Listeyi yenile
+            const reported = await sheetService.getReportedInstallations();
+            setReportedInstallations(reported);
+            
+            setTimeout(() => setUpdateSuccess(false), 3000);
+
+        } catch (err: any) {
+            console.error("Güncelleme hatası:", err);
+            if (err.code === 1) {
+                setError('Konum izni reddedildi. Lütfen konum izni verin.');
+            } else {
+                setError(err.message || 'Bir hata oluştu.');
+            }
+        } finally {
+            setIsSubmittingUpdate(false);
+        }
+    };
 
     const saveToRecents = (term: string) => {
         let updated = [term, ...recentSearches.filter(s => s !== term)];
@@ -502,7 +579,103 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 )}
 
                 {activeTab === 'islemler' && (
-                    <div className="space-y-6 animate-soft-slide-up">
+                    <div className="space-y-6 animate-soft-slide-up pb-20">
+                        {/* Hatalı Telefon Bildirimleri */}
+                        <div className="bg-white p-6 rounded-[24px] shadow-sm border border-red-100">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="bg-red-500 p-2 rounded-xl text-white shadow-lg shadow-red-500/20">
+                                    <ReportIcon />
+                                </div>
+                                <div>
+                                    <span className="label-hardware text-red-500">DÜZELTME GEREKENLER</span>
+                                    <h2 className="text-xl font-black text-brand-text tracking-tight">
+                                        Hatalı Telefonlar
+                                    </h2>
+                                </div>
+                            </div>
+
+                            {selectedReportedInstallation ? (
+                                <div className="space-y-4 animate-fade-in">
+                                    <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="text-xs font-bold text-brand-text-muted uppercase">TESİSAT NO</p>
+                                                <p className="font-black text-brand-text">{selectedReportedInstallation.installationNumber}</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => setSelectedReportedInstallation(null)}
+                                                className="text-brand-text-muted hover:text-red-500"
+                                            >
+                                                <CloseIcon />
+                                            </button>
+                                        </div>
+                                        <p className="text-xs font-bold text-brand-text-muted uppercase">ABONE</p>
+                                        <p className="font-bold text-brand-text">{canViewDetails ? selectedReportedInstallation.name : maskName(selectedReportedInstallation.name)}</p>
+                                        <p className="text-xs font-bold text-brand-text-muted uppercase mt-2">ESKİ TELEFON</p>
+                                        <p className="font-bold text-brand-text">{canViewPhone ? selectedReportedInstallation.phone : maskPhone(selectedReportedInstallation.phone)}</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="label-hardware">GÜNCEL TELEFON NUMARASI</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-accent">
+                                                <PhoneIcon />
+                                            </div>
+                                            <input 
+                                                type="tel" 
+                                                placeholder="05xx xxx xx xx"
+                                                value={newPhoneNumber}
+                                                onChange={(e) => setNewPhoneNumber(e.target.value)}
+                                                className="input-hardware w-full pl-11"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button 
+                                        onClick={handleSubmitUpdate}
+                                        disabled={isSubmittingUpdate || !newPhoneNumber.trim()}
+                                        className="w-full bg-brand-accent text-white py-4 rounded-2xl font-black shadow-lg shadow-brand-accent/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isSubmittingUpdate ? (
+                                            <>
+                                                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                                                KONUM ALINIYOR VE GÖNDERİLİYOR...
+                                            </>
+                                        ) : (
+                                            <>TAMAMLA</>
+                                        )}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                                    {reportedInstallations.length > 0 ? (
+                                        reportedInstallations.map((item, idx) => (
+                                            <button 
+                                                key={idx}
+                                                onClick={() => setSelectedReportedInstallation(item)}
+                                                className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all flex items-center justify-between group"
+                                            >
+                                                <div className="text-left">
+                                                    <p className="font-bold text-brand-text">Tesisat No: {item.installationNumber}</p>
+                                                    <p className="text-[10px] text-brand-text-muted font-bold uppercase">
+                                                        {canViewDetails ? item.name : maskName(item.name)}
+                                                    </p>
+                                                </div>
+                                                <div className="text-brand-accent group-hover:translate-x-1 transition-transform">
+                                                    <ExpandIcon />
+                                                </div>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center text-brand-text-muted">
+                                            <p className="text-sm font-bold italic">Şu an düzeltme bekleyen tesisat bulunmuyor.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sorgu Geçmişi */}
                         <div className="bg-white p-6 rounded-[24px] shadow-sm">
                             <span className="label-hardware">SON İŞLEMLER</span>
                             <h2 className="text-2xl font-black text-brand-text tracking-tight mb-6">
@@ -847,6 +1020,37 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                     <span className="text-[10px] font-bold uppercase tracking-widest">PROFİL</span>
                 </button>
             </nav>
+
+            {/* Success Toast */}
+            {updateSuccess && (
+                <div className="fixed bottom-24 left-6 right-6 z-50 animate-soft-slide-up">
+                    <div className="bg-green-500 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-green-400">
+                        <div className="bg-white/20 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <p className="font-bold text-sm">Güncelleme talebi başarıyla gönderildi!</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Toast */}
+            {error && (
+                <div className="fixed bottom-24 left-6 right-6 z-50 animate-soft-slide-up">
+                    <div className="bg-red-500 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between border border-red-400">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-white/20 p-2 rounded-full">
+                                <ReportIcon />
+                            </div>
+                            <p className="font-bold text-sm">{error}</p>
+                        </div>
+                        <button onClick={() => setError('')} className="text-white/60 hover:text-white">
+                            <CloseIcon />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .animate-soft-slide-up {
