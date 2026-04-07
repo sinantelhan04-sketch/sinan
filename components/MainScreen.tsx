@@ -27,6 +27,7 @@ interface MainScreenProps {
     username: string;
     fullName?: string | null;
     title?: string | null;
+    photoUrl?: string | null;
     canViewDetails: boolean;
     canViewPhone: boolean;
     unlimitedAccess: boolean;
@@ -52,7 +53,7 @@ const maskPhone = (phone: string): string => {
     return clean.substring(0, 4) + ' *** ** ' + clean.substring(clean.length - 2);
 };
 
-const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, title, canViewDetails, canViewPhone, unlimitedAccess, skipDeviceLock }) => {
+const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, title, photoUrl, canViewDetails, canViewPhone, unlimitedAccess, skipDeviceLock }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
@@ -76,6 +77,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     const [showProfileEditModal, setShowProfileEditModal] = useState(false);
     const [editPassword, setEditPassword] = useState('');
     const [editTitle, setEditTitle] = useState(title || '');
+    const [editPhotoUrl, setEditPhotoUrl] = useState(photoUrl || '');
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
     
@@ -238,14 +240,15 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
         try {
             await sheetService.updateUserProfile(username, {
                 password: editPassword || undefined,
-                title: editTitle
+                title: editTitle,
+                photoUrl: editPhotoUrl || undefined
             });
             setProfileUpdateSuccess(true);
             setTimeout(() => {
                 setShowProfileEditModal(false);
                 setProfileUpdateSuccess(false);
-                // Refresh page to show new title if changed
-                if (editTitle !== title) {
+                // Refresh page to show new title or photo if changed
+                if (editTitle !== title || editPhotoUrl !== photoUrl) {
                     window.location.reload();
                 }
             }, 1500);
@@ -253,6 +256,21 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             alert("Profil güncellenirken hata oluştu: " + err.message);
         } finally {
             setIsUpdatingProfile(false);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 500000) { // 500KB limit for base64 in DB
+                alert("Dosya boyutu çok büyük (Maksimum 500KB)");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setEditPhotoUrl(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -561,8 +579,12 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                             <div className="absolute top-0 left-0 w-full h-24 bg-brand-accent/5"></div>
                             
                             <div className="relative">
-                                <div className="w-24 h-24 bg-brand-accent text-white rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl">
-                                    <FlameIcon className="w-12 h-12 text-white" />
+                                <div className="w-24 h-24 bg-brand-accent text-white rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl overflow-hidden">
+                                    {photoUrl ? (
+                                        <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    ) : (
+                                        <FlameIcon className="w-12 h-12 text-white" />
+                                    )}
                                 </div>
                                 <h2 className="text-2xl font-black text-brand-text tracking-tight uppercase">
                                     {fullName || 'Kullanıcı'}
@@ -643,14 +665,42 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
                         <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-scale-up">
                             <div className="text-center mb-6">
-                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <UserIcon className="w-8 h-8 text-brand-accent" />
+                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                                    {editPhotoUrl ? (
+                                        <img src={editPhotoUrl} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    ) : (
+                                        <UserIcon className="w-8 h-8 text-brand-accent" />
+                                    )}
                                 </div>
                                 <h3 className="text-xl font-black text-brand-text">Profili Düzenle</h3>
                                 <p className="text-sm text-brand-text-muted mt-1">Bilgilerinizi güncelleyin.</p>
                             </div>
 
                             <form onSubmit={handleProfileUpdate} className="space-y-4">
+                                <div className="flex flex-col items-center mb-4">
+                                    <input 
+                                        type="file" 
+                                        id="profile-photo-input" 
+                                        className="hidden" 
+                                        accept="image/*" 
+                                        onChange={handleFileChange}
+                                    />
+                                    <label 
+                                        htmlFor="profile-photo-input"
+                                        className="cursor-pointer bg-brand-accent/10 text-brand-accent px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-brand-accent/20 transition-all"
+                                    >
+                                        Fotoğraf Seç
+                                    </label>
+                                    {editPhotoUrl && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => setEditPhotoUrl('')}
+                                            className="mt-2 text-[10px] text-red-500 font-bold uppercase"
+                                        >
+                                            Fotoğrafı Kaldır
+                                        </button>
+                                    )}
+                                </div>
                                 <div>
                                     <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Ünvan</label>
                                     <input 

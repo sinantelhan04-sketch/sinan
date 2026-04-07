@@ -90,6 +90,7 @@ export const getCredentials = async (): Promise<Credential[]> => {
         canViewDetails: user.can_view_details,
         canViewPhone: user.can_view_phone,
         unlimitedAccess: user.unlimited_access, // Yeni alan
+        photoUrl: user.photo_url,
         // DÜZELTME: Tarihi ISO formatında ham olarak gönderiyoruz, formatlama UI'da yapılacak
         lastLogin: user.last_login 
     }));
@@ -131,7 +132,7 @@ export const findCustomerByInstallationNumber = async (installationNumber: strin
 };
 
 // Authentication artık isim ve izinleri de dönüyor
-export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, canViewPhone: boolean, fullName?: string, title?: string, unlimitedAccess?: boolean, skipDeviceLock?: boolean }> => {
+export const authenticateUser = async (username: string, password: string, deviceId: string): Promise<{ canViewDetails: boolean, canViewPhone: boolean, fullName?: string, title?: string, unlimitedAccess?: boolean, skipDeviceLock?: boolean, photoUrl?: string }> => {
     const client = ensureClient();
 
     const { data: user, error } = await client
@@ -189,7 +190,8 @@ export const authenticateUser = async (username: string, password: string, devic
         fullName: user.full_name,
         title: user.title,
         unlimitedAccess: user.unlimited_access || false,
-        skipDeviceLock: user.skip_device_lock || false
+        skipDeviceLock: user.skip_device_lock || false,
+        photoUrl: user.photo_url
     };
 };
 
@@ -646,11 +648,12 @@ export const updateCredential = async (originalUsername: string, updatedCredenti
     return getCredentials();
 };
 
-export const updateUserProfile = async (username: string, updates: { password?: string, title?: string }): Promise<void> => {
+export const updateUserProfile = async (username: string, updates: { password?: string, title?: string, photoUrl?: string }): Promise<void> => {
     const client = ensureClient();
     const dbUpdates: any = {};
     if (updates.password) dbUpdates.password = updates.password;
     if (updates.title) dbUpdates.title = updates.title;
+    if (updates.photoUrl !== undefined) dbUpdates.photo_url = updates.photoUrl;
 
     const { error } = await client
         .from('users')

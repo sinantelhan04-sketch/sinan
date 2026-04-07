@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
   const [currentUserTitle, setCurrentUserTitle] = useState<string | null>(null);
+  const [currentUserPhotoUrl, setCurrentUserPhotoUrl] = useState<string | null>(null);
   const [canViewDetails, setCanViewDetails] = useState<boolean>(false);
   const [canViewPhone, setCanViewPhone] = useState<boolean>(false);
   const [hasUnlimitedAccess, setHasUnlimitedAccess] = useState<boolean>(false); // 7/24 Erişim Yetkisi
@@ -100,6 +101,7 @@ const App: React.FC = () => {
                 setCurrentUser(session.username);
                 setCurrentUserFullName(session.fullName);
                 setCurrentUserTitle(session.title);
+                setCurrentUserPhotoUrl(session.photoUrl || null);
                 setCanViewDetails(session.canViewDetails);
                 setCanViewPhone(session.canViewPhone || false);
                 setHasUnlimitedAccess(session.unlimitedAccess || false);
@@ -133,6 +135,7 @@ const App: React.FC = () => {
             setCurrentUser(null);
             setCurrentUserFullName(null);
             setCurrentUserTitle(null);
+            setCurrentUserPhotoUrl(null);
             setCanViewDetails(false);
             setCanViewPhone(false);
             setHasUnlimitedAccess(false);
@@ -182,6 +185,7 @@ const App: React.FC = () => {
             username: 'admin',
             fullName: 'Sistem Yöneticisi',
             title: 'Yönetici',
+            photoUrl: null,
             canViewDetails: true,
             canViewPhone: true,
             unlimitedAccess: true,
@@ -198,6 +202,7 @@ const App: React.FC = () => {
     setCurrentUser(username);
     setCurrentUserFullName(result.fullName || null);
     setCurrentUserTitle(result.title || null);
+    setCurrentUserPhotoUrl(result.photoUrl || null);
     setCanViewDetails(result.canViewDetails); 
     setCanViewPhone(result.canViewPhone);
     setHasUnlimitedAccess(result.unlimitedAccess || false);
@@ -209,6 +214,7 @@ const App: React.FC = () => {
         username,
         fullName: result.fullName,
         title: result.title,
+        photoUrl: result.photoUrl,
         canViewDetails: result.canViewDetails,
         canViewPhone: result.canViewPhone,
         unlimitedAccess: result.unlimitedAccess,
@@ -224,6 +230,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
     setCurrentUserFullName(null);
     setCurrentUserTitle(null);
+    setCurrentUserPhotoUrl(null);
     setCanViewDetails(false);
     setCanViewPhone(false);
     setHasUnlimitedAccess(false);
@@ -360,6 +367,7 @@ const App: React.FC = () => {
                 username={currentUser!}
                 fullName={currentUserFullName}
                 title={currentUserTitle}
+                photoUrl={currentUserPhotoUrl}
                 canViewDetails={canViewDetails}
                 canViewPhone={canViewPhone}
                 unlimitedAccess={hasUnlimitedAccess}

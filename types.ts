@@ -19,6 +19,7 @@ export interface Credential {
   canViewDetails?: boolean;   // İsim soyisim açık gör
   canViewPhone?: boolean;     // Telefon numarası açık gör
   unlimitedAccess?: boolean;  // 7/24 Erişim (Zaman kısıtlaması yok)
+  photoUrl?: string;          // Profil Fotoğrafı (Base64 veya URL)
 }
 
 export interface UserActivityStat {
