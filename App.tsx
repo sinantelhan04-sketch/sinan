@@ -185,6 +185,7 @@ const App: React.FC = () => {
             canViewDetails: true,
             canViewPhone: true,
             unlimitedAccess: true,
+            skipDeviceLock: true,
             timestamp: Date.now()
         }));
         return;
@@ -200,6 +201,7 @@ const App: React.FC = () => {
     setCanViewDetails(result.canViewDetails); 
     setCanViewPhone(result.canViewPhone);
     setHasUnlimitedAccess(result.unlimitedAccess || false);
+    setSkipDeviceLock(result.skipDeviceLock || false);
     setLegalAccepted(false);
 
     // Oturumu Kaydet
@@ -210,6 +212,7 @@ const App: React.FC = () => {
         canViewDetails: result.canViewDetails,
         canViewPhone: result.canViewPhone,
         unlimitedAccess: result.unlimitedAccess,
+        skipDeviceLock: result.skipDeviceLock,
         timestamp: Date.now()
     }));
   }, []);
@@ -224,6 +227,7 @@ const App: React.FC = () => {
     setCanViewDetails(false);
     setCanViewPhone(false);
     setHasUnlimitedAccess(false);
+    setSkipDeviceLock(false);
     setLegalAccepted(false);
     setShowAnnouncement(false);
     setActiveAnnouncement(null);
