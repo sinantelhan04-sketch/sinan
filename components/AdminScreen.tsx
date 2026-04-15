@@ -5,7 +5,9 @@ import {
     Users, Shield, Trash2, Edit3, BarChart3, 
     UserCheck, RefreshCw, Download, AlertTriangle, 
     Zap, RotateCcw, Search, Phone, MessageSquare,
-    Smartphone, Flame, LayoutDashboard, Database, Megaphone, CheckCircle2, XCircle, ChevronRight, LogOut, Menu, X
+    Smartphone, Flame, LayoutDashboard, Database, Megaphone, CheckCircle2, XCircle, ChevronRight, LogOut, Menu, X,
+    TrendingUp, AlertCircle, User, FileText, Settings, Bell, Clock, Activity, MapPin, Check, ShieldCheck, Plus,
+    Trophy, Crown, Star, Award, Camera, Navigation, AlertTriangle as AlertTriangleIcon
 } from 'lucide-react';
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -31,34 +33,304 @@ const PREDEFINED_TITLES = [
     "Stajyer"
 ];
 
-// --- Yeni İkonlar ve UI Bileşenleri ---
-const DatabaseIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-    </svg>
-);
-
-const CrownIcon = () => (
-     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 2a1 1 0 01.832.445l1.666 2.499 2.917-.583a1 1 0 011.166 1.167l-.583 2.916 2.499 1.667a1 1 0 010 1.666l-2.499 1.667.583 2.916a1 1 0 01-1.166 1.167l-2.917-.583-1.666 2.499a1 1 0 01-1.664 0l-1.666-2.499-2.917.583a1 1 0 01-1.166-1.167l.583-2.916-2.499-1.667a1 1 0 010-1.666l2.499-1.667-.583-2.916a1 1 0 011.166-1.167l2.917.583 1.666-2.499A1 1 0 0110 2z" clipRule="evenodd" />
-    </svg>
-);
-
-const MegaphoneIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clipRule="evenodd" />
-    </svg>
-);
+// --- UI Icons & Components ---
+const DatabaseIcon = ({ className = "h-6 w-6" }: { className?: string }) => <Database className={className} />;
+const MegaphoneIcon = ({ className = "h-5 w-5" }: { className?: string }) => <Megaphone className={className} />;
+const SearchIcon = ({ className = "w-5 h-5" }: { className?: string }) => <Search className={className} />;
+const DownloadIcon = ({ className = "w-5 h-5" }: { className?: string }) => <Download className={className} />;
+const ReportIcon = ({ className = "w-5 h-5" }: { className?: string }) => <AlertCircle className={className} />;
+const DeviceResetIcon = ({ className = "w-5 h-5" }: { className?: string }) => <RotateCcw className={className} />;
+const CounterResetIcon = ({ className = "w-5 h-5" }: { className?: string }) => <RefreshCw className={className} />;
+const EditIcon = ({ className = "w-5 h-5", size }: { className?: string, size?: number }) => <Edit3 className={className} size={size} />;
+const TrashIcon = ({ className = "w-5 h-5" }: { className?: string }) => <Trash2 className={className} />;
+const UserIcon = ({ className = "w-5 h-5" }: { className?: string }) => <User className={className} />;
+const PhoneIconSolid = ({ className = "w-4 h-4" }: { className?: string }) => <Phone className={className} fill="currentColor" />;
+const MessageIcon = ({ className = "w-4 h-4" }: { className?: string }) => <MessageSquare className={className} />;
 
 const MedalIcon = ({ rank }: { rank: number }) => {
-    let colorClass = "text-brand-text-muted bg-brand-bg border-brand-border";
-    if (rank === 1) colorClass = "text-yellow-600 bg-yellow-50 border-yellow-200";
-    if (rank === 2) colorClass = "text-gray-500 bg-gray-50 border-gray-200";
-    if (rank === 3) colorClass = "text-orange-600 bg-orange-50 border-orange-200";
+    let colorClass = "text-slate-400 bg-slate-50 border-slate-200";
+    let Icon = null;
+    
+    if (rank === 1) {
+        colorClass = "text-yellow-600 bg-yellow-50 border-yellow-200";
+        Icon = <Crown size={16} />;
+    } else if (rank === 2) {
+        colorClass = "text-slate-500 bg-slate-50 border-slate-200";
+        Icon = <Award size={16} />;
+    } else if (rank === 3) {
+        colorClass = "text-orange-600 bg-orange-50 border-orange-200";
+        Icon = <Star size={16} />;
+    }
 
     return (
         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border ${colorClass} shadow-sm`}>
-            {rank === 1 ? <CrownIcon /> : rank}
+            {Icon || rank}
+        </div>
+    );
+};
+
+const SidebarItem = ({ icon, label, active, onClick, badge }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void, badge?: number }) => (
+    <button 
+        onClick={onClick}
+        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group relative ${
+            active 
+            ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20' 
+            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+        }`}
+    >
+        <div className="flex items-center gap-3 relative z-10">
+            <span className={`${active ? 'text-white' : 'text-slate-400 group-hover:text-brand-accent'} transition-colors`}>
+                {icon}
+            </span>
+            <span className="text-sm font-bold tracking-tight">{label}</span>
+        </div>
+        {badge !== undefined && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black relative z-10 ${active ? 'bg-white text-brand-accent' : 'bg-brand-accent text-white shadow-sm shadow-brand-accent/50'}`}>
+                {badge}
+            </span>
+        )}
+        {active && (
+            <motion.div 
+                layoutId="sidebar-active"
+                className="absolute inset-0 bg-brand-accent rounded-xl"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            />
+        )}
+    </button>
+);
+
+const StatCard = ({ title, value, icon, trend, color = "brand-accent" }: { title: string, value: string | number, icon: React.ReactNode, trend?: string, color?: string }) => (
+    <div className="card-hardware p-6 relative overflow-hidden group hover:shadow-xl hover:shadow-brand-accent/5 transition-all duration-300">
+        <div className={`absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none text-${color}`}>
+            {React.cloneElement(icon as React.ReactElement, { size: 100 })}
+        </div>
+        <div className="flex items-start justify-between relative z-10">
+            <div>
+                <p className="label-hardware mb-1">{title}</p>
+                <h3 className="text-3xl font-black text-brand-text tracking-tight font-mono">{value}</h3>
+                {trend && (
+                    <p className="text-[10px] font-bold text-green-600 mt-2 flex items-center gap-1">
+                        <TrendingUp size={12} /> {trend}
+                    </p>
+                )}
+            </div>
+            <div className={`p-3 bg-brand-bg text-${color} rounded-2xl border border-brand-border shadow-sm group-hover:bg-white transition-colors`}>
+                {icon}
+            </div>
+        </div>
+    </div>
+);
+
+const DashboardView = ({ 
+    stats, 
+    totalQueries, 
+    monthlyTotalQueries, 
+    totalCustomerCount, 
+    dailyActivity, 
+    topPerformer, 
+    topPerformerDetails, 
+    topQueries, 
+    reportedErrors,
+    handleDownloadReportedErrors,
+    isDownloadingErrors
+}: any) => {
+    return (
+        <div className="space-y-8 pb-12">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard 
+                    title="Bu Ayki Toplam Sorgu" 
+                    value={monthlyTotalQueries.toLocaleString()} 
+                    icon={<Activity size={24} />} 
+                    trend="+12% geçen aya göre"
+                    color="brand-accent"
+                />
+                <StatCard 
+                    title="Toplam Müşteri Sayısı" 
+                    value={totalCustomerCount.toLocaleString()} 
+                    icon={<Database size={24} />} 
+                    color="blue-500"
+                />
+                <StatCard 
+                    title="Aktif Personel (Bugün)" 
+                    value={stats.filter((s: any) => new Date(s.lastLogin).toDateString() === new Date().toDateString()).length} 
+                    icon={<Users size={24} />} 
+                    color="green-500"
+                />
+                <StatCard 
+                    title="Toplam Sistem Sorgusu" 
+                    value={totalQueries.toLocaleString()} 
+                    icon={<Zap size={24} />} 
+                    color="orange-500"
+                />
+            </div>
+
+            <div className="grid grid-cols-12 gap-8">
+                {/* Sol Taraf: Grafik ve Aktivite (9/12) */}
+                <div className="col-span-12 lg:col-span-9 space-y-8">
+                    {/* Activity Chart */}
+                    <div className="card-hardware p-8 bg-white">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-xl font-black text-brand-text tracking-tight uppercase">Sistem Aktivite Grafiği</h3>
+                                <p className="label-hardware">Son 14 Günlük Sorgu Dağılımı</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-brand-accent shadow-sm shadow-brand-accent/50"></div>
+                                    <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Günlük Sorgular</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="h-[350px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={dailyActivity}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="var(--color-brand-accent)" stopOpacity={0.2}/>
+                                            <stop offset="95%" stopColor="var(--color-brand-accent)" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                                        dy={10}
+                                    />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{ 
+                                            backgroundColor: '#0F172A', 
+                                            border: 'none', 
+                                            borderRadius: '16px',
+                                            padding: '12px',
+                                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                                        }}
+                                        itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                                        labelStyle={{ color: '#94a3b8', fontSize: '10px', marginBottom: '4px', textTransform: 'uppercase' }}
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="value" 
+                                        stroke="var(--color-brand-accent)" 
+                                        strokeWidth={4}
+                                        fillOpacity={1} 
+                                        fill="url(#colorValue)" 
+                                        animationDuration={1500}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Performance Highlights */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <motion.div 
+                            whileHover={{ y: -5 }}
+                            className="card-hardware p-6 bg-gradient-to-br from-brand-accent/5 to-transparent border-brand-accent/10"
+                        >
+                            <div className="flex items-center gap-5">
+                                <div className="w-20 h-20 rounded-3xl bg-brand-accent flex items-center justify-center text-black shadow-xl shadow-brand-accent/20 relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                                    <Trophy size={40} className="relative z-10" />
+                                </div>
+                                <div>
+                                    <p className="label-hardware">Ayın En Çok Sorgu Yapanı</p>
+                                    <h4 className="text-2xl font-black text-brand-text tracking-tight">{topPerformerDetails?.fullName || topPerformer.username}</h4>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="px-2 py-0.5 rounded-full bg-brand-accent text-white text-[10px] font-black uppercase tracking-wider">
+                                            {topPerformer.queryCount} Sorgu
+                                        </span>
+                                        <span className="text-[10px] font-bold text-brand-text-muted uppercase">{topPerformerDetails?.title || 'Personel'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                        <motion.div 
+                            whileHover={{ y: -5 }}
+                            className="card-hardware p-6 bg-gradient-to-br from-green-500/5 to-transparent border-green-500/10"
+                        >
+                            <div className="flex items-center gap-5">
+                                <div className="w-20 h-20 rounded-3xl bg-green-500 flex items-center justify-center text-white shadow-xl shadow-green-500/20 relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                                    <ShieldCheck size={40} className="relative z-10" />
+                                </div>
+                                <div>
+                                    <p className="label-hardware">Sistem Güvenlik Durumu</p>
+                                    <h4 className="text-2xl font-black text-brand-text tracking-tight">Korumalı</h4>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="px-2 py-0.5 rounded-full bg-green-500 text-white text-[10px] font-black uppercase tracking-wider">
+                                            Aktif
+                                        </span>
+                                        <span className="text-[10px] font-bold text-brand-text-muted uppercase">Tüm Sistemler Çevrimiçi</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                </div>
+
+                {/* Sağ Taraf: Trendler ve Hatalar (3/12) */}
+                <div className="col-span-12 lg:col-span-3 space-y-6">
+                    <div className="card-hardware p-6 bg-white">
+                        <h3 className="font-black text-brand-text text-xs uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                            <TrendingUp size={16} className="text-brand-accent" />
+                            Trend Sorgular
+                        </h3>
+                        <div className="space-y-4">
+                            {topQueries.map((item: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between group cursor-default p-2 rounded-xl hover:bg-brand-bg transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <MedalIcon rank={index + 1} />
+                                        <span className="text-xs font-bold text-brand-text font-mono tracking-tight">{item.installationNumber}</span>
+                                    </div>
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[10px] font-black text-brand-accent">{item.count}</span>
+                                        <span className="text-[8px] font-bold text-brand-text-muted uppercase">Sorgu</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="card-hardware p-6 bg-white">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-black text-brand-text text-xs uppercase tracking-[0.2em] flex items-center gap-2">
+                                <AlertCircle size={16} className="text-red-500" />
+                                Hatalı Bildirimler
+                            </h3>
+                            <button 
+                                onClick={handleDownloadReportedErrors}
+                                disabled={isDownloadingErrors}
+                                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors disabled:opacity-50"
+                                title="Hataları İndir"
+                            >
+                                <Download size={14} />
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            {reportedErrors.map((item: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between group cursor-default p-2 rounded-xl hover:bg-red-50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50"></div>
+                                        <span className="text-xs font-bold text-brand-text font-mono tracking-tight">{item.installationNumber}</span>
+                                    </div>
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[10px] font-black text-red-500">{item.count}</span>
+                                        <span className="text-[8px] font-bold text-brand-text-muted uppercase">Hata</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
@@ -282,10 +554,552 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     }, [selectedUpdate]);
 
     const getEffectiveCustomerCoords = () => {
-        if (!selectedUpdate) return { lat: 0, lng: 0 };
-        if (geocodedCustomerCoords) return geocodedCustomerCoords;
-        return { lat: selectedUpdate.customerLat, lng: selectedUpdate.customerLng };
+        if (selectedUpdate && selectedUpdate.customerLat && selectedUpdate.customerLng) {
+            return { lat: selectedUpdate.customerLat, lng: selectedUpdate.customerLng };
+        }
+        return { lat: 0, lng: 0 };
     };
+
+    // --- Tab Rendering Functions ---
+    const renderUsersTab = () => (
+        <div className="animate-fade-in space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-2xl border border-brand-border shadow-sm">
+                <div className="relative flex-grow max-w-md w-full">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-text-muted">
+                        <SearchIcon className="w-4 h-4" />
+                    </div>
+                    <input 
+                        type="text" 
+                        placeholder="İsim, sicil no veya ünvan ara..."
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                        className="input-hardware w-full pl-11 bg-brand-bg/50 border-transparent focus:bg-white focus:border-brand-accent h-11 text-sm"
+                    />
+                </div>
+                <button 
+                    onClick={() => { resetForm(); setEditingUser(null); setShowAddModal(true); }}
+                    className="btn-hardware w-full sm:w-auto h-11 px-6 shadow-md shadow-brand-accent/20"
+                >
+                    <Plus size={18} /> Yeni Personel
+                </button>
+            </div>
+
+            <div className="card-hardware bg-white overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-brand-bg/30 border-b border-brand-border text-left">
+                                <th className="px-6 py-4 label-hardware">Personel Bilgileri</th>
+                                <th className="px-6 py-4 label-hardware">Durum</th>
+                                <th className="px-6 py-4 label-hardware">Sorgu Verileri</th>
+                                <th className="px-6 py-4 label-hardware text-right">Yönetim</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-brand-border/50">
+                            {filteredUsers.map((user) => {
+                                const userStat = stats.find(s => s.username === user.username);
+                                const isOnline = userStat && new Date(userStat.lastLogin).toDateString() === new Date().toDateString();
+                                
+                                return (
+                                    <tr key={user.username} className="hover:bg-brand-accent/[0.02] transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative">
+                                                    <div className="w-12 h-12 rounded-2xl bg-brand-bg border border-brand-border overflow-hidden flex items-center justify-center shadow-sm">
+                                                        {user.photoUrl ? (
+                                                            <img src={user.photoUrl} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User size={24} className="text-brand-text-muted" />
+                                                        )}
+                                                    </div>
+                                                    {isOnline && (
+                                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-black text-brand-text tracking-tight">{user.fullName || user.username}</div>
+                                                    <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">{user.title || 'Personel'}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                                    isOnline 
+                                                    ? 'bg-green-50 text-green-600 border-green-100' 
+                                                    : 'bg-slate-50 text-slate-400 border-slate-100'
+                                                }`}>
+                                                    {isOnline ? 'Çevrimiçi' : 'Çevrimdışı'}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <div className="text-xs font-black text-brand-text font-mono">
+                                                    {userStat?.queryCount || 0} <span className="text-[10px] text-brand-text-muted font-sans font-bold uppercase ml-1">Bu Ay</span>
+                                                </div>
+                                                <div className="text-[10px] font-bold text-brand-text-muted font-mono">
+                                                    {userStat?.totalQueryCount || 0} <span className="text-[8px] uppercase ml-1">Toplam</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                                                <button onClick={() => handleResetDevice(user.username)} className="p-2.5 bg-white text-slate-400 rounded-xl hover:bg-brand-accent hover:text-white border border-brand-border hover:border-brand-accent shadow-sm transition-all" title="Cihaz Kilidini Sıfırla"><DeviceResetIcon className="w-4 h-4" /></button>
+                                                <button onClick={() => handleResetStats(user.username)} className="p-2.5 bg-white text-slate-400 rounded-xl hover:bg-brand-accent hover:text-white border border-brand-border hover:border-brand-accent shadow-sm transition-all" title="Sayacı Sıfırla"><CounterResetIcon className="w-4 h-4" /></button>
+                                                <button onClick={() => handleEditUser(user)} className="p-2.5 bg-white text-slate-400 rounded-xl hover:bg-brand-accent hover:text-white border border-brand-border hover:border-brand-accent shadow-sm transition-all" title="Düzenle"><EditIcon className="w-4 h-4" /></button>
+                                                <button onClick={() => handleDeleteUser(user.username)} className="p-2.5 bg-white text-red-400 rounded-xl hover:bg-red-500 hover:text-white border border-brand-border hover:border-red-500 shadow-sm transition-all" title="Sil"><TrashIcon className="w-4 h-4" /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                {filteredUsers.length === 0 && (
+                    <div className="p-20 text-center">
+                        <div className="w-16 h-16 bg-brand-bg rounded-full flex items-center justify-center mx-auto mb-4 text-brand-text-muted">
+                            <Search size={32} />
+                        </div>
+                        <p className="text-brand-text-muted font-bold">Aradığınız kriterlere uygun personel bulunamadı.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    const renderLogsTab = () => (
+        <div className="animate-fade-in space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-2xl border border-brand-border shadow-sm">
+                <div className="relative flex-grow max-w-md w-full">
+                    <select 
+                        value={logUserFilter}
+                        onChange={(e) => setLogUserFilter(e.target.value)}
+                        className="input-hardware w-full appearance-none pr-10 bg-brand-bg/50 border-transparent focus:bg-white focus:border-brand-accent h-11 text-sm font-bold"
+                    >
+                        <option value="">Tüm Personeller</option>
+                        {credentials.map(c => (
+                            <option key={c.username} value={c.username}>{c.fullName || c.username}</option>
+                        ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-brand-text-muted">
+                        <ChevronRight size={16} className="rotate-90" />
+                    </div>
+                </div>
+                <div className="text-xs font-bold text-brand-text-muted uppercase tracking-widest">
+                    Son 100 İşlem Kaydı
+                </div>
+            </div>
+
+            <div className="card-hardware bg-white overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-brand-bg/30 border-b border-brand-border text-left">
+                                <th className="px-6 py-4 label-hardware">Zaman Damgası</th>
+                                <th className="px-6 py-4 label-hardware">Personel</th>
+                                <th className="px-6 py-4 label-hardware">İşlem Türü</th>
+                                <th className="px-6 py-4 label-hardware">İşlem Detayları</th>
+                                <th className="px-6 py-4 label-hardware text-right">Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-brand-border/50">
+                            {globalLogs.filter(log => !logUserFilter || log.username === logUserFilter).slice(0, 100).map((log, idx) => (
+                                <tr key={idx} className="hover:bg-brand-accent/[0.01] transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-brand-text-muted">
+                                            <Clock size={12} />
+                                            <span className="text-[11px] font-mono font-bold">
+                                                {new Date(log.timestamp).toLocaleString('tr-TR')}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm font-black text-brand-text tracking-tight">
+                                            {log.username}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${
+                                            log.action.includes('Giriş') ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                            log.action.includes('Sorgu') ? 'bg-brand-accent/5 text-brand-accent border-brand-accent/10' :
+                                            'bg-slate-50 text-slate-500 border-slate-100'
+                                        }`}>
+                                            {log.action}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-medium text-brand-text-muted truncate max-w-xs" title={log.details}>
+                                            {log.details}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end">
+                                            {log.status === 'success' ? (
+                                                <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center text-green-500 border border-green-100">
+                                                    <Check size={14} />
+                                                </div>
+                                            ) : (
+                                                <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
+                                                    <X size={14} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {globalLogs.length === 0 && (
+                    <div className="p-20 text-center">
+                        <div className="w-16 h-16 bg-brand-bg rounded-full flex items-center justify-center mx-auto mb-4 text-brand-text-muted">
+                            <Activity size={32} />
+                        </div>
+                        <p className="text-brand-text-muted font-bold">Henüz bir işlem kaydı bulunmuyor.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    const renderApprovalsTab = () => (
+        <div className="animate-fade-in space-y-6">
+            <div className="card-hardware bg-white overflow-hidden">
+                <div className="p-8 border-b border-brand-border bg-gradient-to-r from-brand-bg/50 to-transparent flex items-center justify-between">
+                    <div>
+                        <h3 className="text-xl font-black text-brand-text uppercase tracking-tight">Onay Bekleyen Talepler</h3>
+                        <p className="text-xs text-brand-text-muted mt-1 font-bold">Telefon numarası güncelleme istekleri için yönetici onayı gereklidir.</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent">
+                        <CheckCircle2 size={24} />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-brand-bg/30 border-b border-brand-border text-left">
+                                <th className="px-6 py-4 label-hardware">Talep Tarihi</th>
+                                <th className="px-6 py-4 label-hardware">Talep Eden</th>
+                                <th className="px-6 py-4 label-hardware">Tesisat No</th>
+                                <th className="px-6 py-4 label-hardware">Yeni Numara</th>
+                                <th className="px-6 py-4 label-hardware text-right">Aksiyon</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-brand-border/50">
+                            {pendingUpdates.map((update) => (
+                                <tr key={update.id} className="hover:bg-brand-accent/[0.01] transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-brand-text-muted">
+                                            <Clock size={12} />
+                                            <span className="text-[11px] font-mono font-bold">
+                                                {new Date(update.createdAt!).toLocaleString('tr-TR')}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm font-black text-brand-text tracking-tight">
+                                            {update.userFullName || update.username}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm font-mono font-black text-brand-text bg-brand-bg px-2 py-1 rounded-lg border border-brand-border inline-block">
+                                            {update.installationNumber}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-brand-accent">
+                                            <Phone size={12} fill="currentColor" />
+                                            <span className="text-sm font-black tracking-tight">{update.newPhone}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button 
+                                            onClick={() => setSelectedUpdate(update)}
+                                            className="px-5 py-2.5 bg-brand-text text-white text-[10px] font-black rounded-xl hover:bg-black transition-all active:scale-95 shadow-md shadow-black/10 uppercase tracking-widest"
+                                        >
+                                            İncele
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {pendingUpdates.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                        <div className="w-16 h-16 bg-brand-bg rounded-full flex items-center justify-center mx-auto mb-4 text-brand-text-muted">
+                                            <CheckCircle2 size={32} />
+                                        </div>
+                                        <p className="text-brand-text-muted font-bold">Şu an için bekleyen bir onay talebi bulunmuyor.</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderUpdateTab = () => (
+        <div className="animate-fade-in space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Upload Section */}
+                <div className="card-hardware bg-white p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none text-brand-accent">
+                        <Database size={120} />
+                    </div>
+                    
+                    <div className="w-20 h-20 bg-brand-accent/10 text-brand-accent rounded-3xl flex items-center justify-center border border-brand-accent/20 shadow-sm relative z-10">
+                        <Database size={32} />
+                    </div>
+                    <div className="relative z-10">
+                        <h3 className="text-2xl font-black text-brand-text uppercase tracking-tight">Veri Yükleme</h3>
+                        <p className="text-sm text-brand-text-muted mt-2 font-medium">Sisteme toplu abone verisi yükleyin (.CSV formatında)</p>
+                    </div>
+                    
+                    <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-brand-border rounded-[32px] p-12 hover:border-brand-accent hover:bg-brand-accent/[0.02] transition-all cursor-pointer group/upload relative z-10 bg-brand-bg/30"
+                    >
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="p-5 bg-white rounded-2xl text-brand-text-muted group-hover/upload:text-brand-accent group-hover/upload:scale-110 transition-all shadow-sm border border-brand-border">
+                                <Plus size={32} />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-sm font-black text-brand-text">Dosya Seçin</p>
+                                <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">veya buraya sürükleyin</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {uploadFile && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="w-full p-5 bg-brand-accent/5 rounded-2xl border border-brand-accent/20 flex items-center justify-between relative z-10"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-accent shadow-sm">
+                                    <FileText size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-black text-brand-text truncate max-w-[200px]">{uploadFile.name}</p>
+                                    <p className="text-[10px] font-bold text-brand-text-muted uppercase">{(uploadFile.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setUploadFile(null)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={20} /></button>
+                        </motion.div>
+                    )}
+
+                    <div className="w-full space-y-3 relative z-10">
+                        <button 
+                            onClick={handleBulkUpload}
+                            disabled={!uploadFile || isUploading}
+                            className="btn-hardware w-full py-4 shadow-lg shadow-brand-accent/20 disabled:opacity-50 disabled:grayscale"
+                        >
+                            {isUploading ? (
+                                <div className="flex items-center gap-3">
+                                    <RefreshCw size={20} className="animate-spin" />
+                                    <span>İşleniyor...</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <Zap size={20} />
+                                    <span>Yüklemeyi Başlat</span>
+                                </div>
+                            )}
+                        </button>
+                        <button 
+                            onClick={downloadSampleCsv}
+                            className="w-full py-3 text-[10px] font-black text-brand-text-muted hover:text-brand-accent uppercase tracking-[0.2em] transition-colors"
+                        >
+                            Örnek Şablonu İndir
+                        </button>
+                    </div>
+                </div>
+
+                {/* Export Section */}
+                <div className="card-hardware bg-white p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none text-brand-accent">
+                        <Download size={120} />
+                    </div>
+
+                    <div className="w-20 h-20 bg-brand-accent/10 text-brand-accent rounded-3xl flex items-center justify-center border border-brand-accent/20 shadow-sm relative z-10">
+                        <Download size={32} />
+                    </div>
+                    <div className="relative z-10">
+                        <h3 className="text-2xl font-black text-brand-text uppercase tracking-tight">Veri Yedekleme</h3>
+                        <p className="text-sm text-brand-text-muted mt-2 font-medium">Tüm sistem verilerini güvenli bir şekilde dışa aktarın</p>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center w-full relative z-10">
+                        <div className="p-10 bg-brand-bg/50 rounded-[32px] border border-brand-border w-full relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-brand-accent/10">
+                                <div className="h-full bg-brand-accent w-full animate-pulse"></div>
+                            </div>
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="text-left">
+                                    <span className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest block mb-1">Toplam Kayıt Sayısı</span>
+                                    <span className="text-4xl font-black text-brand-text tracking-tighter font-mono">{totalCustomerCount.toLocaleString()}</span>
+                                </div>
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-accent shadow-sm border border-brand-border">
+                                    <Database size={24} />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-bold text-brand-text-muted uppercase">
+                                    <span>Doluluk Oranı</span>
+                                    <span>100%</span>
+                                </div>
+                                <div className="h-3 bg-white border border-brand-border rounded-full overflow-hidden p-0.5">
+                                    <div className="h-full bg-brand-accent rounded-full shadow-sm shadow-brand-accent/50"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={handleDownloadDatabase}
+                        disabled={isDownloading}
+                        className="btn-hardware w-full py-4 bg-brand-text hover:bg-black shadow-lg shadow-black/10 relative z-10"
+                    >
+                        {isDownloading ? (
+                            <div className="flex items-center gap-3">
+                                <RefreshCw size={20} className="animate-spin" />
+                                <span>Hazırlanıyor...</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <Download size={20} />
+                                <span>Veritabanını İndir (.CSV)</span>
+                            </div>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderAnnouncementTab = () => (
+        <div className="animate-fade-in space-y-6">
+            <div className="card-hardware bg-white p-10 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none text-brand-accent">
+                    <Megaphone size={150} />
+                </div>
+
+                <div className="flex items-center gap-5 mb-10 relative z-10">
+                    <div className="p-4 bg-brand-accent/10 text-brand-accent rounded-[24px] border border-brand-accent/20 shadow-sm">
+                        <Megaphone size={32} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-brand-text uppercase tracking-tight">Yeni Duyuru Yayınla</h3>
+                        <p className="text-sm text-brand-text-muted font-bold">Tüm personellere veya seçili kişilere anlık bildirim gönderin</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="label-hardware ml-1">Duyuru Başlığı</label>
+                            <input 
+                                type="text" 
+                                value={announcementForm.title}
+                                onChange={(e) => setAnnouncementForm(prev => ({ ...prev, title: e.target.value }))}
+                                className="input-hardware w-full bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-14 font-bold"
+                                placeholder="Örn: Mesai Saati Değişikliği"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="label-hardware ml-1">Duyuru İçeriği</label>
+                            <textarea 
+                                value={announcementForm.content}
+                                onChange={(e) => setAnnouncementForm(prev => ({ ...prev, content: e.target.value }))}
+                                className="input-hardware w-full min-h-[200px] resize-none bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent p-5 font-medium"
+                                placeholder="Duyuru detaylarını buraya yazın..."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="label-hardware ml-1">Görsel (Opsiyonel)</label>
+                            <div 
+                                onClick={() => announcementImageRef.current?.click()}
+                                className="border-2 border-dashed border-brand-border rounded-[32px] p-8 hover:border-brand-accent hover:bg-brand-accent/[0.02] transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px] bg-brand-bg/30 group/img"
+                            >
+                                <input type="file" ref={announcementImageRef} onChange={handleAnnouncementImageChange} accept="image/*" className="hidden" />
+                                {announcementForm.imageUrl ? (
+                                    <div className="relative group/preview">
+                                        <img src={announcementForm.imageUrl} alt="Önizleme" className="max-h-40 rounded-2xl shadow-lg border-4 border-white" />
+                                        <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
+                                            <p className="text-white text-[10px] font-black uppercase tracking-widest">Değiştir</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center space-y-3">
+                                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mx-auto text-brand-text-muted group-hover/img:text-brand-accent group-hover/img:scale-110 transition-all shadow-sm border border-brand-border">
+                                            <Plus size={24} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-black text-brand-text">Görsel Ekle</p>
+                                            <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">JPG, PNG (Max 2MB)</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="label-hardware ml-1">Hedef Kitle</label>
+                            <div className="relative">
+                                <select 
+                                    value={announcementForm.targetUsers[0]}
+                                    onChange={(e) => setAnnouncementForm(prev => ({ ...prev, targetUsers: [e.target.value] }))}
+                                    className="input-hardware w-full appearance-none pr-12 bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-14 font-bold"
+                                >
+                                    <option value="all">Tüm Personeller</option>
+                                    {credentials.map(c => (
+                                        <option key={c.username} value={c.username}>{c.fullName || c.username}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none text-brand-text-muted">
+                                    <ChevronRight size={20} className="rotate-90" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-end gap-4 mt-12 pt-8 border-t border-brand-border relative z-10">
+                    <button 
+                        onClick={() => setShowAnnouncementPreview(true)}
+                        className="px-10 py-4 bg-white text-brand-text font-black rounded-2xl hover:bg-brand-bg transition-all border border-brand-border uppercase text-xs tracking-widest shadow-sm active:scale-95"
+                    >
+                        Önizleme
+                    </button>
+                    <button 
+                        onClick={handleSendAnnouncement}
+                        disabled={isSendingAnnouncement}
+                        className="btn-hardware px-12 py-4 shadow-lg shadow-brand-accent/20"
+                    >
+                        {isSendingAnnouncement ? (
+                            <div className="flex items-center gap-3">
+                                <RefreshCw size={20} className="animate-spin" />
+                                <span>Yayınlanıyor...</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <Megaphone size={20} />
+                                <span>Şimdi Yayınla</span>
+                            </div>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 
     const handleApproveUpdate = async (req: PhoneUpdateRequest) => {
         if (!req.id) return;
@@ -758,6 +1572,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     topPerformerDetails={topPerformerDetails}
                                     topQueries={topQueries}
                                     reportedErrors={reportedErrors}
+                                    handleDownloadReportedErrors={handleDownloadReportedErrors}
+                                    isDownloadingErrors={isDownloadingErrors}
                                 />
                             )}
                             {activeTab === 'users' && renderUsersTab()}
@@ -771,511 +1587,38 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             </main>
 
             {/* --- Modals --- */}
-            {/* ... (Existing modals will be moved to separate render functions or kept here) */}
-
-                        {/* --- TAB CONTENT: USERS --- */}
-                        {activeTab === 'users' && (
-                            <div className="animate-fade-in space-y-6">
-                                {/* Toolbar */}
-                                <div className="flex flex-col sm:flex-row justify-between gap-4">
-                                    <div className="relative flex-grow max-w-md">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-text-muted">
-                                            <SearchIcon />
-                                        </div>
-                                        <input 
-                                            type="text" 
-                                            placeholder="İsim, sicil no veya ünvan ara..."
-                                            value={userSearchTerm}
-                                            onChange={(e) => setUserSearchTerm(e.target.value)}
-                                            className="input-hardware w-full pl-11"
-                                        />
-                                    </div>
-                                    <button 
-                                        onClick={() => { resetForm(); setEditingUser(null); setShowAddModal(true); }}
-                                        className="btn-hardware"
-                                    >
-                                        <span className="text-lg leading-none">+</span> Yeni Kullanıcı Ekle
-                                    </button>
-                                </div>
-
-                                {/* Table */}
-                                <div className="card-hardware">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="bg-brand-bg/50 border-b border-brand-border text-left">
-                                                    <th className="px-6 py-5 label-hardware">Ad Soyad</th>
-                                                    <th className="px-6 py-5"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-brand-border/50">
-                                                {filteredUsers.map((user) => {
-                                                    const userStat = stats.find(s => s.username === user.username);
-                                                    const isOnline = userStat && new Date(userStat.lastLogin).toDateString() === new Date().toDateString();
-                                                    
-                                                    return (
-                                                        <tr key={user.username} className="hover:bg-brand-accent/5 transition-colors group">
-                                                            <td className="px-6 py-4 text-sm font-medium text-brand-text">{user.fullName || '-'}</td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <button onClick={() => handleResetDevice(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Cihaz Kilidini Sıfırla"><DeviceResetIcon /></button>
-                                                                    <button onClick={() => handleResetStats(user.username)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Sayacı Sıfırla"><CounterResetIcon /></button>
-                                                                    <button onClick={() => handleEditUser(user)} className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg hover:bg-brand-accent/20 border border-brand-accent/20" title="Düzenle"><EditIcon /></button>
-                                                                    <button onClick={() => handleDeleteUser(user.username)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 border border-red-500/20" title="Sil"><TrashIcon /></button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {filteredUsers.length === 0 && <div className="p-8 text-center text-brand-text-muted">Kayıt bulunamadı.</div>}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* --- TAB CONTENT: LOGS --- */}
-                        {activeTab === 'logs' && (
-                            <div className="animate-fade-in space-y-6">
-                                {/* Log Filter */}
-                                <div className="flex flex-col sm:flex-row justify-between gap-4">
-                                    <div className="relative flex-grow max-w-md">
-                                        <select 
-                                            value={logUserFilter}
-                                            onChange={(e) => setLogUserFilter(e.target.value)}
-                                            className="input-hardware w-full"
-                                        >
-                                            <option value="">Tüm Personeller</option>
-                                            {credentials.map(c => (
-                                                <option key={c.username} value={c.username}>
-                                                    {c.fullName || c.username}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="card-hardware overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="bg-brand-bg/50 border-b border-brand-border text-left">
-                                                    <th className="px-6 py-5 label-hardware">Personel</th>
-                                                    <th className="px-6 py-5 label-hardware">Tesisat No</th>
-                                                    <th className="px-6 py-5 label-hardware">Tarih</th>
-                                                    <th className="px-6 py-5 label-hardware">İşlem Detayı</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-brand-border/50">
-                                                {globalLogs
-                                                    .filter(log => !logUserFilter || log.username === logUserFilter)
-                                                    .map((log, idx) => (
-                                                        <tr key={idx} className="hover:bg-brand-accent/5 transition-colors">
-                                                            <td className="px-6 py-4">
-                                                                <div className="font-bold text-brand-text">{log.username}</div>
-                                                                <div className="text-[10px] text-brand-text-muted uppercase font-bold">
-                                                                    {credentials.find(c => c.username === log.username)?.fullName || '-'}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4 font-mono text-sm text-brand-text">{log.installationNumber}</td>
-                                                            <td className="px-6 py-4 text-xs text-brand-text-muted">{log.timestamp}</td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {log.called && (
-                                                                        <div className="flex items-center gap-1.5 bg-brand-accent/10 text-brand-accent px-3 py-1 rounded-full text-[10px] font-bold border border-brand-accent/20">
-                                                                            <PhoneIconSolid />
-                                                                            ARAMA YAPILDI
-                                                                            {log.callDuration > 0 && ` (${log.callDuration} dk)`}
-                                                                            {log.callStatus && ` - ${log.callStatus}`}
-                                                                        </div>
-                                                                    )}
-                                                                    {log.smsSent && (
-                                                                        <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold border border-blue-500/20">
-                                                                            <MessageIcon />
-                                                                            SMS GÖNDERİLDİ
-                                                                        </div>
-                                                                    )}
-                                                                    {!log.called && !log.smsSent && (
-                                                                        <div className="flex items-center gap-1.5 bg-gray-500/10 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold border border-gray-500/20">
-                                                                            <SearchIcon />
-                                                                            SORGULAMA
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {globalLogs.filter(log => !logUserFilter || log.username === logUserFilter).length === 0 && <div className="p-8 text-center text-brand-text-muted">İşlem kaydı bulunamadı.</div>}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'approvals' && (
-                            <div className="animate-fade-in space-y-6">
-                                <div className="bg-white rounded-[24px] shadow-sm border border-brand-border overflow-hidden">
-                                    <div className="p-6 border-b border-brand-border bg-brand-bg/30 flex justify-between items-center">
-                                        <div>
-                                            <h3 className="text-lg font-black text-brand-text">Bekleyen Onaylar</h3>
-                                            <p className="text-xs text-brand-text-muted mt-1">Telefon numarası güncelleme talepleri</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="bg-brand-bg/50 border-b border-brand-border text-left">
-                                                    <th className="px-6 py-5 label-hardware">Kullanıcı</th>
-                                                    <th className="px-6 py-5 label-hardware">Tesisat No</th>
-                                                    <th className="px-6 py-5 label-hardware">Yeni Telefon</th>
-                                                    <th className="px-6 py-5 label-hardware">Tarih</th>
-                                                    <th className="px-6 py-5"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-brand-border">
-                                                {pendingUpdates.length > 0 ? (
-                                                    pendingUpdates.map((req) => (
-                                                        <tr key={req.id} className="hover:bg-brand-accent/5 transition-colors group">
-                                                            <td className="px-6 py-4 text-sm font-bold text-brand-text">{req.username}</td>
-                                                            <td className="px-6 py-4 text-sm text-brand-text-muted">{req.installationNumber}</td>
-                                                            <td className="px-6 py-4 text-sm font-mono text-brand-accent">{req.newPhone}</td>
-                                                            <td className="px-6 py-4 text-[10px] text-brand-text-muted">
-                                                                {req.createdAt ? new Date(req.createdAt).toLocaleString('tr-TR') : '-'}
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <button 
-                                                                    onClick={() => setSelectedUpdate(req)}
-                                                                    className="bg-brand-accent text-black px-4 py-2 rounded-xl text-xs font-bold hover:shadow-lg transition-all"
-                                                                >
-                                                                    Detaylar
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td colSpan={5} className="px-6 py-12 text-center text-brand-text-muted italic">
-                                                            Bekleyen onay bulunmuyor.
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* --- TAB CONTENT: DATA UPDATE --- */}
-                        {activeTab === 'update' && (
-                            <div className="animate-fade-in card-hardware p-8 text-center space-y-12">
-                                
-                                {/* Upload Section */}
-                                <div className="max-w-xl mx-auto space-y-6">
-                                    <div className="w-20 h-20 bg-brand-accent/10 text-brand-accent rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-accent/20">
-                                        <DownloadIcon />
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-brand-text">Veri Yükle</h2>
-                                    <p className="text-brand-text-muted">
-                                        Müşteri veritabanını güncellemek için güncel CSV dosyasını buraya sürükleyin veya seçin.
-                                    </p>
-                                    
-                                    <button 
-                                        onClick={downloadSampleCsv}
-                                        className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-brand-accent bg-brand-accent/10 hover:bg-brand-accent/20 rounded-xl transition-colors border border-brand-accent/20"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        Örnek Şablonu İndir (.CSV)
-                                    </button>
-                                    
-                                    <div 
-                                        onClick={() => !isUploading && fileInputRef.current?.click()}
-                                        className={`border-2 border-dashed rounded-2xl p-12 transition-all cursor-pointer ${isUploading ? 'bg-brand-bg border-brand-border' : 'border-brand-accent/30 bg-brand-accent/5 hover:bg-brand-accent/10 hover:border-brand-accent'}`}
-                                    >
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
-                                        {uploadFile ? (
-                                            <div>
-                                                <p className="font-bold text-brand-text">{uploadFile.name}</p>
-                                                <p className="text-sm text-brand-text-muted">{(uploadFile.size / 1024).toFixed(1)} KB</p>
-                                            </div>
-                                        ) : (
-                                            <div className="text-brand-accent font-bold">Dosya Seçin</div>
-                                        )}
-                                    </div>
-
-                                    {isUploading && (
-                                        <div className="w-full bg-brand-bg rounded-full h-2 overflow-hidden border border-brand-border">
-                                            <div className="bg-brand-accent h-2 transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
-                                        </div>
-                                    )}
-
-                                    <button 
-                                        onClick={handleBulkUpload}
-                                        disabled={!uploadFile || isUploading}
-                                        className="btn-hardware w-full py-4"
-                                    >
-                                        {isUploading ? 'Yükleniyor...' : 'Güncellemeyi Başlat'}
-                                    </button>
-
-                                    {uploadStatus && (
-                                        <div className="flex justify-center gap-4 mt-4 text-sm font-medium">
-                                            <span className="text-brand-accent">Başarılı: {uploadStatus.success}</span>
-                                            <span className="text-red-500">Hatalı: {uploadStatus.error}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div className="border-t border-brand-border"></div>
-
-                                {/* Download Section */}
-                                <div className="max-w-xl mx-auto space-y-6 pt-4">
-                                     <div className="w-20 h-20 bg-brand-accent/10 text-brand-accent rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-accent/20">
-                                        <DatabaseIcon />
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-brand-text">Veritabanı Dışa Aktar</h2>
-                                    <p className="text-brand-text-muted">
-                                        Sistemdeki tüm kayıtlı tesisat verilerini CSV formatında indirebilirsiniz.
-                                    </p>
-                                    
-                                     <button 
-                                        onClick={handleDownloadDatabase}
-                                        disabled={isDownloading}
-                                        className="btn-hardware w-full py-4 flex items-center justify-center gap-2"
-                                    >
-                                        {isDownloading ? (
-                                            <>
-                                                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-brand-text" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Veriler Hazırlanıyor...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <DownloadIcon />
-                                                Tüm Veritabanını İndir (.CSV)
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* --- TAB CONTENT: ANNOUNCEMENT --- */}
-                        {activeTab === 'announcement' && (
-                            <div className="animate-fade-in space-y-6">
-                                <div className="card-hardware p-8">
-                                    <h2 className="text-xl font-bold text-brand-text mb-6">Yeni Duyuru Oluştur</h2>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="label-hardware mb-2 block">Başlık</label>
-                                                <input 
-                                                    type="text" 
-                                                    className="input-hardware w-full"
-                                                    placeholder="Duyuru Başlığı"
-                                                    value={announcementForm.title}
-                                                    onChange={(e) => setAnnouncementForm({...announcementForm, title: e.target.value})}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="label-hardware mb-2 block">Mesaj İçeriği</label>
-                                                <textarea 
-                                                    className="input-hardware w-full min-h-[150px]"
-                                                    placeholder="Kullanıcılara iletmek istediğiniz mesaj..."
-                                                    value={announcementForm.content}
-                                                    onChange={(e) => setAnnouncementForm({...announcementForm, content: e.target.value})}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="label-hardware mb-2 block">Resim (Opsiyonel)</label>
-                                                <div 
-                                                    onClick={() => announcementImageRef.current?.click()}
-                                                    className="border-2 border-dashed border-brand-border rounded-xl p-4 text-center cursor-pointer hover:bg-brand-accent/5 transition-colors"
-                                                >
-                                                    {announcementForm.imageUrl ? (
-                                                        <div className="relative">
-                                                            <img src={announcementForm.imageUrl} alt="Preview" className="max-h-32 mx-auto rounded-lg" />
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); setAnnouncementForm({...announcementForm, imageFile: null, imageUrl: ''}) }}
-                                                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2 shadow"
-                                                            >
-                                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-brand-text-muted text-sm py-4 font-bold uppercase tracking-wider">Resim seçmek için tıklayın</div>
-                                                    )}
-                                                    <input type="file" ref={announcementImageRef} onChange={handleAnnouncementImageChange} accept="image/*" className="hidden" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <label className="label-hardware mb-2 block">Hedef Kullanıcılar</label>
-                                            <div className="border border-brand-border rounded-xl max-h-[350px] overflow-y-auto custom-scrollbar bg-brand-bg p-2">
-                                                <label className="flex items-center p-3 rounded-lg hover:bg-brand-accent/10 cursor-pointer transition-colors border-b border-brand-border/50 last:border-0 group">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={announcementForm.targetUsers.includes('all')}
-                                                        onChange={() => handleTargetUserToggle('all')}
-                                                        className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg mr-3"
-                                                    />
-                                                    <span className="font-bold text-sm text-brand-text group-hover:text-brand-accent">Tüm Kullanıcılar</span>
-                                                </label>
-                                                {credentials.map(user => (
-                                                    <label key={user.username} className="flex items-center p-3 rounded-lg hover:bg-brand-accent/10 cursor-pointer transition-colors border-b border-brand-border/50 last:border-0 group">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={announcementForm.targetUsers.includes(user.username)}
-                                                            onChange={() => handleTargetUserToggle(user.username)}
-                                                            className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg mr-3"
-                                                        />
-                                                        <div>
-                                                            <div className="font-bold text-sm text-brand-text group-hover:text-brand-accent">{user.fullName || user.username}</div>
-                                                            <div className="text-[10px] text-brand-text-muted uppercase font-bold">{user.title || 'Personel'}</div>
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                            <p className="text-[10px] text-brand-text-muted font-bold uppercase tracking-widest">
-                                                Seçilen: {announcementForm.targetUsers.includes('all') ? 'Tüm Kullanıcılar' : `${announcementForm.targetUsers.length} Kişi`}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-brand-border">
-                                        <button 
-                                            onClick={() => setShowAnnouncementPreview(true)}
-                                            className="px-6 py-3 bg-brand-bg text-brand-text-muted font-bold rounded-xl hover:bg-brand-border transition-colors border border-brand-border"
-                                        >
-                                            Önizle
-                                        </button>
-                                        <button 
-                                            onClick={handleSendAnnouncement}
-                                            disabled={isSendingAnnouncement}
-                                            className="btn-hardware px-8 py-3 flex items-center"
-                                        >
-                                            {isSendingAnnouncement ? 'Gönderiliyor...' : 'Yayınla'}
-                                            <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
-
-                    {/* Sağ Taraf: Trend Analizi (3/12) */}
-                    <div className="col-span-12 lg:col-span-3 space-y-6">
-                        {/* Trend Listesi */}
-                        <div className="card-hardware p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="font-bold text-brand-text text-lg">Trend Analizi</h3>
-                                    <p className="label-hardware">En Çok Sorgulananlar</p>
-                                </div>
-                                <div className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg border border-brand-accent/20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {topQueries.map((item, index) => (
-                                    <div key={index} className="flex items-center justify-between p-3 rounded-xl hover:bg-brand-accent/5 transition-colors border border-transparent hover:border-brand-border">
-                                        <div className="flex items-center gap-3">
-                                            <MedalIcon rank={index + 1} />
-                                            <span className="font-bold text-brand-text font-mono tracking-tight">{item.installationNumber}</span>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-brand-text-muted uppercase">{item.count} SORGU</span>
-                                    </div>
-                                ))}
-                                {topQueries.length === 0 && <div className="text-brand-text-muted text-sm text-center py-4">Veri yok</div>}
-                            </div>
-                        </div>
-
-                        {/* Hatalı Bildirimler Listesi */}
-                        <div className="card-hardware p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="font-bold text-brand-text text-lg">Hatalı Numaralar</h3>
-                                    <p className="label-hardware">Personel Bildirimleri</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={handleDownloadReportedErrors}
-                                        disabled={isDownloadingErrors}
-                                        className="p-2 bg-brand-accent/10 text-brand-accent rounded-lg border border-brand-accent/20 hover:bg-brand-accent/20 transition-colors disabled:opacity-50"
-                                        title="Tümünü İndir"
-                                    >
-                                        {isDownloadingErrors ? (
-                                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                        ) : (
-                                            <DownloadIcon />
-                                        )}
-                                    </button>
-                                    <div className="p-2 bg-red-500/10 text-red-500 rounded-lg border border-red-500/20">
-                                        <ReportIcon />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {reportedErrors.map((item, index) => (
-                                    <div key={index} className="flex items-center justify-between p-3 rounded-xl hover:bg-red-500/5 transition-colors border border-transparent hover:border-red-500/20 group">
-                                        <div className="flex items-center gap-3">
-                                            <span className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center font-bold text-sm border border-red-500/20">!</span>
-                                            <span className="font-bold text-brand-text font-mono tracking-tight">{item.installationNumber}</span>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-red-400 uppercase group-hover:text-red-500">{item.count} BİLDİRİM</span>
-                                    </div>
-                                ))}
-                                {reportedErrors.length === 0 && <div className="text-brand-text-muted text-sm text-center py-4">Bildirim yok</div>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* --- Modal (Add/Edit) --- */}
             {showAddModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-bg/80 backdrop-blur-md animate-fade-in">
-                    <div className="bg-brand-card border border-brand-border w-full max-w-lg rounded-[32px] shadow-2xl shadow-black/50 overflow-hidden animate-soft-slide-up">
-                        <div className="px-8 py-6 border-b border-brand-border bg-brand-bg flex justify-between items-center">
-                            <h3 className="font-black text-xl text-brand-text tracking-tight uppercase">{editingUser ? 'Personel Düzenle' : 'Yeni Personel Ekle'}</h3>
-                            <button onClick={() => setShowAddModal(false)} className="text-brand-text-muted hover:text-brand-accent text-2xl leading-none">×</button>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-text/60 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white border border-brand-border w-full max-w-lg rounded-[40px] shadow-2xl shadow-black/20 overflow-hidden animate-soft-slide-up">
+                        <div className="px-10 py-8 border-b border-brand-border bg-gradient-to-r from-brand-bg/50 to-transparent flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent">
+                                    {editingUser ? <EditIcon size={24} /> : <Plus size={24} />}
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-xl text-brand-text tracking-tight uppercase">{editingUser ? 'Personel Düzenle' : 'Yeni Personel Ekle'}</h3>
+                                    <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Sistem erişim yetkilerini belirleyin</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowAddModal(false)} className="w-10 h-10 rounded-full hover:bg-brand-bg flex items-center justify-center text-brand-text-muted transition-colors text-2xl leading-none">×</button>
                         </div>
-                        <form onSubmit={handleSubmitUser} className="p-8 space-y-4">
+                        <form onSubmit={handleSubmitUser} className="p-10 space-y-6">
                             {/* Profil Fotoğrafı Bölümü */}
-                            <div className="flex justify-center mb-6">
+                            <div className="flex justify-center">
                                 <div className="relative group">
                                     <div 
                                         onClick={() => userPhotoRef.current?.click()}
-                                        className="w-24 h-24 rounded-full border-4 border-brand-accent/20 overflow-hidden bg-brand-bg flex items-center justify-center cursor-pointer hover:border-brand-accent transition-all relative"
+                                        className="w-28 h-28 rounded-[32px] border-4 border-brand-bg overflow-hidden bg-brand-bg flex items-center justify-center cursor-pointer hover:border-brand-accent transition-all relative shadow-inner group-hover:shadow-xl"
                                     >
                                         {formData.photoUrl ? (
                                             <img src={formData.photoUrl} alt="Profil" className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="text-brand-text-muted">
-                                                <UserIcon />
+                                            <div className="text-brand-text-muted group-hover:text-brand-accent transition-colors">
+                                                <User size={40} />
                                             </div>
                                         )}
                                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
+                                            <Camera className="w-8 h-8 text-white" />
                                         </div>
                                     </div>
                                     <input 
@@ -1289,61 +1632,80 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                         <button 
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, photoUrl: '' }))}
-                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors border-2 border-white"
                                         >
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                            <X size={12} />
                                         </button>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label-hardware mb-1 block">Sicil No</label>
-                                    <input required type="text" name="username" value={formData.username} onChange={handleInputChange} readOnly={!!editingUser} className="input-hardware w-full disabled:opacity-50" />
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="label-hardware ml-1">Sicil No</label>
+                                    <input required type="text" name="username" value={formData.username} onChange={handleInputChange} readOnly={!!editingUser} className="input-hardware w-full bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-12 font-bold disabled:opacity-50" />
                                 </div>
-                                <div>
-                                    <label className="label-hardware mb-1 block">Şifre</label>
-                                    <input required type="text" name="password" value={formData.password} onChange={handleInputChange} className="input-hardware w-full" />
+                                <div className="space-y-2">
+                                    <label className="label-hardware ml-1">Şifre</label>
+                                    <input required type="text" name="password" value={formData.password} onChange={handleInputChange} className="input-hardware w-full bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-12 font-bold" />
                                 </div>
                             </div>
-                            <div>
-                                <label className="label-hardware mb-1 block">Ad Soyad</label>
-                                <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className="input-hardware w-full" />
+                            <div className="space-y-2">
+                                <label className="label-hardware ml-1">Ad Soyad</label>
+                                <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className="input-hardware w-full bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-12 font-bold" />
                             </div>
-                            <div>
-                                <label className="label-hardware mb-1 block">Ünvan</label>
-                                <select 
-                                    name="title" 
-                                    value={formData.title} 
-                                    onChange={handleInputChange} 
-                                    className="input-hardware w-full"
-                                >
-                                    {PREDEFINED_TITLES.map((t) => (
-                                        <option key={t} value={t}>{t}</option>
-                                    ))}
-                                </select>
+                            <div className="space-y-2">
+                                <label className="label-hardware ml-1">Ünvan / Görev</label>
+                                <div className="relative">
+                                    <select 
+                                        name="title" 
+                                        value={formData.title} 
+                                        onChange={handleInputChange} 
+                                        className="input-hardware w-full appearance-none pr-12 bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-12 font-bold"
+                                    >
+                                        {PREDEFINED_TITLES.map((t) => (
+                                            <option key={t} value={t}>{t}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-brand-text-muted">
+                                        <ChevronRight size={16} className="rotate-90" />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-2 pt-2">
-                                <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                <label className="flex items-center gap-3 p-4 bg-brand-bg/30 border border-brand-border rounded-2xl cursor-pointer hover:bg-brand-accent/[0.03] hover:border-brand-accent/30 transition-all group">
                                     <input type="checkbox" name="skipDeviceLock" checked={formData.skipDeviceLock} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
-                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Cihaz Kilidini Kaldır</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Herhangi bir cihazdan giriş yapabilir.</div></div>
+                                    <div>
+                                        <div className="text-xs font-black text-brand-text group-hover:text-brand-accent transition-colors">Cihaz Kilidi</div>
+                                        <div className="text-[9px] text-brand-text-muted uppercase font-bold tracking-tight">Serbest Erişim</div>
+                                    </div>
                                 </label>
-                                <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
+                                <label className="flex items-center gap-3 p-4 bg-brand-bg/30 border border-brand-border rounded-2xl cursor-pointer hover:bg-brand-accent/[0.03] hover:border-brand-accent/30 transition-all group">
                                     <input type="checkbox" name="canViewDetails" checked={formData.canViewDetails} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
-                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Tam Yetki (İsim Gör)</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone isimlerini maskelemeden görür.</div></div>
+                                    <div>
+                                        <div className="text-xs font-black text-brand-text group-hover:text-brand-accent transition-colors">Tam Yetki</div>
+                                        <div className="text-[9px] text-brand-text-muted uppercase font-bold tracking-tight">İsimleri Gör</div>
+                                    </div>
                                 </label>
-                                <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
+                                <label className="flex items-center gap-3 p-4 bg-brand-bg/30 border border-brand-border rounded-2xl cursor-pointer hover:bg-brand-accent/[0.03] hover:border-brand-accent/30 transition-all group">
                                     <input type="checkbox" name="canViewPhone" checked={formData.canViewPhone} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
-                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">Telefon Numarası Görüntüle</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Abone telefon numaralarını görür.</div></div>
+                                    <div>
+                                        <div className="text-xs font-black text-brand-text group-hover:text-brand-accent transition-colors">Tel. Gör</div>
+                                        <div className="text-[9px] text-brand-text-muted uppercase font-bold tracking-tight">Numaraları Gör</div>
+                                    </div>
                                 </label>
-                                <label className="flex items-center gap-3 p-3 border border-brand-border rounded-xl cursor-pointer hover:bg-brand-accent/5 group">
+                                <label className="flex items-center gap-3 p-4 bg-brand-bg/30 border border-brand-border rounded-2xl cursor-pointer hover:bg-brand-accent/[0.03] hover:border-brand-accent/30 transition-all group">
                                     <input type="checkbox" name="unlimitedAccess" checked={formData.unlimitedAccess} onChange={handleInputChange} className="w-5 h-5 rounded border-brand-border bg-white text-brand-accent focus:ring-brand-accent focus:ring-offset-brand-bg" />
-                                    <div><div className="text-sm font-bold text-brand-text group-hover:text-brand-accent">7/24 Erişim</div><div className="text-[10px] text-brand-text-muted uppercase font-bold">Mesai saati kısıtlamasına takılmaz.</div></div>
+                                    <div>
+                                        <div className="text-xs font-black text-brand-text group-hover:text-brand-accent transition-colors">7/24 Erişim</div>
+                                        <div className="text-[9px] text-brand-text-muted uppercase font-bold tracking-tight">Mesai Sınırı Yok</div>
+                                    </div>
                                 </label>
                             </div>
                             <div className="pt-4">
-                                <button type="submit" className="btn-hardware w-full py-4">Kaydet</button>
+                                <button type="submit" className="btn-hardware w-full py-4 shadow-lg shadow-brand-accent/20">
+                                    {editingUser ? 'Değişiklikleri Kaydet' : 'Personeli Kaydet'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -1363,94 +1725,115 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
              {/* Detay Modalı */}
             {selectedUpdate && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-brand-text/60 backdrop-blur-sm" onClick={() => setSelectedUpdate(null)}></div>
-                    <div className="relative bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-soft-slide-up">
-                        <div className="p-6 border-b border-brand-border flex justify-between items-center bg-brand-bg/30">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-brand-accent p-2 rounded-xl text-black">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-text/60 backdrop-blur-md animate-fade-in">
+                    <div className="relative bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-soft-slide-up border border-brand-border">
+                        <div className="p-8 border-b border-brand-border flex justify-between items-center bg-gradient-to-r from-brand-bg/50 to-transparent">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-brand-accent w-12 h-12 rounded-2xl flex items-center justify-center text-black shadow-lg shadow-brand-accent/20">
                                     <ReportIcon />
                                 </div>
-                                <h3 className="text-xl font-black text-brand-text">Talep Detayları</h3>
+                                <div>
+                                    <h3 className="text-2xl font-black text-brand-text tracking-tight uppercase">Talep Detayları</h3>
+                                    <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Veri güncelleme isteğini inceleyin</p>
+                                </div>
                             </div>
-                            <button onClick={() => setSelectedUpdate(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-brand-text-muted">
-                                <SearchIcon className="w-6 h-6 rotate-45" />
-                            </button>
+                            <button onClick={() => setSelectedUpdate(null)} className="w-10 h-10 rounded-full hover:bg-brand-bg flex items-center justify-center text-brand-text-muted transition-colors text-2xl leading-none">×</button>
                         </div>
 
-                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-1">
-                                     <p className="label-hardware">BİLDİRİM YAPAN</p>
-                                     <p className="font-bold text-brand-text">{selectedUpdate.userFullName || selectedUpdate.username}</p>
+                        <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                <div className="space-y-1.5 p-5 bg-brand-bg/30 rounded-2xl border border-brand-border">
+                                     <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Bildirim Yapan</p>
+                                     <p className="text-base font-black text-brand-text">{selectedUpdate.userFullName || selectedUpdate.username}</p>
                                  </div>
-                                 <div className="space-y-1">
-                                     <p className="label-hardware">ABONE ADI SOYADI</p>
-                                     <p className="font-bold text-brand-text">{selectedUpdate.customerName || '-'}</p>
+                                 <div className="space-y-1.5 p-5 bg-brand-bg/30 rounded-2xl border border-brand-border">
+                                     <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Abone Bilgisi</p>
+                                     <p className="text-base font-black text-brand-text">{selectedUpdate.customerName || '-'}</p>
                                  </div>
-                                 <div className="space-y-1">
-                                     <p className="label-hardware">TESİSAT NO</p>
-                                     <p className="font-bold text-brand-text">{selectedUpdate.installationNumber}</p>
+                                 <div className="space-y-1.5 p-5 bg-brand-bg/30 rounded-2xl border border-brand-border">
+                                     <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Tesisat No</p>
+                                     <p className="text-base font-black text-brand-text font-mono tracking-tight">{selectedUpdate.installationNumber}</p>
                                  </div>
-                                 <div className="space-y-1">
-                                     <p className="label-hardware">ESKİ TELEFON</p>
-                                     <p className="font-bold text-brand-text-muted">{selectedUpdate.oldPhone || '-'}</p>
-                                 </div>
-                                 <div className="space-y-1">
-                                     <p className="label-hardware text-brand-accent">YENİ TELEFON</p>
-                                     <p className="font-black text-brand-accent">{selectedUpdate.newPhone}</p>
+                                 <div className="space-y-1.5 p-5 bg-brand-accent/5 rounded-2xl border border-brand-accent/20">
+                                     <p className="text-[10px] font-black text-brand-accent uppercase tracking-widest">Yeni Telefon</p>
+                                     <div className="flex items-center gap-2">
+                                         <Phone size={16} className="text-brand-accent" fill="currentColor" />
+                                         <p className="text-xl font-black text-brand-accent tracking-tighter">{selectedUpdate.newPhone}</p>
+                                     </div>
                                  </div>
                              </div>
 
-                             <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border space-y-4">
-                                 <h4 className="text-xs font-black text-brand-text uppercase tracking-widest">Konum ve Adres Karşılaştırması</h4>
+                             <div className="p-8 bg-brand-bg/50 rounded-[32px] border border-brand-border space-y-6 relative overflow-hidden">
+                                 <div className="absolute top-0 right-0 p-6 opacity-[0.05] pointer-events-none text-brand-accent">
+                                     <MapPin size={80} />
+                                 </div>
                                  
-                                 <div className="grid grid-cols-1 gap-4">
-                                     <div className="space-y-1">
-                                         <p className="text-[10px] font-bold text-brand-text-muted">KULLANICI ADRESİ (CİHAZ)</p>
-                                         <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
+                                 <h4 className="text-xs font-black text-brand-text uppercase tracking-[0.2em] flex items-center gap-2">
+                                     <div className="w-1.5 h-1.5 bg-brand-accent rounded-full animate-pulse"></div>
+                                     Konum ve Adres Analizi
+                                 </h4>
+                                 
+                                 <div className="grid grid-cols-1 gap-5">
+                                     <div className="space-y-2">
+                                         <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider ml-1">Kullanıcı Konumu (Cihaz)</p>
+                                         <div className="text-xs font-bold text-brand-text bg-white p-4 rounded-2xl border border-brand-border shadow-sm leading-relaxed">
                                              {selectedUpdate.userAddress || 'Adres bilgisi alınamadı.'}
-                                         </p>
+                                         </div>
                                      </div>
-                                     <div className="space-y-1">
-                                         <p className="text-[10px] font-bold text-brand-text-muted">TESİSAT ADRESİ (SİSTEM)</p>
-                                         <p className="text-xs font-medium text-brand-text bg-white p-2 rounded-lg border border-brand-border">
+                                     <div className="space-y-2">
+                                         <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider ml-1">Tesisat Adresi (Sistem)</p>
+                                         <div className="text-xs font-bold text-brand-text bg-white p-4 rounded-2xl border border-brand-border shadow-sm leading-relaxed">
                                              {selectedUpdate.customerAddress || 'Adres bilgisi bulunamadı.'}
-                                         </p>
+                                         </div>
                                      </div>
                                  </div>
 
-                                 <div className="pt-4 border-t border-brand-border flex items-center justify-between">
-                                     <span className="text-sm font-bold text-brand-text">Adresler Arası Mesafe:</span>
-                                     <span className={`text-lg font-black ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
-                                         {isGeocoding ? '...' : calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)} km
-                                     </span>
+                                 <div className="pt-6 border-t border-brand-border flex items-center justify-between">
+                                     <div className="flex items-center gap-3">
+                                         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-text-muted shadow-sm border border-brand-border">
+                                             <Navigation size={20} />
+                                         </div>
+                                         <span className="text-sm font-black text-brand-text uppercase tracking-tight">Analiz Mesafesi</span>
+                                     </div>
+                                     <div className="text-right">
+                                         <span className={`text-3xl font-black tracking-tighter ${parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)) > 0.5 ? 'text-red-500' : 'text-green-600'}`}>
+                                             {isGeocoding ? '...' : calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)}
+                                         </span>
+                                         <span className="text-sm font-black text-brand-text-muted ml-1 uppercase">km</span>
+                                     </div>
                                  </div>
+                                 
                                  {getEffectiveCustomerCoords().lat === 0 && !isGeocoding && (
-                                     <p className="text-[10px] text-orange-500 font-bold italic">
-                                         * Tesisat koordinatları sistemde eksik ve adres çözülemedi, mesafe hesaplanamadı.
-                                     </p>
+                                     <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-xl border border-orange-100">
+                                         <AlertCircle size={14} className="text-orange-500" />
+                                         <p className="text-[10px] text-orange-600 font-bold">
+                                             Tesisat koordinatları sistemde eksik, mesafe hesaplanamadı.
+                                         </p>
+                                     </div>
                                  )}
                                  {parseFloat(calculateDistance(selectedUpdate.userLat, selectedUpdate.userLng, getEffectiveCustomerCoords().lat, getEffectiveCustomerCoords().lng)) > 0.5 && getEffectiveCustomerCoords().lat !== 0 && !isGeocoding && (
-                                     <p className="text-[10px] text-red-500 font-bold italic">
-                                         * Kullanıcı tesisatın 500 metreden daha uzağında görünüyor.
-                                     </p>
+                                     <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-100">
+                                         <AlertTriangle size={14} className="text-red-500" />
+                                         <p className="text-[10px] text-red-600 font-bold">
+                                             Kullanıcı tesisatın 500 metreden daha uzağında görünüyor!
+                                         </p>
+                                     </div>
                                  )}
-                            </div>
+                             </div>
                         </div>
 
-                        <div className="p-6 bg-gray-50 border-t border-brand-border flex gap-3">
+                        <div className="p-8 bg-brand-bg/50 border-t border-brand-border flex gap-4">
                             <button 
                                 onClick={() => handleRejectUpdate(selectedUpdate)}
-                                className="flex-1 py-4 rounded-2xl font-black text-red-500 border-2 border-red-500 hover:bg-red-50 transition-all active:scale-95"
+                                className="flex-1 py-4 rounded-2xl font-black text-red-500 border-2 border-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-95 uppercase tracking-widest text-xs"
                             >
-                                REDDET
+                                Talebi Reddet
                             </button>
                             <button 
                                 onClick={() => handleApproveUpdate(selectedUpdate)}
-                                className="flex-1 py-4 rounded-2xl font-black text-black bg-brand-accent shadow-lg shadow-brand-accent/20 hover:bg-brand-accent/90 transition-all active:scale-95"
+                                className="flex-1 py-4 rounded-2xl font-black text-black bg-brand-accent shadow-lg shadow-brand-accent/20 hover:bg-brand-accent/90 transition-all active:scale-95 uppercase tracking-widest text-xs"
                             >
-                                ONAYLA
+                                Talebi Onayla
                             </button>
                         </div>
                     </div>
