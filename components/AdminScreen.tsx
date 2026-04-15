@@ -722,11 +722,13 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${
-                                            log.action.includes('Giriş') ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                            log.action.includes('Sorgu') ? 'bg-brand-accent/5 text-brand-accent border-brand-accent/10' :
+                                            log.action?.includes('Giriş') ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                            log.action?.includes('Sorgu') ? 'bg-brand-accent/5 text-brand-accent border-brand-accent/10' :
+                                            log.action?.includes('Arama') ? 'bg-green-50 text-green-600 border-green-100' :
+                                            log.action?.includes('SMS') ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                             'bg-slate-50 text-slate-500 border-slate-100'
                                         }`}>
-                                            {log.action}
+                                            {log.action || 'Bilinmiyor'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -1439,7 +1441,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         <div className="min-h-screen bg-[#F8FAFC] flex text-[#1E293B] font-sans selection:bg-brand-accent/30">
             {/* --- Sidebar --- */}
             <aside 
-                className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0F172A] text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+                className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0F172A] text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >

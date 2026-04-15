@@ -429,15 +429,25 @@ export const getGlobalLogs = async (limit: number = 20): Promise<any[]> => {
         return [];
     }
 
-    return data.map((log: any) => ({
-        username: log.username,
-        installationNumber: log.installation_number,
-        timestamp: log.created_at ? new Date(log.created_at).toLocaleString('tr-TR') : '-',
-        called: log.called || false,
-        smsSent: log.sms_sent || false,
-        callDuration: log.call_duration || 0,
-        callStatus: log.call_status || ''
-    }));
+    return data.map((log: any) => {
+        let action = 'Sorgulama';
+        if (log.called) action = 'Arama';
+        else if (log.sms_sent) action = 'SMS Gönderimi';
+        else if (log.error_reported) action = 'Hata Bildirimi';
+
+        return {
+            username: log.username,
+            action: action,
+            details: `Tesisat: ${log.installation_number}${log.call_duration ? ` (${log.call_duration} sn)` : ''}`,
+            status: 'success',
+            timestamp: log.created_at || new Date().toISOString(),
+            installationNumber: log.installation_number,
+            called: log.called || false,
+            smsSent: log.sms_sent || false,
+            callDuration: log.call_duration || 0,
+            callStatus: log.call_status || ''
+        };
+    });
 };
 
 export const getUserLogs = async (username: string): Promise<any[]> => {
