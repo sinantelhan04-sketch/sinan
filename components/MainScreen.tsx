@@ -643,29 +643,42 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
 
                             {selectedReportedInstallation ? (
                                 <div className="space-y-4 animate-fade-in">
-                                    <div className="p-4 bg-brand-bg rounded-2xl border border-brand-border">
-                                        <div className="flex justify-between items-start mb-2">
+                                    <div className="p-6 bg-brand-bg rounded-[28px] border border-brand-border shadow-inner">
+                                        <div className="flex justify-between items-start mb-4">
                                             <div>
-                                                <p className="text-xs font-bold text-brand-text-muted uppercase">TESİSAT NO</p>
-                                                <p className="font-black text-brand-text">{selectedReportedInstallation.installationNumber}</p>
+                                                <p className="text-[10px] font-black text-brand-accent uppercase tracking-[0.2em] mb-1">TESİSAT NUMARASI</p>
+                                                <p className="text-2xl font-black text-brand-text tracking-tight">{selectedReportedInstallation.installationNumber}</p>
                                             </div>
                                             <button 
                                                 onClick={() => setSelectedReportedInstallation(null)}
-                                                className="text-brand-text-muted hover:text-red-500"
+                                                className="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-text-muted hover:text-red-500 transition-colors shadow-sm"
                                             >
                                                 <CloseIcon />
                                             </button>
                                         </div>
-                                        <p className="text-xs font-bold text-brand-text-muted uppercase">ABONE</p>
-                                        <p className="font-bold text-brand-text">{canViewDetails ? selectedReportedInstallation.name : maskName(selectedReportedInstallation.name)}</p>
-                                        <p className="text-xs font-bold text-brand-text-muted uppercase mt-2">ESKİ TELEFON</p>
-                                        <p className="font-bold text-brand-text">{canViewPhone ? selectedReportedInstallation.phone : maskPhone(selectedReportedInstallation.phone)}</p>
+                                        
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-[0.2em] mb-1">ABONE ADI SOYADI</p>
+                                                <p className="text-lg font-bold text-brand-text">{canViewDetails ? selectedReportedInstallation.name : maskName(selectedReportedInstallation.name)}</p>
+                                            </div>
+                                            
+                                            <div>
+                                                <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-[0.2em] mb-1">SİSTEMDEKİ TELEFON</p>
+                                                <p className="text-lg font-bold text-brand-text">{canViewPhone ? selectedReportedInstallation.phone : maskPhone(selectedReportedInstallation.phone)}</p>
+                                            </div>
+
+                                            <div className="pt-2">
+                                                <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-[0.2em] mb-1">ADRES BİLGİSİ</p>
+                                                <p className="text-sm font-medium text-brand-text leading-relaxed">{selectedReportedInstallation.address}</p>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="label-hardware">GÜNCEL TELEFON NUMARASI</label>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-brand-text-muted uppercase tracking-[0.2em] ml-1">YENİ GÜNCEL TELEFON NUMARASI</label>
                                         <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-accent">
+                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-brand-accent">
                                                 <PhoneIcon />
                                             </div>
                                             <input 
@@ -673,7 +686,7 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                                 placeholder="05xx xxx xx xx"
                                                 value={newPhoneNumber}
                                                 onChange={(e) => setNewPhoneNumber(e.target.value)}
-                                                className="input-hardware w-full pl-11"
+                                                className="input-hardware w-full pl-12 py-5 text-lg"
                                             />
                                         </div>
                                     </div>
@@ -711,12 +724,15 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                                         className="w-full flex items-center gap-2 px-1 group"
                                                     >
                                                         <div className={`h-px flex-grow ${isExpanded ? 'bg-brand-accent' : 'bg-brand-border'}`}></div>
-                                                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all ${isExpanded ? 'bg-brand-accent text-black border-brand-accent' : 'bg-brand-bg text-brand-text-muted border-brand-border'}`}>
-                                                            <span className="text-[10px] font-black uppercase tracking-widest">
-                                                                {neighborhood} ({groupedInstallations[neighborhood].length})
+                                                        <div className={`flex items-center gap-3 px-4 py-2 rounded-full border transition-all ${isExpanded ? 'bg-brand-accent text-black border-brand-accent shadow-lg shadow-brand-accent/20' : 'bg-brand-bg text-brand-text-muted border-brand-border'}`}>
+                                                            <span className="text-[11px] font-black uppercase tracking-[0.15em]">
+                                                                {neighborhood}
+                                                            </span>
+                                                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isExpanded ? 'bg-black/20' : 'bg-brand-border/50'}`}>
+                                                                {groupedInstallations[neighborhood].length}
                                                             </span>
                                                             <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                 </svg>
                                                             </div>
@@ -730,23 +746,31 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                                                 <button 
                                                                     key={idx}
                                                                     onClick={() => setSelectedReportedInstallation(item)}
-                                                                    className="w-full p-4 bg-brand-bg rounded-2xl border border-brand-border hover:border-brand-accent transition-all flex flex-col gap-2 group"
+                                                                    className="w-full p-5 bg-white rounded-[24px] border border-brand-border hover:border-brand-accent hover:shadow-xl hover:shadow-brand-accent/5 transition-all flex flex-col gap-3 group text-left relative overflow-hidden"
                                                                 >
+                                                                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-accent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                                                     <div className="w-full flex items-center justify-between">
-                                                                        <div className="text-left">
-                                                                            <p className="font-bold text-brand-text text-sm">Tesisat No: {item.installationNumber}</p>
-                                                                            <p className="text-[10px] text-brand-text-muted font-bold uppercase">
-                                                                                {canViewDetails ? item.name : maskName(item.name)}
-                                                                            </p>
+                                                                        <div>
+                                                                            <p className="text-[10px] font-black text-brand-accent uppercase tracking-widest mb-1">Tesisat No</p>
+                                                                            <p className="font-black text-brand-text text-xl tracking-tight">{item.installationNumber}</p>
                                                                         </div>
-                                                                        <div className="text-brand-accent group-hover:translate-x-1 transition-transform">
+                                                                        <div className="w-10 h-10 rounded-xl bg-brand-bg flex items-center justify-center text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-all">
                                                                             <ExpandIcon />
                                                                         </div>
                                                                     </div>
-                                                                    <div className="w-full pt-2 border-t border-brand-border/50 text-left">
-                                                                        <p className="text-[10px] text-brand-text-muted font-medium leading-tight">
-                                                                            <span className="font-bold text-brand-accent/70 uppercase">ADRES:</span> {item.address}
-                                                                        </p>
+                                                                    <div className="space-y-3">
+                                                                        <div>
+                                                                            <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest mb-0.5">Abone</p>
+                                                                            <p className="text-sm font-bold text-brand-text">
+                                                                                {canViewDetails ? item.name : maskName(item.name)}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="pt-3 border-t border-brand-border/50">
+                                                                            <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest mb-1">Adres</p>
+                                                                            <p className="text-xs font-medium text-brand-text leading-relaxed">
+                                                                                {item.address}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
                                                                 </button>
                                                             ))}
