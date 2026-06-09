@@ -75,7 +75,7 @@ const SidebarItem = ({ icon, label, active, onClick, badge }: { icon: React.Reac
         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group relative ${
             active 
             ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20' 
-            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            : 'text-slate-400 hover:bg-brand-accent/5 hover:text-brand-accent'
         }`}
     >
         <div className="flex items-center gap-3 relative z-10">
@@ -114,7 +114,7 @@ const StatCard = ({ title, value, icon, trend, color = "brand-accent" }: { title
                     </p>
                 )}
             </div>
-            <div className={`p-3 bg-brand-bg text-${color} rounded-2xl border border-brand-border shadow-sm group-hover:bg-white transition-colors`}>
+            <div className={`p-3 bg-brand-bg text-${color} rounded-2xl border border-brand-border shadow-sm group-hover:bg-brand-card transition-colors`}>
                 {icon}
             </div>
         </div>
@@ -169,7 +169,7 @@ const DashboardView = ({
                 {/* Sol Taraf: Grafik ve Aktivite (9/12) */}
                 <div className="col-span-12 lg:col-span-9 space-y-8">
                     {/* Activity Chart */}
-                    <div className="card-hardware p-8 bg-white">
+                    <div className="card-hardware p-8 bg-brand-card">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-xl font-black text-brand-text tracking-tight uppercase">Sistem Aktivite Grafiği</h3>
@@ -278,7 +278,7 @@ const DashboardView = ({
 
                 {/* Sağ Taraf: Trendler ve Hatalar (3/12) */}
                 <div className="col-span-12 lg:col-span-3 space-y-6">
-                    <div className="card-hardware p-6 bg-white">
+                    <div className="card-hardware p-6 bg-brand-card">
                         <h3 className="font-black text-brand-text text-xs uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                             <TrendingUp size={16} className="text-brand-accent" />
                             Trend Sorgular
@@ -299,7 +299,7 @@ const DashboardView = ({
                         </div>
                     </div>
 
-                    <div className="card-hardware p-6 bg-white">
+                    <div className="card-hardware p-6 bg-brand-card">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-black text-brand-text text-xs uppercase tracking-[0.2em] flex items-center gap-2">
                                 <AlertCircle size={16} className="text-red-500" />
@@ -584,7 +584,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </button>
             </div>
 
-            <div className="card-hardware bg-white overflow-hidden">
+            <div className="card-hardware bg-brand-card overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
@@ -671,12 +671,12 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
     const renderLogsTab = () => (
         <div className="animate-fade-in space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-2xl border border-brand-border shadow-sm">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-brand-card p-4 rounded-2xl border border-brand-border shadow-sm">
                 <div className="relative flex-grow max-w-md w-full">
                     <select 
                         value={logUserFilter}
                         onChange={(e) => setLogUserFilter(e.target.value)}
-                        className="input-hardware w-full appearance-none pr-10 bg-brand-bg/50 border-transparent focus:bg-white focus:border-brand-accent h-11 text-sm font-bold"
+                        className="input-hardware w-full appearance-none pr-10 bg-brand-bg border-transparent focus:bg-white focus:border-brand-accent h-11 text-sm font-bold"
                     >
                         <option value="">Tüm Personeller</option>
                         {credentials.map(c => (
@@ -1447,8 +1447,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             >
                 <div className="flex flex-col h-full">
                     {/* Sidebar Header */}
-                    <div className="p-6 flex items-center gap-3 border-b border-white/10">
-                        <div className="w-10 h-10 bg-brand-accent rounded-xl flex items-center justify-center text-black shadow-lg shadow-brand-accent/20">
+                    <div className="p-6 flex items-center gap-3 border-b border-brand-border">
+                        <div className="w-10 h-10 bg-brand-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-accent/20">
                             <Flame size={24} />
                         </div>
                         <div>
@@ -1499,10 +1499,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     </nav>
 
                     {/* Sidebar Footer */}
-                    <div className="p-4 border-t border-white/10">
+                    <div className="p-4 border-t border-brand-border">
                         <button 
                             onClick={onLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors font-bold text-sm"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors font-bold text-sm"
                         >
                             <LogOut size={20} />
                             Güvenli Çıkış
@@ -1590,8 +1590,8 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
             {/* --- Modals --- */}
             {showAddModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-text/60 backdrop-blur-md animate-fade-in">
-                    <div className="bg-white border border-brand-border w-full max-w-lg rounded-[40px] shadow-2xl shadow-black/20 overflow-hidden animate-soft-slide-up">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white border border-brand-border w-full max-w-lg rounded-[40px] shadow-2xl shadow-slate-200/50 overflow-hidden animate-soft-slide-up">
                         <div className="px-10 py-8 border-b border-brand-border bg-gradient-to-r from-brand-bg/50 to-transparent flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent">

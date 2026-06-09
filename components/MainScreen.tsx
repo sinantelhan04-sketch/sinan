@@ -401,9 +401,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     return (
         <div className="min-h-screen bg-brand-bg pb-24">
             {/* Header */}
-            <header className="bg-brand-card px-6 py-4 flex justify-between items-center border-b border-brand-border sticky top-0 z-50">
+            <header className="bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-brand-border sticky top-0 z-50">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-accent rounded-full flex items-center justify-center shadow-lg shadow-brand-accent/20 overflow-hidden border-2 border-white/10">
+                    <div className="w-10 h-10 bg-brand-accent rounded-full flex items-center justify-center shadow-lg shadow-brand-accent/20 overflow-hidden border-2 border-brand-accent/10">
                         {photoUrl ? (
                             <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
@@ -435,8 +435,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 {activeTab === 'sorgu' && (
                     <>
                         {/* Search Bar */}
-                        <div className="bg-brand-card p-3 rounded-[24px] border border-brand-border shadow-2xl shadow-black/20 flex items-center gap-2">
-                            <div className="flex-grow flex items-center px-4 gap-3 bg-brand-bg/50 rounded-xl">
+                        <div className="bg-brand-card p-3 rounded-[24px] border border-brand-border shadow-xl shadow-slate-200/50 flex items-center gap-2">
+                            <div className="flex-grow flex items-center px-4 gap-3 bg-brand-bg rounded-xl">
                                 <SearchIcon />
                                 <input 
                                     type="tel"
@@ -476,19 +476,19 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                             <div className="space-y-6 animate-soft-slide-up">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Abone Bilgileri Card */}
-                                    <div className="bg-brand-card p-6 rounded-[24px] border border-brand-border shadow-2xl shadow-black/20 space-y-6 flex flex-col justify-between animate-scale-up">
+                                    <div className="bg-brand-card p-6 rounded-[24px] border border-brand-border shadow-xl shadow-slate-200/50 space-y-6 flex flex-col justify-between animate-scale-up">
                                         <div>
                                             <span className="label-hardware">ABONE BİLGİLERİ</span>
                                             <h2 className="text-2xl font-black text-brand-text tracking-tight uppercase">
                                                 {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
                                             </h2>
                                             <div className="mt-4 grid grid-cols-1 gap-2">
-                                                <div className="bg-brand-bg/50 px-4 py-3 rounded-xl border border-brand-border/50">
+                                                <div className="bg-brand-bg px-4 py-3 rounded-xl border border-brand-border/50">
                                                     <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Tesisat No</p>
                                                     <p className="text-lg font-black text-brand-accent">{searchTerm}</p>
                                                 </div>
                                                 {canViewPhone && (
-                                                    <div className="bg-brand-bg/50 px-4 py-3 rounded-xl border border-brand-border/50">
+                                                    <div className="bg-brand-bg px-4 py-3 rounded-xl border border-brand-border/50">
                                                         <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Telefon</p>
                                                         <p className="text-lg font-black text-brand-text">{foundCustomer.phone}</p>
                                                     </div>
@@ -520,10 +520,10 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                     </div>
 
                                     {/* Tesisat Adresi Card */}
-                                    <div className="bg-brand-card rounded-[24px] border border-brand-border shadow-2xl shadow-black/20 overflow-hidden flex relative group">
+                                    <div className="bg-brand-card rounded-[24px] border border-brand-border shadow-xl shadow-slate-200/50 overflow-hidden flex relative group">
                                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-accent"></div>
                                         <div className="p-6 flex gap-4 items-start">
-                                            <div className="bg-brand-accent/10 p-3 rounded-2xl text-brand-accent border border-brand-accent/20">
+                                            <div className="bg-brand-accent/5 p-3 rounded-2xl text-brand-accent border border-brand-accent/10">
                                                 <MapPinIcon />
                                             </div>
                                             <div className="space-y-2">
@@ -537,18 +537,18 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                 </div>
 
                                 {/* Map Card */}
-                                <div className="bg-[#1a1a1a] rounded-[24px] shadow-sm overflow-hidden relative aspect-video group">
-                                    <div className="absolute inset-0 opacity-40">
+                                <div className="bg-slate-100 rounded-[24px] shadow-sm overflow-hidden relative aspect-video group border border-brand-border">
+                                    <div className="absolute inset-0 opacity-60">
                                         <img 
                                             src="https://picsum.photos/seed/map/800/600" 
                                             alt="Map Background" 
-                                            className="w-full h-full object-cover grayscale"
+                                            className="w-full h-full object-cover grayscale brightness-110"
                                             referrerPolicy="no-referrer"
                                         />
                                     </div>
-                                    <div className="absolute bottom-4 left-4 right-4 bg-brand-card/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center border border-white/5">
+                                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center border border-brand-border/50 shadow-lg">
                                         <div className="flex items-center gap-3">
-                                            <div className="bg-brand-accent p-2 rounded-xl text-white shadow-lg shadow-brand-accent/20">
+                                            <div className="bg-brand-accent p-2 rounded-xl text-white shadow-md shadow-brand-accent/20">
                                                 <GlobeIcon />
                                             </div>
                                             <div>

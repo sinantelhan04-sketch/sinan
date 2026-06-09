@@ -12,8 +12,8 @@ interface AnnouncementModalProps {
 
 const AnnouncementModal: React.FC<AnnouncementModalProps> = ({ title, content, imageUrl, onDismiss, isPreview }) => {
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-text/60 backdrop-blur-md animate-fade-in">
-            <div className="bg-white border border-brand-border w-full max-w-lg rounded-[40px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col max-h-[90vh] animate-soft-slide-up relative">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white border border-brand-border w-full max-w-lg rounded-[40px] shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col max-h-[90vh] animate-soft-slide-up relative">
                 
                 {/* Header Pattern */}
                 <div className="h-32 bg-brand-accent relative overflow-hidden flex-shrink-0">
