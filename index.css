@@ -4,13 +4,13 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --color-brand-bg: #f8f9fc;
-  --color-brand-card: #ffffff;
-  --color-brand-accent: #0056b3;
-  --color-brand-accent-hover: #004494;
-  --color-brand-border: #e2e8f0;
-  --color-brand-text: #1a202c;
-  --color-brand-text-muted: #718096;
+  --color-brand-bg: #020617;
+  --color-brand-card: #0f172a;
+  --color-brand-accent: #8b5cf6;
+  --color-brand-accent-hover: #7c3aed;
+  --color-brand-border: #1e293b;
+  --color-brand-text: #f8fafc;
+  --color-brand-text-muted: #94a3b8;
 }
 
 @layer base {
@@ -29,7 +29,7 @@
   }
 
   .input-hardware {
-    @apply bg-white border border-brand-border text-brand-text rounded-xl px-4 py-3 focus:outline-none focus:border-brand-accent transition-colors placeholder:text-brand-text-muted/50;
+    @apply bg-brand-bg border border-brand-border text-brand-text rounded-xl px-4 py-3 focus:outline-none focus:border-brand-accent transition-colors placeholder:text-brand-text-muted/50;
   }
 
   .label-hardware {
@@ -71,6 +71,6 @@
 }
 
 .loader-spinner {
-  border-color: #27272a !important;
-  border-top-color: #f59e0b !important;
+  border-color: #1e293b !important;
+  border-top-color: #8b5cf6 !important;
 }

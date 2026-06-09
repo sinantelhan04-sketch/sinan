@@ -401,9 +401,9 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
     return (
         <div className="min-h-screen bg-brand-bg pb-24">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
+            <header className="bg-brand-card px-6 py-4 flex justify-between items-center border-b border-brand-border sticky top-0 z-50">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-accent rounded-full flex items-center justify-center shadow-sm overflow-hidden border-2 border-brand-accent/10">
+                    <div className="w-10 h-10 bg-brand-accent rounded-full flex items-center justify-center shadow-lg shadow-brand-accent/20 overflow-hidden border-2 border-white/10">
                         {photoUrl ? (
                             <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
@@ -415,13 +415,13 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={() => setActiveTab('profil')}
-                        className="p-2 text-brand-text hover:bg-brand-bg rounded-full transition-colors"
+                        className="p-2 text-brand-text-muted hover:text-brand-accent hover:bg-brand-accent/10 rounded-full transition-colors"
                     >
                         <UserIcon />
                     </button>
                     <button 
                         onClick={onLogout}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-full transition-colors"
                         title="Çıkış Yap"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -435,8 +435,8 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 {activeTab === 'sorgu' && (
                     <>
                         {/* Search Bar */}
-                        <div className="bg-white p-3 rounded-[20px] shadow-sm flex items-center gap-2">
-                            <div className="flex-grow flex items-center px-4 gap-3">
+                        <div className="bg-brand-card p-3 rounded-[24px] border border-brand-border shadow-2xl shadow-black/20 flex items-center gap-2">
+                            <div className="flex-grow flex items-center px-4 gap-3 bg-brand-bg/50 rounded-xl">
                                 <SearchIcon />
                                 <input 
                                     type="tel"
@@ -444,24 +444,24 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                     value={searchTerm}
                                     onChange={handleInputChange}
                                     placeholder="Sorgu numara"
-                                    className="w-full bg-transparent border-none focus:ring-0 text-brand-text font-medium placeholder:text-brand-text-muted/60"
+                                    className="w-full bg-transparent border-none focus:ring-0 text-brand-text font-bold py-3 placeholder:text-brand-text-muted/40"
                                 />
                             </div>
                             <div className="flex gap-2">
                                 {foundCustomer && (
                                     <button 
                                         onClick={handleClear}
-                                        className="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                        className="bg-brand-bg text-brand-text-muted px-4 py-3 rounded-xl font-bold active:scale-95 transition-all"
                                     >
-                                        Temizle
+                                        İptal
                                     </button>
                                 )}
                                 <button 
                                     onClick={() => performSearch(searchTerm)}
                                     disabled={loading || !searchTerm}
-                                    className="bg-brand-accent text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-brand-accent/20 active:scale-95 transition-all disabled:opacity-50"
+                                    className="bg-brand-accent text-white px-6 py-3 rounded-xl font-black shadow-lg shadow-brand-accent/20 active:scale-95 transition-all disabled:opacity-50 uppercase tracking-widest text-[10px]"
                                 >
-                                    {loading ? '...' : 'Sorgula'}
+                                    {loading ? '...' : 'SORGULA'}
                                 </button>
                             </div>
                         </div>
@@ -476,57 +476,59 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                             <div className="space-y-6 animate-soft-slide-up">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Abone Bilgileri Card */}
-                                    <div className="bg-white p-6 rounded-[24px] shadow-sm space-y-6 flex flex-col justify-between">
+                                    <div className="bg-brand-card p-6 rounded-[24px] border border-brand-border shadow-2xl shadow-black/20 space-y-6 flex flex-col justify-between animate-scale-up">
                                         <div>
                                             <span className="label-hardware">ABONE BİLGİLERİ</span>
-                                            <h2 className="text-2xl font-black text-brand-text tracking-tight">
+                                            <h2 className="text-2xl font-black text-brand-text tracking-tight uppercase">
                                                 {canViewDetails ? foundCustomer.name : maskName(foundCustomer.name)}
                                             </h2>
-                                            <div className="mt-2 flex flex-col gap-1">
-                                                <p className="text-sm text-brand-text-muted font-medium">Abone No: {searchTerm}</p>
+                                            <div className="mt-4 grid grid-cols-1 gap-2">
+                                                <div className="bg-brand-bg/50 px-4 py-3 rounded-xl border border-brand-border/50">
+                                                    <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Tesisat No</p>
+                                                    <p className="text-lg font-black text-brand-accent">{searchTerm}</p>
+                                                </div>
                                                 {canViewPhone && (
-                                                    <div className="flex items-center gap-2 text-sm font-bold">
-                                                        <span className="text-brand-text-muted">Telefon:</span>
-                                                        <span className="text-brand-accent">
-                                                            {foundCustomer.phone}
-                                                        </span>
+                                                    <div className="bg-brand-bg/50 px-4 py-3 rounded-xl border border-brand-border/50">
+                                                        <p className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest">Telefon</p>
+                                                        <p className="text-lg font-black text-brand-text">{foundCustomer.phone}</p>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-3">
+                                        <div className="flex gap-2.5 pt-4">
                                             <button 
                                                 onClick={(e) => handleCallClick(e, foundCustomer.phone)}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-[#0a7a3d] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                                className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold active:scale-95 transition-all shadow-lg shadow-emerald-600/10"
                                             >
                                                 <PhoneIconSolid /> Ara
                                             </button>
                                             <button 
                                                 onClick={(e) => handleSmsClick(e, foundCustomer.phone, foundCustomer.name)}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-[#f59e0b] text-white py-3 rounded-xl font-bold active:scale-95 transition-all"
+                                                className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-xl font-bold active:scale-95 transition-all shadow-lg shadow-amber-500/10"
                                             >
                                                 <MessageIcon /> Mesaj
                                             </button>
                                             <button 
                                                 onClick={handleReportClick}
                                                 disabled={reportSent}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-[#c02626] text-white py-3 rounded-xl font-bold active:scale-95 transition-all disabled:opacity-50"
+                                                className="flex-1 flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white py-4 rounded-xl font-bold active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-rose-600/10"
                                             >
-                                                <ReportIcon /> {reportSent ? 'Bildirildi' : 'Hatalı'}
+                                                <ReportIcon /> {reportSent ? 'OK' : '!'}
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Tesisat Adresi Card */}
-                                    <div className="bg-white rounded-[24px] shadow-sm overflow-hidden flex border-l-[6px] border-brand-accent">
+                                    <div className="bg-brand-card rounded-[24px] border border-brand-border shadow-2xl shadow-black/20 overflow-hidden flex relative group">
+                                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-accent"></div>
                                         <div className="p-6 flex gap-4 items-start">
-                                            <div className="bg-blue-50 p-3 rounded-2xl text-brand-accent">
+                                            <div className="bg-brand-accent/10 p-3 rounded-2xl text-brand-accent border border-brand-accent/20">
                                                 <MapPinIcon />
                                             </div>
                                             <div className="space-y-2">
                                                 <span className="label-hardware">TESİSAT ADRESİ</span>
-                                                <p className="text-lg font-bold text-brand-text leading-tight">
+                                                <p className="text-lg font-black text-brand-text leading-tight tracking-tight">
                                                     {foundCustomer.address}
                                                 </p>
                                             </div>
@@ -544,18 +546,18 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                             referrerPolicy="no-referrer"
                                         />
                                     </div>
-                                    <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center border border-white/20">
+                                    <div className="absolute bottom-4 left-4 right-4 bg-brand-card/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center border border-white/5">
                                         <div className="flex items-center gap-3">
-                                            <div className="bg-brand-accent p-2 rounded-xl text-white">
+                                            <div className="bg-brand-accent p-2 rounded-xl text-white shadow-lg shadow-brand-accent/20">
                                                 <GlobeIcon />
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-brand-text">Lokasyon Verisi</p>
                                                 <div className="flex items-center gap-1.5">
-                                                    <div className="text-red-500 scale-75">
+                                                    <div className="text-brand-accent scale-75">
                                                         <ReportIcon />
                                                     </div>
-                                                    <p className="text-[10px] text-brand-text-muted font-mono">
+                                                    <p className="text-[10px] text-brand-text-muted font-mono tracking-tighter">
                                                         {foundCustomer.latitude}, {foundCustomer.longitude}
                                                     </p>
                                                 </div>
@@ -879,22 +881,22 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                 )}
                 {/* Profile Edit Modal */}
                 {showProfileEditModal && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
-                        <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-scale-up">
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in">
+                        <div className="bg-brand-card w-full max-w-sm rounded-[32px] p-8 border border-brand-border shadow-2xl animate-scale-up">
                             <div className="text-center mb-6">
-                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full border border-brand-accent/20 flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-inner">
                                     {editPhotoUrl ? (
                                         <img src={editPhotoUrl} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     ) : (
                                         <UserIcon className="w-8 h-8 text-brand-accent" />
                                     )}
                                 </div>
-                                <h3 className="text-xl font-black text-brand-text">Profili Düzenle</h3>
-                                <p className="text-sm text-brand-text-muted mt-1">Bilgilerinizi güncelleyin.</p>
+                                <h3 className="text-xl font-black text-brand-text uppercase tracking-tight">Profili Düzenle</h3>
+                                <p className="text-sm text-brand-text-muted mt-1 font-medium">Hesap bilgilerinizi güncelleyin.</p>
                             </div>
 
-                            <form onSubmit={handleProfileUpdate} className="space-y-4">
-                                <div className="flex flex-col items-center mb-4">
+                            <form onSubmit={handleProfileUpdate} className="space-y-5">
+                                <div className="flex flex-col items-center mb-2">
                                     <input 
                                         type="file" 
                                         id="profile-photo-input" 
@@ -904,55 +906,57 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                     />
                                     <label 
                                         htmlFor="profile-photo-input"
-                                        className="cursor-pointer bg-brand-accent/10 text-brand-accent px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-brand-accent/20 transition-all"
+                                        className="cursor-pointer bg-brand-accent/10 border border-brand-accent/20 text-brand-accent px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] hover:bg-brand-accent/20 transition-all active:scale-95"
                                     >
-                                        Fotoğraf Seç
+                                        FOTOĞRAF SEÇ
                                     </label>
                                     {editPhotoUrl && (
                                         <button 
                                             type="button"
                                             onClick={() => setEditPhotoUrl('')}
-                                            className="mt-2 text-[10px] text-red-500 font-bold uppercase"
+                                            className="mt-3 text-[10px] text-rose-500 font-black uppercase tracking-widest"
                                         >
-                                            Fotoğrafı Kaldır
+                                            Kaldır
                                         </button>
                                     )}
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Ünvan</label>
-                                    <input 
-                                        type="text"
-                                        value={editTitle}
-                                        onChange={(e) => setEditTitle(e.target.value)}
-                                        placeholder="Örn: Saha Operasyon Uzmanı"
-                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
-                                    <input 
-                                        type="password"
-                                        value={editPassword}
-                                        onChange={(e) => setEditPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all"
-                                    />
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="label-hardware ml-1">Kullanıcı Ünvanı</label>
+                                        <input 
+                                            type="text"
+                                            value={editTitle}
+                                            onChange={(e) => setEditTitle(e.target.value)}
+                                            placeholder="Örn: Operasyon Şefi"
+                                            className="w-full bg-brand-bg border border-brand-border rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label-hardware ml-1">Yeni Giriş Şifresi</label>
+                                        <input 
+                                            type="password"
+                                            value={editPassword}
+                                            onChange={(e) => setEditPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            className="w-full bg-brand-bg border border-brand-border rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all outline-none"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
                                     <button 
                                         type="button"
                                         onClick={() => setShowProfileEditModal(false)}
-                                        className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold active:scale-95 transition-all"
+                                        className="flex-1 bg-brand-bg border border-brand-border text-brand-text-muted py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all"
                                     >
                                         İptal
                                     </button>
                                     <button 
                                         type="submit"
                                         disabled={isUpdatingProfile || profileUpdateSuccess}
-                                        className={`flex-1 ${profileUpdateSuccess ? 'bg-green-500' : 'bg-brand-accent'} text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all disabled:opacity-50`}
+                                        className={`flex-1 ${profileUpdateSuccess ? 'bg-emerald-500' : 'bg-brand-accent'} text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-accent/20 active:scale-95 transition-all disabled:opacity-50`}
                                     >
-                                        {isUpdatingProfile ? '...' : profileUpdateSuccess ? 'Başarılı!' : 'Güncelle'}
+                                        {isUpdatingProfile ? '...' : profileUpdateSuccess ? 'Başarılı' : 'GÜNCELLE'}
                                     </button>
                                 </div>
                             </form>
@@ -962,34 +966,34 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
 
                 {/* Call Log Modal */}
                 {showCallLogModal && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
-                        <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-scale-up">
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in">
+                        <div className="bg-brand-card w-full max-w-sm rounded-[32px] p-8 border border-brand-border shadow-2xl animate-scale-up">
                             <div className="text-center mb-6">
-                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-16 h-16 bg-brand-accent/10 rounded-full border border-brand-accent/20 flex items-center justify-center mx-auto mb-4 text-brand-accent">
                                     <PhoneIconSolid />
                                 </div>
-                                <h3 className="text-xl font-black text-brand-text">Görüşme Kaydı</h3>
-                                <p className="text-sm text-brand-text-muted mt-1">Lütfen görüşme detaylarını giriniz.</p>
+                                <h3 className="text-xl font-black text-brand-text uppercase tracking-tight">Görüşme Kaydı</h3>
+                                <p className="text-sm text-brand-text-muted mt-1 font-medium">Detayları sisteme işleyin.</p>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div>
-                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Görüşme Süresi (Dakika)</label>
+                                    <label className="label-hardware ml-1">Görüşme Süresi (Dakika)</label>
                                     <input 
                                         type="number"
                                         value={callDuration}
                                         onChange={(e) => setCallDuration(e.target.value)}
                                         placeholder="Örn: 5"
-                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all"
+                                        className="w-full bg-brand-bg border border-brand-border rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all outline-none"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-brand-text-muted uppercase tracking-wider mb-2 ml-1">Görüşme Durumu</label>
+                                    <label className="label-hardware ml-1">Görüşme Sonucu</label>
                                     <select 
                                         value={callStatus}
                                         onChange={(e) => setCallStatus(e.target.value)}
-                                        className="w-full bg-brand-bg border-none rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all appearance-none"
+                                        className="w-full bg-brand-bg border border-brand-border rounded-2xl px-5 py-4 text-brand-text font-bold focus:ring-2 focus:ring-brand-accent transition-all outline-none appearance-none"
                                     >
                                         <option value="Ulaşıldı">Ulaşıldı</option>
                                         <option value="Ulaşılamadı">Ulaşılamadı</option>
@@ -1002,15 +1006,15 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
                                 <div className="flex gap-3 pt-4">
                                     <button 
                                         onClick={() => setShowCallLogModal(false)}
-                                        className="flex-1 py-4 rounded-2xl font-bold text-brand-text-muted hover:bg-brand-bg transition-all"
+                                        className="flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] text-brand-text-muted hover:bg-brand-bg transition-all border border-transparent hover:border-brand-border"
                                     >
                                         İptal
                                     </button>
                                     <button 
                                         onClick={handleCallLogSubmit}
-                                        className="flex-[2] bg-brand-accent text-white py-4 rounded-2xl font-bold shadow-lg shadow-brand-accent/20 active:scale-95 transition-all"
+                                        className="flex-[2] bg-brand-accent text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-accent/20 active:scale-95 transition-all"
                                     >
-                                        Kaydet
+                                        KAYDET & KAPAT
                                     </button>
                                 </div>
                             </div>
@@ -1020,42 +1024,34 @@ const MainScreen: React.FC<MainScreenProps> = ({ onLogout, username, fullName, t
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border px-6 py-3 flex justify-between items-center z-50">
+            <nav className="fixed bottom-0 left-0 right-0 bg-brand-card/80 backdrop-blur-xl border-t border-brand-border px-6 py-4 flex justify-between items-center z-50">
                 <button 
                     onClick={() => setActiveTab('sorgu')}
-                    className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'sorgu' ? 'text-brand-accent' : 'text-brand-text-muted'}`}
+                    className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'sorgu' ? 'text-brand-accent scale-110' : 'text-brand-text-muted opacity-60 hover:opacity-100'}`}
                 >
-                    <div className={`p-2 rounded-xl ${activeTab === 'sorgu' ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20' : ''}`}>
-                        <SearchIcon />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">SORGU</span>
+                    <SearchIcon />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em]">Sorgu</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('harita')}
-                    className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'harita' ? 'text-brand-accent' : 'text-brand-text-muted'}`}
+                    className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'harita' ? 'text-brand-accent scale-110' : 'text-brand-text-muted opacity-60 hover:opacity-100'}`}
                 >
-                    <div className={`p-2 rounded-xl ${activeTab === 'harita' ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20' : ''}`}>
-                        <GlobeIcon />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">HARİTA</span>
+                    <GlobeIcon />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em]">Harita</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('islemler')}
-                    className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'islemler' ? 'text-brand-accent' : 'text-brand-text-muted'}`}
+                    className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'islemler' ? 'text-brand-accent scale-110' : 'text-brand-text-muted opacity-60 hover:opacity-100'}`}
                 >
-                    <div className={`p-2 rounded-xl ${activeTab === 'islemler' ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20' : ''}`}>
-                        <ReportIcon />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">İŞLEMLER</span>
+                    <ReportIcon />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em]">İşlemler</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('profil')}
-                    className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'profil' ? 'text-brand-accent' : 'text-brand-text-muted'}`}
+                    className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'profil' ? 'text-brand-accent scale-110' : 'text-brand-text-muted opacity-60 hover:opacity-100'}`}
                 >
-                    <div className={`p-2 rounded-xl ${activeTab === 'profil' ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/20' : ''}`}>
-                        <UserIcon />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">PROFİL</span>
+                    <UserIcon />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em]">Profil</span>
                 </button>
             </nav>
 

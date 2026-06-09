@@ -563,7 +563,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     // --- Tab Rendering Functions ---
     const renderUsersTab = () => (
         <div className="animate-fade-in space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-2xl border border-brand-border shadow-sm">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-brand-card p-4 rounded-2xl border border-brand-border shadow-sm">
                 <div className="relative flex-grow max-w-md w-full">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-text-muted">
                         <SearchIcon className="w-4 h-4" />
@@ -573,7 +573,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                         placeholder="İsim, sicil no veya ünvan ara..."
                         value={userSearchTerm}
                         onChange={(e) => setUserSearchTerm(e.target.value)}
-                        className="input-hardware w-full pl-11 bg-brand-bg/50 border-transparent focus:bg-white focus:border-brand-accent h-11 text-sm"
+                        className="input-hardware w-full pl-11 bg-brand-bg/50 border-transparent focus:bg-brand-card focus:border-brand-accent h-11 text-sm"
                     />
                 </div>
                 <button 
@@ -768,7 +768,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
     const renderApprovalsTab = () => (
         <div className="animate-fade-in space-y-6">
-            <div className="card-hardware bg-white overflow-hidden">
+            <div className="card-hardware bg-brand-card overflow-hidden">
                 <div className="p-8 border-b border-brand-border bg-gradient-to-r from-brand-bg/50 to-transparent flex items-center justify-between">
                     <div>
                         <h3 className="text-xl font-black text-brand-text uppercase tracking-tight">Onay Bekleyen Talepler</h3>
@@ -848,7 +848,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
         <div className="animate-fade-in space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Upload Section */}
-                <div className="card-hardware bg-white p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+                <div className="card-hardware bg-brand-card p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none text-brand-accent">
                         <Database size={120} />
                     </div>
@@ -867,7 +867,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     >
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
                         <div className="flex flex-col items-center gap-4">
-                            <div className="p-5 bg-white rounded-2xl text-brand-text-muted group-hover/upload:text-brand-accent group-hover/upload:scale-110 transition-all shadow-sm border border-brand-border">
+                            <div className="p-5 bg-brand-card rounded-2xl text-brand-text-muted group-hover/upload:text-brand-accent group-hover/upload:scale-110 transition-all shadow-sm border border-brand-border">
                                 <Plus size={32} />
                             </div>
                             <div className="space-y-1">
@@ -884,7 +884,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             className="w-full p-5 bg-brand-accent/5 rounded-2xl border border-brand-accent/20 flex items-center justify-between relative z-10"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-accent shadow-sm">
+                                <div className="w-10 h-10 bg-brand-card rounded-xl flex items-center justify-center text-brand-accent shadow-sm">
                                     <FileText size={20} />
                                 </div>
                                 <div className="text-left">
@@ -892,7 +892,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     <p className="text-[10px] font-bold text-brand-text-muted uppercase">{(uploadFile.size / 1024).toFixed(1)} KB</p>
                                 </div>
                             </div>
-                            <button onClick={() => setUploadFile(null)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><X size={20} /></button>
+                            <button onClick={() => setUploadFile(null)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><X size={20} /></button>
                         </motion.div>
                     )}
 
@@ -924,7 +924,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 </div>
 
                 {/* Export Section */}
-                <div className="card-hardware bg-white p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+                <div className="card-hardware bg-brand-card p-10 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none text-brand-accent">
                         <Download size={120} />
                     </div>
@@ -947,7 +947,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     <span className="text-[10px] font-black text-brand-text-muted uppercase tracking-widest block mb-1">Toplam Kayıt Sayısı</span>
                                     <span className="text-4xl font-black text-brand-text tracking-tighter font-mono">{totalCustomerCount.toLocaleString()}</span>
                                 </div>
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-accent shadow-sm border border-brand-border">
+                                <div className="w-12 h-12 bg-brand-card rounded-xl flex items-center justify-center text-brand-accent shadow-sm border border-brand-border">
                                     <Database size={24} />
                                 </div>
                             </div>
@@ -956,7 +956,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                     <span>Doluluk Oranı</span>
                                     <span>100%</span>
                                 </div>
-                                <div className="h-3 bg-white border border-brand-border rounded-full overflow-hidden p-0.5">
+                                <div className="h-3 bg-brand-bg border border-brand-border rounded-full overflow-hidden p-0.5">
                                     <div className="h-full bg-brand-accent rounded-full shadow-sm shadow-brand-accent/50"></div>
                                 </div>
                             </div>
@@ -987,7 +987,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
 
     const renderAnnouncementTab = () => (
         <div className="animate-fade-in space-y-6">
-            <div className="card-hardware bg-white p-10 relative overflow-hidden group">
+            <div className="card-hardware bg-brand-card p-10 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none text-brand-accent">
                     <Megaphone size={150} />
                 </div>
@@ -1010,7 +1010,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 type="text" 
                                 value={announcementForm.title}
                                 onChange={(e) => setAnnouncementForm(prev => ({ ...prev, title: e.target.value }))}
-                                className="input-hardware w-full bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-14 font-bold"
+                                className="input-hardware w-full bg-brand-bg/30 border-brand-border focus:bg-brand-card focus:border-brand-accent h-14 font-bold"
                                 placeholder="Örn: Mesai Saati Değişikliği"
                             />
                         </div>
@@ -1019,7 +1019,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                             <textarea 
                                 value={announcementForm.content}
                                 onChange={(e) => setAnnouncementForm(prev => ({ ...prev, content: e.target.value }))}
-                                className="input-hardware w-full min-h-[200px] resize-none bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent p-5 font-medium"
+                                className="input-hardware w-full min-h-[200px] resize-none bg-brand-bg/30 border-brand-border focus:bg-brand-card focus:border-brand-accent p-5 font-medium"
                                 placeholder="Duyuru detaylarını buraya yazın..."
                             />
                         </div>
@@ -1035,14 +1035,14 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 <input type="file" ref={announcementImageRef} onChange={handleAnnouncementImageChange} accept="image/*" className="hidden" />
                                 {announcementForm.imageUrl ? (
                                     <div className="relative group/preview">
-                                        <img src={announcementForm.imageUrl} alt="Önizleme" className="max-h-40 rounded-2xl shadow-lg border-4 border-white" />
+                                        <img src={announcementForm.imageUrl} alt="Önizleme" className="max-h-40 rounded-2xl shadow-lg border-4 border-brand-card" />
                                         <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
                                             <p className="text-white text-[10px] font-black uppercase tracking-widest">Değiştir</p>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="text-center space-y-3">
-                                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mx-auto text-brand-text-muted group-hover/img:text-brand-accent group-hover/img:scale-110 transition-all shadow-sm border border-brand-border">
+                                        <div className="w-14 h-14 bg-brand-card rounded-2xl flex items-center justify-center mx-auto text-brand-text-muted group-hover/img:text-brand-accent group-hover/img:scale-110 transition-all shadow-sm border border-brand-border">
                                             <Plus size={24} />
                                         </div>
                                         <div className="space-y-1">
@@ -1059,7 +1059,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                                 <select 
                                     value={announcementForm.targetUsers[0]}
                                     onChange={(e) => setAnnouncementForm(prev => ({ ...prev, targetUsers: [e.target.value] }))}
-                                    className="input-hardware w-full appearance-none pr-12 bg-brand-bg/30 border-brand-border focus:bg-white focus:border-brand-accent h-14 font-bold"
+                                    className="input-hardware w-full appearance-none pr-12 bg-brand-bg/30 border-brand-border focus:bg-brand-card focus:border-brand-accent h-14 font-bold"
                                 >
                                     <option value="all">Tüm Personeller</option>
                                     {credentials.map(c => (
@@ -1077,7 +1077,7 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                 <div className="flex flex-col sm:flex-row justify-end gap-4 mt-12 pt-8 border-t border-brand-border relative z-10">
                     <button 
                         onClick={() => setShowAnnouncementPreview(true)}
-                        className="px-10 py-4 bg-white text-brand-text font-black rounded-2xl hover:bg-brand-bg transition-all border border-brand-border uppercase text-xs tracking-widest shadow-sm active:scale-95"
+                        className="px-10 py-4 bg-brand-card text-brand-text font-black rounded-2xl hover:bg-brand-bg transition-all border border-brand-border uppercase text-xs tracking-widest shadow-sm active:scale-95"
                     >
                         Önizleme
                     </button>
@@ -1438,10 +1438,10 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
     );
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex text-[#1E293B] font-sans selection:bg-brand-accent/30">
+        <div className="min-h-screen bg-brand-bg flex text-brand-text font-sans selection:bg-brand-accent/30">
             {/* --- Sidebar --- */}
             <aside 
-                className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0F172A] text-white transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen ${
+                className={`fixed inset-y-0 left-0 z-50 w-72 bg-brand-card text-brand-text transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen border-r border-brand-border ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
@@ -1514,15 +1514,15 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
             {/* --- Main Content --- */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Top Header */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-40">
+                <header className="h-16 bg-brand-card border-b border-brand-border flex items-center justify-between px-6 sticky top-0 z-40">
                     <div className="flex items-center gap-4">
                         <button 
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="p-2 hover:bg-slate-100 rounded-lg lg:hidden"
+                            className="p-2 hover:bg-brand-bg rounded-lg lg:hidden"
                         >
                             <Menu size={20} />
                         </button>
-                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+                        <h2 className="text-sm font-bold text-brand-text-muted uppercase tracking-wider">
                             {activeTab === 'dashboard' && 'Genel Bakış'}
                             {activeTab === 'users' && 'Kullanıcı Yönetimi'}
                             {activeTab === 'logs' && 'Sistem Kayıtları'}
@@ -1535,17 +1535,17 @@ export const AdminScreen: React.FC<AdminScreenProps> = ({ onLogout }) => {
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={loadData}
-                            className={`p-2 text-slate-400 hover:text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-all ${loading ? 'animate-spin' : ''}`}
+                            className={`p-2 text-brand-text-muted hover:text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-all ${loading ? 'animate-spin' : ''}`}
                         >
                             <RefreshCw size={18} />
                         </button>
-                        <div className="h-8 w-px bg-slate-200 mx-2"></div>
+                        <div className="h-8 w-px bg-brand-border mx-2"></div>
                         <div className="flex items-center gap-3">
                             <div className="text-right hidden sm:block">
-                                <div className="text-xs font-bold text-slate-900">Admin</div>
-                                <div className="text-[10px] text-slate-500 font-medium">Sistem Yöneticisi</div>
+                                <div className="text-xs font-bold text-brand-text">Admin</div>
+                                <div className="text-[10px] text-brand-text-muted font-medium">Sistem Yöneticisi</div>
                             </div>
-                            <div className="w-9 h-9 bg-slate-100 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm">
+                            <div className="w-9 h-9 bg-brand-bg rounded-full border border-brand-border flex items-center justify-center text-brand-text font-bold text-sm">
                                 A
                             </div>
                         </div>
